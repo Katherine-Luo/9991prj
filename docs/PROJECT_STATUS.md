@@ -10,7 +10,7 @@ active_bug_ids: []
 resume_phase: P0
 next_phase: P1
 last_updated: 2026-08-08
-last_verified_commit: bdccb98
+last_verified_commit: 5388425
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -39,7 +39,7 @@ last_verified_commit: bdccb98
 | 恢复阶段 | `P0` |
 | 下一阶段 | `P1 DICOM/XML 审计` |
 | 最近更新 | 2026-08-08 |
-| 状态依据 commit | `bdccb98` |
+| 状态依据 commit | `5388425` |
 
 ## 3. 当前阶段：P0 工程环境与配置冻结
 
@@ -53,10 +53,11 @@ last_verified_commit: bdccb98
 - Git 仓库已创建并连接 GitHub。
 - 冻结需求文档已提交。
 - 项目状态文档已建立。
+- 仓库级 `AGENTS.md` 开发治理、双 agent 审查和 Git 门禁规则已建立并创建本地 commit；尚未推送。
 
 ### 正在进行
 
-- 建立 P0 开发状态和后续阶段维护规则。
+- 按冻结需求准备 P0 Python 工程骨架、环境和机器可读配置。
 
 ### 尚未完成
 
@@ -88,7 +89,10 @@ P0 阶段门当前未通过。
 ### 当前证据与产物
 
 - [冻结需求文档](./LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md)
+- [仓库开发规则](../AGENTS.md)
 - Git commit `bdccb98`：`docs: freeze Baseline-v1 requirements`
+- Git commit `d6e37d4`：`docs: add project status tracking`
+- 本地 Git commit `5388425`：`docs: add repository agent workflow`（尚未推送）
 
 ## 4. 下一阶段：P1 DICOM/XML 审计
 
@@ -130,8 +134,20 @@ P0 阶段门当前未通过。
 |---|---|
 | `NOT_STARTED` | 尚未进入该阶段 |
 | `IN_PROGRESS` | 正在开发或重新验收 |
+| `AWAITING_USER_APPROVAL` | 技术验收和双 agent 审查已通过，正在等待用户明确确认 |
 | `BLOCKED` | 阶段无法继续，且已有明确阻塞条件 |
-| `COMPLETED` | 全部阶段门验收已通过并保存证据 |
+| `COMPLETED` | 全部阶段门验收已通过、用户已明确确认并保存证据 |
+
+正常阶段流转固定为：
+
+```text
+NOT_STARTED
+→ IN_PROGRESS
+→ AWAITING_USER_APPROVAL
+→ COMPLETED
+```
+
+下一阶段在其实施计划获得用户明确批准前保持 `NOT_STARTED`。`BLOCKED` 用于明确的技术或外部阻塞，不得用于表示正常等待用户确认。
 
 ### 阶段健康状态
 
@@ -148,8 +164,18 @@ P0 阶段门当前未通过。
 
 1. 更新 YAML 中的阶段、模式、下一阶段和最近更新时间。
 2. 更新“当前阶段”的已完成、正在进行、尚未完成、验收证据和困难。
-3. 如果阶段门通过，将阶段标记为 `COMPLETED`，追加永久阶段记录，并将下一阶段切换为 `IN_PROGRESS`。
-4. 状态更新与对应代码或修复放在同一个 Git commit；不复制普通 Git commit 日志。
+3. 串行调用独立的阶段合规审查 agent 和状态同步审查 agent；合规审查只读，状态同步审查如发现差异只能修改本状态文档。
+4. 状态同步使用独立的原子 Git commit，不与实现、测试或修复 commit 混合；不复制普通 Git commit 日志。
+5. 阶段内允许在双 agent 审查通过后创建本地原子 commits，但未经阶段确认不得推送。
+
+当阶段门的技术验收全部通过时：
+
+1. 运行覆盖整个阶段的双 agent 审查。
+2. 将当前阶段标记为 `AWAITING_USER_APPROVAL`，保存验收证据，下一阶段继续保持 `NOT_STARTED`。
+3. 向用户报告阶段结果并等待明确确认，不得把沉默视为批准。
+4. 用户确认后，使用独立状态 commit 将当前阶段标记为 `COMPLETED` 并追加永久阶段记录。
+5. 验证 branch、remote 和 commit 范围后，推送该阶段的本地原子 commits。
+6. 推送成功后才制定下一阶段实施计划；该计划获得用户批准后，下一阶段才切换为 `IN_PROGRESS`。
 
 ### Bug 维护模式
 
@@ -167,7 +193,8 @@ Bug 修复后：
 1. 记录根因、修改内容、验证命令、验证结果和修复 commit。
 2. 对失效的阶段重新执行阶段门。
 3. 将 Bug 标记为 `RESOLVED`；只有重新验收通过后才能恢复阶段的 `COMPLETED / ON_TRACK`。
-4. 清除 `maintenance_phase` 和 `active_bug_ids`，恢复 `NORMAL_DEVELOPMENT / CURRENT_AND_NEXT`，回到 `resume_phase`。
+4. 运行阶段合规审查和状态同步审查，并向用户报告修复及重新验收结果。
+5. 用户明确确认后，清除 `maintenance_phase` 和 `active_bug_ids`，恢复 `NORMAL_DEVELOPMENT / CURRENT_AND_NEXT`，回到 `resume_phase`，然后才可推送修复 commits。
 
 ### 未解决困难
 
@@ -245,7 +272,7 @@ Bug 修复后：
 
 - 开始日期：2026-08-08
 - 当前状态：`IN_PROGRESS`
-- 已完成：需求冻结、仓库创建与连接、冻结需求文档提交、状态文档建立。
+- 已完成：需求冻结、仓库创建与连接、冻结需求文档提交、状态文档建立、仓库级开发治理与双 agent 审查规则建立并创建本地 commit。
 - 未完成：项目骨架、依赖锁定、三种设备 smoke tests、机器可读配置及哈希。
 - 当前验收结果：未通过。
 - 开放困难：`DIF-P0-001`。
