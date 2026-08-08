@@ -4,13 +4,13 @@ project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P1
-development_phase_status: IN_PROGRESS
+development_phase_status: BLOCKED
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P1
 next_phase: P2
 last_updated: 2026-08-09
-last_verified_commit: cf767d3
+last_verified_commit: 3fd5fcb
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -32,14 +32,14 @@ last_verified_commit: cf767d3
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | 当前开发阶段 | `P1 DICOM/XML 审计` |
-| 阶段状态 | `IN_PROGRESS` |
+| 阶段状态 | `BLOCKED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无 |
+| 当前阻塞项 | `DIF-P1-001`：5 个 CT series 中发现 13 个 `DUPLICATE_SLICE_PLANE` 阻断性异常，等待用户审阅并确定处理结论 |
 | 恢复阶段 | `P1` |
 | 下一阶段 | `P2 Physical nodule cohort` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `cf767d3` |
+| 状态依据 commit | `3fd5fcb`（P1 审计实现与精简证据已保存为本地原子 commits，尚未推送） |
 
 ## 3. 当前阶段：P1 DICOM/XML 审计
 
@@ -52,41 +52,46 @@ last_verified_commit: cf767d3
 - P0 已完成、确认并推送；冻结配置与 P0 环境/审计证据可复用。
 - P1 实施计划已获用户明确批准；审计产物采用精简提交策略：提交脱敏摘要、每-series 报告与异常清单，不提交逐切片明细。
 - 已确认本地原始数据根目录为 `/Users/katherine/Desktop/lidc_data`，其中 canonical XML 与 DICOM 下载树均存在。
+- 已实现 header-only P1 audit、合成 XML/DICOM fixtures、确定性与脱敏报告测试；P1 专项测试为 `6 passed`，最新完整测试为 `43 passed`。
+- 完整本地审计已生成脱敏的 `summary.json`、`series_audit.csv` 和 `anomalies.csv`：1,010 patients、1,018 CT series、243,958 CT instances、513 DX、56 CR；1,035/1,035 canonical CT XML 均唯一映射到 CT series，且 1,018/1,018 CT series 均被 canonical CT XML 覆盖。
+- canonical XML 合计为 1,318，较本地参考盘点 1,319 少 1；该 reconciliation 的 `hard_gate=false`，不构成失败。
+- Phase Compliance Reviewer 已对 P1 当前实现给出 `PASS`；未发现越阶段实现。
 
 ### 正在进行
 
-- 实现 canonical XML 分类、DICOM header inventory、XML–CT series mapping、CT geometry validation 与稳定审计报告。
+- P1 数据异常处理结论等待用户审阅；在此之前不进入 P2。
 
 ### 尚未完成
 
-- P1-R1：canonical XML source 审计、CT/DX/CR/CXR 盘点、XML–DICOM UID mapping 与异常清单。
-- P1-R2：CT geometry validation、空间投影排序、duplicate/missing slice 与 spacing/orientation 异常检测。
-- 完整本地数据审计、阶段级双 agent 审查与用户阶段确认。
+- `DIF-P1-001` 的处理决定及其必要的复核审计。
+- P1 结果尚未取得阻断性异常的处理结论，故不得进入阶段级双 agent 审查、`AWAITING_USER_APPROVAL` 或 P2。
+- P1 本地 commits 尚未推送；依据治理规则，只有阶段确认完成后才允许推送。
+- P1 阶段级双 agent 审查、`AWAITING_USER_APPROVAL` 和用户阶段确认。
 
 ### 验收进度
 
 | P1 验收项 | 状态 | 证据 |
 |---|---|---|
-| P1-R1 canonical XML 与 UID mapping | `IN_PROGRESS` | 实施计划已获批准；尚未生成审计产物 |
-| P1-R2 DICOM geometry | `IN_PROGRESS` | 实施计划已获批准；尚未生成审计产物 |
-| P1 自动测试 | `NOT_STARTED` | 待实现 |
-| Phase Compliance Reviewer | `NOT_STARTED` | 待 P1 原子改动完成后执行 |
-| Status Synchronization Reviewer | `NOT_STARTED` | 待 P1 原子改动完成后执行 |
+| P1-R1 canonical XML 与 UID mapping | `PASS` | `summary.json`：1,035/1,035 canonical CT XML mapped，1,018/1,018 CT series covered；CT/DX/CR/CXR 与 embedded XML 均单独统计 |
+| P1-R2 DICOM geometry | `BLOCKED` | 空间投影排序和异常检测已完成；发现 13 个 `DUPLICATE_SLICE_PLANE`（5 series，阻断性）、4 个 `SPACING_NONUNIFORM` 与 2 个 `SUSPECTED_SLICE_GAP`（警告） |
+| P1 自动测试 | `PASS` | P1 专项 `6 passed`；完整套件 `43 passed` |
+| Phase Compliance Reviewer | `PASS` | 当前 P1 audit implementation 合规、无越阶段实现 |
+| Status Synchronization Reviewer | `UPDATED` | 已同步 `3fd5fcb` 的本地提交、最新 `43 passed` 测试与阻断条件；状态同步 commit 待创建 |
 
-P1 已由用户批准进入开发，尚未满足任何阶段门验收。
+P1 已完成审计实现与运行，但其阻断性重复 slice plane 尚无审阅后的处理结论；因此不得进入阶段门或 P2。
 
 ### 未解决困难
 
-- 当前无 P1 特有开放困难。
+- `DIF-P1-001`：5 个 CT series 存在 13 个 `DUPLICATE_SLICE_PLANE` 阻断性异常。需要用户审阅异常并明确可追溯的处理结论；在结论与必要复核完成前，P1 为 `BLOCKED`。
 - `DIF-P10-001` 继续为 `OPEN`，但不影响 P1 的本地 header-only audit。
 
 ### 当前证据与产物
 
 - [冻结需求文档](./LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md)
 - [仓库开发规则](../AGENTS.md)
-- P1 分支基线：`cf767d3`（已推送的 P0 交付状态）。
+- P1 分支：`p1-dicom-xml-audit`，当前 HEAD 为 `3fd5fcb`。`2584052` 已保存审计实现、测试与 `.gitignore`；`3fd5fcb` 已保存脱敏精简审计产物；两者均只在本地，尚未推送。
 - 原始数据：`/Users/katherine/Desktop/lidc_data`；审计仅读取 DICOM headers，不读取像素数据。
-- P1 输出目标：`artifacts/audit/p1/summary.json`、`series_audit.csv`、`anomalies.csv`；可选逐切片明细保持本地 ignored。
+- P1 输出：`artifacts/audit/p1/summary.json`、`series_audit.csv`、`anomalies.csv`（脱敏；当前约 4 KB、232 KB、4 KB）；可选逐切片明细保持本地 ignored。
 
 ## 4. 下一阶段：P2 Physical nodule cohort
 
@@ -97,7 +102,7 @@ P1 已由用户批准进入开发，尚未满足任何阶段门验收。
 ### 进入条件
 
 - P1 canonical XML、XML–DICOM mapping 与 CT geometry 审计通过并已获用户确认。
-- P1 的阻断性异常已解决或形成明确审阅结论。
+- `DIF-P1-001` 已解决或形成明确审阅结论，并完成所需复核审计。
 
 ### 第一批任务
 
@@ -196,7 +201,7 @@ Bug 修复后：
 | 阶段 | 名称 | 生命周期 | 健康状态 | 阶段门 | 开放 Bug | 开放困难 |
 |---|---|---|---|---|---:|---:|
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
-| P1 | DICOM/XML 审计 | `IN_PROGRESS` | `ON_TRACK` | 实施中 | 0 | 0 |
+| P1 | DICOM/XML 审计 | `BLOCKED` | `AT_RISK` | 阻断性 slice plane 异常待审阅 | 0 | 1 |
 | P2 | Physical nodule cohort | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -241,6 +246,18 @@ Bug 修复后：
 ```
 
 ## 8. 未解决困难登记表
+
+### DIF-P1-001：CT series 重复 slice plane 的处理结论待审阅
+
+- 状态：`OPEN`
+- 所属阶段：P1
+- 首次记录：2026-08-09
+- 影响：P1-R2 的“每个纳入 CT series 能确定性构建 3D volume”验收无法通过；P2 不得开始。
+- 当前结论：完整 header-only audit 在 5 个匿名 CT series 中发现 13 个 `DUPLICATE_SLICE_PLANE` 阻断性异常。审计也记录 4 个 `SPACING_NONUNIFORM` 和 2 个 `SUSPECTED_SLICE_GAP` 警告；后两者不单独阻断 P1。
+- 证据：`artifacts/audit/p1/summary.json` 和 `artifacts/audit/p1/anomalies.csv`；P1 专项测试 `6 passed`，完整测试 `43 passed`。
+- 下一步：用户审阅异常清单，并明确这些重复 plane 的可追溯处理结论；随后只在 P1 范围内实施必要处理并重新运行完整审计。
+- 解除条件：所有阻断性重复 plane 均已解决，或已有用户明确批准的处理结论及相应复核证据。
+- 关联 Bug：无；这是原始数据审计发现，尚非实现 Bug。
 
 ### DIF-P0-001：Katana CUDA 环境尚未验证
 
@@ -315,3 +332,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P0 | 技术验收与双 agent 审查通过，等待用户确认；P1 保持未开始 | 本状态同步提交 |
 | 2026-08-09 | `PHASE_COMPLETED` | P0 | 用户确认 P0；阶段封存、交付并完成安全清理，P1 保持未开始 | `a16e3b5` |
 | 2026-08-09 | `PHASE_STARTED` | P1 | 用户批准 P1 DICOM/XML 审计实施计划；P1 开始开发，P2 保持未开始 | P1 本地分支 |
+| 2026-08-09 | `PHASE_BLOCKED` | P1 | 完整审计发现 5 个 CT series 中的 13 个阻断性 `DUPLICATE_SLICE_PLANE`；审计实现与精简证据已保存为本地 commits，等待用户审阅处理结论，P2 保持未开始 | `2584052`、`3fd5fcb`（未推送） |
