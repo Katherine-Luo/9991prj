@@ -4,13 +4,13 @@ project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P0
-development_phase_status: IN_PROGRESS
+development_phase_status: AWAITING_USER_APPROVAL
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P0
 next_phase: P1
-last_updated: 2026-08-08
-last_verified_commit: d7de8c0
+last_updated: 2026-08-09
+last_verified_commit: 6012941
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -32,14 +32,14 @@ last_verified_commit: d7de8c0
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | 当前开发阶段 | `P0 工程环境与配置冻结` |
-| 阶段状态 | `IN_PROGRESS` |
+| 阶段状态 | `AWAITING_USER_APPROVAL` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
 | 当前阻塞项 | 无 |
 | 恢复阶段 | `P0` |
 | 下一阶段 | `P1 DICOM/XML 审计` |
-| 最近更新 | 2026-08-08 |
-| 状态依据 commit | `d7de8c0` |
+| 最近更新 | 2026-08-09 |
+| 状态依据 commit | `6012941` |
 
 ## 3. 当前阶段：P0 工程环境与配置冻结
 
@@ -54,37 +54,45 @@ last_verified_commit: d7de8c0
 - 冻结需求文档已提交。
 - 项目状态文档已建立。
 - 仓库级 `AGENTS.md` 开发治理、双 agent 审查和 Git 门禁规则已建立、提交并推送至 `origin/main`。
+- Python 3.11 `src` 工程骨架、项目依赖、macOS-arm64 与 Katana-CUDA 环境定义及精确环境锁定文件已完成。
+- `configs/baseline_v1.yaml`、只读 resolved config 和 SHA-256 已冻结；配置哈希为 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c`。
+- 全局 seed `20260808` 与 `base_seed + fold_index` 派生规则已实现并验证。
+- 合成 `64³` ROI 的 CPU、MPS、CUDA DenseNet-121 forward/backward smoke tests 均通过，三种设备使用相同配置哈希。
+- Mac 与 Katana 的 `pylidc` import、`pip check` 和 `setuptools 80.10.2` 验证均通过。
+- Katana PBS job `8942735.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上以 Exit 0 完成；远程 P0 工作集和剩余空间 gates 均通过。
+- 本地完整测试为 `37 passed`；Phase Compliance Reviewer 给出 `PASS`，Status Synchronization Reviewer 已完成状态同步。
 
 ### 正在进行
 
-- 按冻结需求准备 P0 Python 工程骨架、环境和机器可读配置。
+- 等待用户明确确认 P0 阶段验收结果。
 
 ### 尚未完成
 
-- 创建 Python 项目骨架与环境文件。
-- 锁定 Python、PyTorch、MONAI、pylidc、pydicom、pandas/pyarrow 和 scikit-learn/scipy 版本。
-- 完成 CPU、MPS 和 CUDA forward/backward smoke tests。
-- 固定全局 seed 与 fold seed 派生规则。
-- 创建 `configs/baseline_v1.yaml`。
-- 生成只读 resolved config 和 SHA-256。
-- 保存环境版本和 CUDA 信息。
+- 用户尚未确认 P0，阶段不得标记为 `COMPLETED`。
+- 尚未创建 P0 阶段完成状态 commit，也未将 P0 实现合并并推送到 `main`。
+- P1 实施计划尚未制定或批准，P1 不得开始。
 
 ### 验收进度
 
 | P0 验收项 | 状态 | 证据 |
 |---|---|---|
-| CPU forward/backward smoke test | `PENDING` | — |
-| MPS forward/backward smoke test | `PENDING` | — |
-| CUDA forward/backward smoke test | `PENDING` | — |
-| 环境版本已记录 | `PENDING` | — |
-| 随机 seed 规则已冻结 | `PENDING` | — |
-| Resolved config 与 SHA-256 已冻结 | `PENDING` | — |
+| CPU forward/backward smoke test | `PASS` | `artifacts/audit/p0/cpu.json` |
+| MPS forward/backward smoke test | `PASS` | `artifacts/audit/p0/mps.json`；记录唯一允许的 `aten::max_pool3d_with_indices` CPU fallback |
+| CUDA forward/backward smoke test | `PASS` | `artifacts/audit/p0/cuda.json`；PBS `8942735.kman.restech.unsw.edu.au`，Exit 0，NVIDIA L40S |
+| 环境版本已记录 | `PASS` | `artifacts/audit/p0/*-environment.json` 与 `environment/locks/`；两平台 `pylidc` import、`pip check` 通过 |
+| 随机 seed 规则已冻结 | `PASS` | base seed `20260808`；fold seed 为 `base_seed + fold_index`；测试通过 |
+| Resolved config 与 SHA-256 已冻结 | `PASS` | `configs/baseline_v1.resolved.yaml`、`configs/baseline_v1.sha256`；哈希 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c` |
+| 本地自动测试 | `PASS` | 2026-08-09：`37 passed` |
+| Katana 存储 gates | `PASS` | `artifacts/audit/p0/katana-storage-preflight.json`；工作集 `7,543,988,928` bytes |
+| Phase Compliance Reviewer | `PASS` | 2026-08-09：无冻结需求改动、无 P1 实现、无阻断缺口 |
+| Status Synchronization Reviewer | `PASS` | 2026-08-09：状态、代码、测试和审计证据已同步 |
 
-P0 阶段门当前未通过。
+P0 技术验收与双 agent 审查均已通过，当前等待用户确认；阶段尚未 `COMPLETED`。
 
 ### 未解决困难
 
-- `DIF-P0-001`：Katana CUDA 环境和依赖版本尚未验证。它不阻塞本地工程初始化，但阻止 P0 阶段门通过。
+- P0 当前无开放困难；`DIF-P0-001` 已在 Katana CUDA 验证通过后标记为 `RESOLVED`。
+- `DIF-P10-001` 仍为 `OPEN`，但属于 P10 存储风险，不阻塞 P0 确认。
 
 ### 当前证据与产物
 
@@ -94,6 +102,19 @@ P0 阶段门当前未通过。
 - Git commit `d6e37d4`：`docs: add project status tracking`
 - Git commit `5388425`：`docs: add repository agent workflow`
 - Git commit `d7de8c0`：`docs: align project status approval gates`
+- Git commit `8a91863`：`docs: record Katana storage risk`
+- Git commit `5f65be3`：`chore: scaffold P0 project environment`
+- Git commit `d10d958`：`feat: add deterministic baseline configuration`
+- Git commit `bc77067`：`feat: add cross-device DenseNet smoke test`
+- Git commit `c1d4393`：`chore: add Katana P0 workflow`
+- Git commit `6012941`：`chore: record P0 audit evidence`
+- [Baseline-v1 source config](../configs/baseline_v1.yaml)
+- [Baseline-v1 resolved config](../configs/baseline_v1.resolved.yaml)
+- [Baseline-v1 config SHA-256](../configs/baseline_v1.sha256)
+- [P0 audit artifacts](../artifacts/audit/p0/)
+- [Platform environment definitions and locks](../environment/)
+- [Katana P0 scripts](../scripts/katana/)
+- 本地验证命令：`/Users/katherine/.conda/envs/lidc-baseline-v1-p0/bin/python -m pytest -q`；结果 `37 passed`。
 
 ## 4. 下一阶段：P1 DICOM/XML 审计
 
@@ -209,7 +230,7 @@ Bug 修复后：
 
 | 阶段 | 名称 | 生命周期 | 健康状态 | 阶段门 | 开放 Bug | 开放困难 |
 |---|---|---|---|---|---:|---:|
-| P0 | 工程环境与配置冻结 | `IN_PROGRESS` | `ON_TRACK` | 未通过 | 0 | 1 |
+| P0 | 工程环境与配置冻结 | `AWAITING_USER_APPROVAL` | `ON_TRACK` | 技术验收通过，待用户确认 | 0 | 0 |
 | P1 | DICOM/XML 审计 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P2 | Physical nodule cohort | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -258,13 +279,14 @@ Bug 修复后：
 
 ### DIF-P0-001：Katana CUDA 环境尚未验证
 
-- 状态：`OPEN`
+- 状态：`RESOLVED`
 - 所属阶段：P0
 - 首次记录：2026-08-08
-- 影响：无法验证正式训练环境的 CUDA forward/backward smoke test，因此 P0 阶段门不能通过。
-- 当前结论：不阻塞本地 CPU/MPS 工程初始化。
-- 下一步：建立项目环境后，在 Katana GPU node 上记录 CUDA、驱动、PyTorch 和 MONAI 版本并运行 smoke test。
-- 解除条件：Katana smoke test 通过，结果和环境版本写入 P0 验收证据。
+- 解决日期：2026-08-09
+- 原影响：在正式训练环境完成 CUDA forward/backward smoke test 前，P0 阶段门不能通过。
+- 当前结论：Katana CUDA 环境、依赖、存储和 PBS batch smoke 已全部验证，P0 不再受此困难阻塞。
+- 解决证据：PBS job `8942735.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 Exit 0；`artifacts/audit/p0/cuda.json` 与 `katana-linux-environment.json` 均为 `PASS`；配置哈希为 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c`。
+- 解除条件：已满足。
 - 关联 Bug：无。
 
 ### DIF-P10-001：Katana user scratch 扩容申请等待回复
@@ -284,11 +306,12 @@ Bug 修复后：
 ### P0 当前未封存记录
 
 - 开始日期：2026-08-08
-- 当前状态：`IN_PROGRESS`
-- 已完成：需求冻结、仓库创建与连接、冻结需求文档提交、状态文档建立、仓库级开发治理与双 agent 审查规则建立、提交并推送至 `origin/main`。
-- 未完成：项目骨架、依赖锁定、三种设备 smoke tests、机器可读配置及哈希。
-- 当前验收结果：未通过。
-- 开放困难：`DIF-P0-001`。
+- 当前状态：`AWAITING_USER_APPROVAL`
+- 已完成：工程骨架、依赖与双平台环境锁定、机器可读配置及 SHA-256、固定 seed、CPU/MPS/CUDA DenseNet smoke、Katana PBS 与存储 gates、本地 37 项测试、Phase Compliance Reviewer 和 Status Synchronization Reviewer。
+- 未完成：仅剩用户阶段确认、确认后的 `COMPLETED` 状态 commit、合并到 `main` 和推送；P1 尚未开始。
+- 当前验收结果：技术验收与双 agent 审查 `PASS`，等待用户明确确认；P0 尚未 `COMPLETED`。
+- 验收证据：配置哈希 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c`；CPU/MPS/CUDA audit 均为 `PASS`；PBS job `8942735.kman.restech.unsw.edu.au` Exit 0；Katana 工作集 `7,543,988,928` bytes；本地 `37 passed`。
+- 开放困难：P0 无；`DIF-P10-001` 属于未来 P10，不阻塞 P0。
 - 开放 Bug：无。
 - 阶段完成日期：—
 - 阶段完成 commit：—
@@ -321,3 +344,4 @@ Bug 修复后：
 |---|---|---|---|---|
 | 2026-08-08 | `PROTOCOL_FROZEN` | 全局 | Baseline-v1 科学需求确认并冻结 | `bdccb98` |
 | 2026-08-08 | `PHASE_STARTED` | P0 | 开始工程环境与配置冻结阶段 | 本状态文档初始化提交 |
+| 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P0 | 技术验收与双 agent 审查通过，等待用户确认；P1 保持未开始 | 本状态同步提交 |
