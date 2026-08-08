@@ -3,14 +3,14 @@ schema_version: 1
 project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P1
-development_phase_status: COMPLETED
+development_phase: P2
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P1
-next_phase: P2
+resume_phase: P2
+next_phase: P3
 last_updated: 2026-08-09
-last_verified_commit: f4d1964
+last_verified_commit: 1f0ed33
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -31,17 +31,69 @@ last_verified_commit: f4d1964
 |---|---|
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
-| 当前开发阶段 | `P1 DICOM/XML 审计` |
-| 阶段状态 | `COMPLETED` |
+| 当前开发阶段 | `P2 Physical nodule cohort` |
+| 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P1 已获用户明确确认并完成阶段封存，P2 仍未开始 |
-| 恢复阶段 | `P1` |
-| 下一阶段 | `P2 Physical nodule cohort` |
+| 当前阻塞项 | `DIF-P2-001`：pylidc 0.2.3 在锁定 NumPy 1.26.4 环境中使用已移除的 `np.int`；P2 将以最小运行时兼容层验证，不改依赖或原始数据 |
+| 恢复阶段 | `P2` |
+| 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `c70e068`（duplicate-plane resolution 实现与测试）、`7d34cbf`（脱敏 resolution 证据）、`fa73a1b` 和 `f4d1964`（P1 状态同步）；P1 已获用户确认，推送在本次阶段封存后执行 |
+| 状态依据 commit | `1f0ed33`：P1 已封存并推送至 `origin/main`；P2 获批后在本地分支 `p2-physical-nodule-cohort` 开始 |
 
-## 3. 当前阶段：P1 DICOM/XML 审计
+## 3. 当前阶段：P2 Physical nodule cohort
+
+### 阶段目标
+
+将 canonical XML 的 `nodule >=3 mm` reader annotations 与 pylidc spatial clusters 对齐，建立 stable source-derived `nodule_uid`、reader aggregation 和本地私有 cohort manifest。
+
+### 已完成
+
+- P1 的 canonical XML、CT geometry、series eligibility 和 4 个不同图像内容 series 的排除决定均已确认并推送。
+- P2 实施计划已获用户批准：使用 pylidc 默认 clustering rule 与最小 `np.int` runtime compatibility adapter；完整 manifest 本地私有，Git 仅保存脱敏审计证据。
+- strict computed `>3 mm` flag 固定为 cluster 内 reader axial diameter 的最大值严格大于 `3.0 mm`；不影响 primary inclusion。
+
+### 正在进行
+
+- 建立 XML source annotation parser、pylidc matching/clustering、stable provenance、reader aggregation 和 cohort reconciliation。
+
+### 尚未完成
+
+- P2 代码、自动测试、完整本地 cohort audit、private manifest、脱敏审计产物、阶段级双 agent 审查和用户阶段确认。
+
+### 验收进度
+
+| P2 验收项 | 状态 | 证据 |
+|---|---|---|
+| P2-R1 primary cohort 与 reconciliation | `NOT_STARTED` | P2 已获批准，尚未运行 cohort audit |
+| P2-R2 stable provenance 与 `nodule_uid` | `NOT_STARTED` | 尚未生成 source-derived fingerprint 或 manifest |
+| P2-R3 reader aggregation | `NOT_STARTED` | 尚未生成逐 target valid-reader counts |
+| P2-R4 categorical ties | `NOT_STARTED` | 尚未生成 vote distributions 或 tie flags |
+
+### 未解决困难
+
+- `DIF-P2-001`：锁定 pylidc/NumPy 组合的 `np.int` compatibility defect；必须由测试覆盖的最小 adapter 解决，且不得修改 pylidc database、依赖锁定或原始数据。
+- `DIF-P10-001` 继续为 `OPEN`，不影响 P2 本地 cohort 开发。
+
+## 4. 下一阶段：P3 Consensus mask 与 ROI
+
+### 阶段目标
+
+对已确认的 P2 physical nodules 生成 50% consensus mask、固定 `64³` ROI 和 QA 证据。
+
+### 进入条件
+
+- P2 cohort、stable provenance、reader aggregation 和 reconciliation 通过阶段门并取得用户确认。
+
+### 第一批任务
+
+- 尚未制定；P3 保持 `NOT_STARTED`。
+
+<!-- NORMAL_READING_END -->
+
+---
+
+## 5. P1 历史阶段记录
 
 ### 阶段目标
 
@@ -96,7 +148,9 @@ P1 技术阶段门和用户确认均已通过，阶段封存为 `COMPLETED`。`a
 - P1 初始 audit 输出：`artifacts/audit/p1/summary.json`、`series_audit.csv`、`anomalies.csv`（脱敏）。`anomalies.csv` 是原始数据异常记录。
 - P1 resolution 输出：`artifacts/audit/p1/duplicate_plane_resolution.json`、`duplicate_plane_resolution.csv`、`derived_volume_selection.csv`（均脱敏）。这些文件记录最终的 P1 后续可用性决定；可选逐切片明细保持本地 ignored。
 
-## 4. 下一阶段：P2 Physical nodule cohort
+## 6. P2 启动前历史快照
+
+本节记录 P1 完成后、P2 实施计划获批前的状态，保留用于审计。它已于 2026-08-09 被第 3 节的 P2 `IN_PROGRESS` 当前状态取代；不得将本节的 `NOT_STARTED` 表述理解为当前阶段状态。
 
 ### 阶段目标
 
@@ -109,15 +163,11 @@ P1 技术阶段门和用户确认均已通过，阶段封存为 `COMPLETED`。`a
 
 ### 第一批任务
 
-- 尚未制定；P2 保持 `NOT_STARTED`。
+- 当时尚未制定；P2 当时保持 `NOT_STARTED`。
 
 ### 已知风险
 
 - P2 不能绕过 P1 的 canonical source、mapping 或 geometry 审计结论。
-
-<!-- NORMAL_READING_END -->
-
----
 
 以下为完整历史与维护区。正常开发模式无需每次通读；`BUG_MAINTENANCE` 模式必须从此处继续阅读到文件末尾。
 
@@ -205,7 +255,7 @@ Bug 修复后：
 |---|---|---|---|---|---:|---:|
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
-| P2 | Physical nodule cohort | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P2 | Physical nodule cohort | `IN_PROGRESS` | `AT_RISK` | 已获批并开始；等待 compatibility adapter、cohort audit 与阶段门 | 0 | 1 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -249,6 +299,17 @@ Bug 修复后：
 ```
 
 ## 8. 未解决困难登记表
+
+### DIF-P2-001：pylidc 与锁定 NumPy 的 `np.int` compatibility defect
+
+- 状态：`OPEN`
+- 所属阶段：P2
+- 首次记录：2026-08-09
+- 影响：直接调用 pylidc 0.2.3 的 contour/clustering 代码会在 NumPy 1.26.4 因已移除的 `np.int` 失败，阻止 physical nodule clustering。
+- 当前结论：P2 已获用户批准，采用经过测试的最小运行时 compatibility adapter，仅在缺失时恢复 `np.int = int`；不修改 pylidc 源码、SQLite database、依赖锁定或原始数据。
+- 下一步：实现 adapter 并覆盖 pylidc default clustering、determinism 与 source mapping 测试；完整 cohort audit 成功后标记为 `RESOLVED`。
+- 解除条件：adapter 在锁定环境通过直接 clustering 测试和完整 P2 cohort audit，且无原始数据、数据库或依赖文件修改。
+- 关联 Bug：无；这是第三方已锁定依赖的 compatibility defect。
 
 ### DIF-P1-001：CT series 重复 slice plane 的处理结论
 
@@ -355,3 +416,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_BLOCKED` | P1 | 完整审计发现 5 个 CT series 中的 13 个阻断性 `DUPLICATE_SLICE_PLANE`；审计实现与精简证据已保存为本地 commits，等待用户审阅处理结论，P2 保持未开始 | `2584052`、`3fd5fcb`（未推送） |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P1 | 用户批准的 duplicate-plane policy 已完成并复核：1 个 exact duplicate 仅记录派生 volume selection，4 个不同内容 series 排除，原始 DICOM 未修改；P1 技术验收与阶段级双 agent 审查通过，等待用户确认，P2 保持未开始 | `c70e068`、`7d34cbf`、`fa73a1b`（均未推送） |
 | 2026-08-09 | `PHASE_COMPLETED` | P1 | 用户确认 P1；阶段永久记录已写入 4 个不同图像内容 CT series 的排除决定、影响范围和验收证据，P2 保持未开始 | 本次 P1 完成状态提交 |
+| 2026-08-09 | `PHASE_STARTED` | P2 | 用户批准 P2 physical nodule cohort 与 stable provenance 实施计划；采用 pylidc 默认 clustering、最小 runtime compatibility adapter 和本地私有 manifest，P3 保持未开始 | P2 本地分支 |
