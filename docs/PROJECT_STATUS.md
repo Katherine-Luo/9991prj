@@ -10,7 +10,7 @@ active_bug_ids: []
 resume_phase: P0
 next_phase: P1
 last_updated: 2026-08-08
-last_verified_commit: 5388425
+last_verified_commit: d7de8c0
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -39,7 +39,7 @@ last_verified_commit: 5388425
 | 恢复阶段 | `P0` |
 | 下一阶段 | `P1 DICOM/XML 审计` |
 | 最近更新 | 2026-08-08 |
-| 状态依据 commit | `5388425` |
+| 状态依据 commit | `d7de8c0` |
 
 ## 3. 当前阶段：P0 工程环境与配置冻结
 
@@ -53,7 +53,7 @@ last_verified_commit: 5388425
 - Git 仓库已创建并连接 GitHub。
 - 冻结需求文档已提交。
 - 项目状态文档已建立。
-- 仓库级 `AGENTS.md` 开发治理、双 agent 审查和 Git 门禁规则已建立并创建本地 commit；尚未推送。
+- 仓库级 `AGENTS.md` 开发治理、双 agent 审查和 Git 门禁规则已建立、提交并推送至 `origin/main`。
 
 ### 正在进行
 
@@ -92,7 +92,8 @@ P0 阶段门当前未通过。
 - [仓库开发规则](../AGENTS.md)
 - Git commit `bdccb98`：`docs: freeze Baseline-v1 requirements`
 - Git commit `d6e37d4`：`docs: add project status tracking`
-- 本地 Git commit `5388425`：`docs: add repository agent workflow`（尚未推送）
+- Git commit `5388425`：`docs: add repository agent workflow`
+- Git commit `d7de8c0`：`docs: align project status approval gates`
 
 ## 4. 下一阶段：P1 DICOM/XML 审计
 
@@ -218,7 +219,7 @@ Bug 修复后：
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
-| P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
 
@@ -266,13 +267,25 @@ Bug 修复后：
 - 解除条件：Katana smoke test 通过，结果和环境版本写入 P0 验收证据。
 - 关联 Bug：无。
 
+### DIF-P10-001：Katana user scratch 扩容申请等待回复
+
+- 状态：`OPEN`
+- 所属阶段：P10
+- 首次记录：2026-08-08
+- 影响：正式训练、Grad-CAM 和中间产物可能超过当前 scratch 的安全容量。
+- 当前结论：不阻塞 P0。P0 只使用合成 ROI，远程工作集控制在 20 GB 以内。
+- 缓解措施：不上传原始 DICOM；通过 KDM 传输；正式 job 使用 `$TMPDIR`；重要数据和证据保留本地副本。
+- 下一步：等待扩容回复；P3 完成后测量 ROI 大小并估算正式训练和报告产物的总工作集。
+- 解除条件：Katana 可用存储不少于预计正式工作集的 120%，或学校批准足够的扩容空间。
+- 关联 Bug：无。
+
 ## 9. 阶段永久记录
 
 ### P0 当前未封存记录
 
 - 开始日期：2026-08-08
 - 当前状态：`IN_PROGRESS`
-- 已完成：需求冻结、仓库创建与连接、冻结需求文档提交、状态文档建立、仓库级开发治理与双 agent 审查规则建立并创建本地 commit。
+- 已完成：需求冻结、仓库创建与连接、冻结需求文档提交、状态文档建立、仓库级开发治理与双 agent 审查规则建立、提交并推送至 `origin/main`。
 - 未完成：项目骨架、依赖锁定、三种设备 smoke tests、机器可读配置及哈希。
 - 当前验收结果：未通过。
 - 开放困难：`DIF-P0-001`。
