@@ -1,0 +1,41 @@
+{
+  "config_sha256": "6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c",
+  "device_requested": "cuda",
+  "device_resolved": "cuda:0",
+  "gradients_finite": true,
+  "gradients_nonzero": true,
+  "input_shape": [
+    1,
+    1,
+    64,
+    64,
+    64
+  ],
+  "loss": 0.5492898225784302,
+  "loss_finite": true,
+  "output_shape": [
+    1,
+    1
+  ],
+  "protocol_version": "Baseline-v1",
+  "schema_version": 1,
+  "seed": 20260808,
+  "status": "PASS",
+  "target_shape": [
+    1,
+    1
+  ],
+  "versions": {
+    "cublas_workspace_config": ":4096:8",
+    "cuda_driver": "610.43.02",
+    "cuda_runtime": "12.1",
+    "gpu_name": "NVIDIA L40S",
+    "monai": "1.4.0",
+    "mps_cpu_fallback_enabled": false,
+    "mps_fallback_operators": [],
+    "pylidc": "0.2.3",
+    "python": "3.11.15",
+    "setuptools": "80.10.2",
+    "torch": "2.5.1+cu121"
+  }
+}

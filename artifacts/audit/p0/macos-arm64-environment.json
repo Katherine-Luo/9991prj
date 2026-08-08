@@ -1,0 +1,23 @@
+{
+  "architecture": "arm64",
+  "conda_environment": "/Users/katherine/.conda/envs/lidc-baseline-v1-p0",
+  "conda_solver": "classic",
+  "environment_name": "lidc-baseline-v1-p0",
+  "operating_system": {
+    "build": "24F74",
+    "name": "macOS",
+    "version": "15.5"
+  },
+  "pip_check": "PASS",
+  "pylidc_import": "PASS",
+  "python": "3.11.15",
+  "schema_version": 1,
+  "status": "PASS",
+  "setuptools": "80.10.2",
+  "torch": {
+    "cuda_enabled": false,
+    "mps_built": true,
+    "mps_smoke_status": "PASS",
+    "version": "2.5.1"
+  }
+}

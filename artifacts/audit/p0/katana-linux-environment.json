@@ -1,0 +1,34 @@
+{
+  "compute_node": "k098",
+  "conda_channel": "conda-forge",
+  "conda_environment": "/srv/scratch/z5448417/conda/envs/lidc-baseline-v1",
+  "conda_solver": "classic",
+  "cuda_repeat_byte_identical": true,
+  "final_batch": {
+    "compute_node": "k098",
+    "exit_status": 0,
+    "gpu_name": "NVIDIA L40S",
+    "job_id": "8942735.kman.restech.unsw.edu.au",
+    "source_tree_import": true,
+    "walltime": "00:00:14"
+  },
+  "gpu": {
+    "driver": "610.43.02",
+    "memory_mib": 46068,
+    "name": "NVIDIA L40S",
+    "runtime": "12.1"
+  },
+  "job_id": "8942690.kman.restech.unsw.edu.au",
+  "operating_system": "Linux 4.18.0-553.148.1.el8_10.x86_64",
+  "pip_check": "PASS",
+  "pylidc_import": "PASS",
+  "python": "3.11.15",
+  "remote_unit_tests": {
+    "deselected": 3,
+    "passed": 34
+  },
+  "schema_version": 1,
+  "setuptools": "80.10.2",
+  "status": "PASS",
+  "torch": "2.5.1+cu121"
+}

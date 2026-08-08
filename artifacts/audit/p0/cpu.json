@@ -1,0 +1,41 @@
+{
+  "config_sha256": "6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c",
+  "device_requested": "cpu",
+  "device_resolved": "cpu",
+  "gradients_finite": true,
+  "gradients_nonzero": true,
+  "input_shape": [
+    1,
+    1,
+    64,
+    64,
+    64
+  ],
+  "loss": 0.549318790435791,
+  "loss_finite": true,
+  "output_shape": [
+    1,
+    1
+  ],
+  "protocol_version": "Baseline-v1",
+  "schema_version": 1,
+  "seed": 20260808,
+  "status": "PASS",
+  "target_shape": [
+    1,
+    1
+  ],
+  "versions": {
+    "cublas_workspace_config": null,
+    "cuda_driver": null,
+    "cuda_runtime": null,
+    "gpu_name": null,
+    "monai": "1.4.0",
+    "mps_cpu_fallback_enabled": false,
+    "mps_fallback_operators": [],
+    "pylidc": "0.2.3",
+    "python": "3.11.15",
+    "setuptools": "80.10.2",
+    "torch": "2.5.1"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "maximum_p0_workset_bytes": 21474836480,
+  "minimum_remaining_bytes": 21474836480,
+  "p0_workset_bytes": 7543988928,
+  "p0_workset_pass": true,
+  "p0_workset_paths": [
+    "/srv/scratch/z5448417/conda",
+    "/srv/scratch/z5448417/lidc-baseline-p0"
+  ],
+  "remaining_space_pass": true,
+  "schema_version": 1,
+  "scratch_path": "/srv/scratch/z5448417",
+  "scratch_quota_bytes": 137438953472,
+  "scratch_remaining_bytes": 129894964544,
+  "scratch_used_bytes": 7543988928,
+  "status": "PASS"
+}
