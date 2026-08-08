@@ -27,4 +27,3 @@ def write_json(path: str | Path, payload: dict[str, Any]) -> None:
     finally:
         if os.path.exists(temporary_name):
             os.unlink(temporary_name)
-
