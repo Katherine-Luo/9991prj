@@ -10,7 +10,7 @@ active_bug_ids: []
 resume_phase: P1
 next_phase: P2
 last_updated: 2026-08-09
-last_verified_commit: 7d34cbf
+last_verified_commit: fa73a1b
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -39,7 +39,7 @@ last_verified_commit: 7d34cbf
 | 恢复阶段 | `P1` |
 | 下一阶段 | `P2 Physical nodule cohort` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `c70e068`（duplicate-plane resolution 实现与测试）和 `7d34cbf`（脱敏 resolution 证据）；本次状态同步 commit 待创建，P1 commits 均尚未推送 |
+| 状态依据 commit | `c70e068`（duplicate-plane resolution 实现与测试）、`7d34cbf`（脱敏 resolution 证据）和 `fa73a1b`（P1 状态同步）；P1 commits 均尚未推送 |
 
 ## 3. 当前阶段：P1 DICOM/XML 审计
 
@@ -79,7 +79,7 @@ last_verified_commit: 7d34cbf
 | P1-R2 DICOM geometry | `PASS` | 空间投影排序和异常检测已完成；原始 `anomalies.csv` 保留 13 个 `DUPLICATE_SLICE_PLANE`、4 个 `SPACING_NONUNIFORM` 与 2 个 `SUSPECTED_SLICE_GAP`。resolution policy 将 4 个不同内容 series 排除、对 1 个完全相同 duplicate 记录派生 volume selection；剩余 1,014 CT series 可确定性进入后续 pipeline |
 | P1 自动测试 | `PASS` | P1 专项 `7 passed`；完整套件 `44 passed` |
 | Phase Compliance Reviewer | `PASS` | 阶段级审查确认 P1-R1/P1-R2、用户批准的 duplicate-plane policy、脱敏产物、只读原始数据及无越阶段实现 |
-| Status Synchronization Reviewer | `UPDATED` | 本次状态同步已反映 resolution 实现、证据、阶段级审查与 `AWAITING_USER_APPROVAL`；状态同步 commit 待创建 |
+| Status Synchronization Reviewer | `UPDATED` | 状态已同步 resolution 实现、证据、阶段级审查与 `AWAITING_USER_APPROVAL` |
 
 P1 技术阶段门已通过并进入 `AWAITING_USER_APPROVAL`。`anomalies.csv` 是对原始数据的审计记录，不会因 resolution 而被改写；后续 eligibility 仅以 `duplicate_plane_resolution.json`、`duplicate_plane_resolution.csv` 和 `derived_volume_selection.csv` 为准。P2 仍为 `NOT_STARTED`，不得自动进入。
 
@@ -91,7 +91,7 @@ P1 技术阶段门已通过并进入 `AWAITING_USER_APPROVAL`。`anomalies.csv` 
 
 - [冻结需求文档](./LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md)
 - [仓库开发规则](../AGENTS.md)
-- P1 分支：`p1-dicom-xml-audit`，当前 HEAD 为 `7d34cbf`；`c70e068` 保存 duplicate-plane resolution 实现与测试，`7d34cbf` 保存脱敏 resolution 证据。本次状态同步 commit 待创建，所有 P1 commits 均未推送。
+- P1 分支：`p1-dicom-xml-audit`；`c70e068` 保存 duplicate-plane resolution 实现与测试，`7d34cbf` 保存脱敏 resolution 证据，`fa73a1b` 保存 P1 状态同步。所有 P1 commits 均未推送。
 - 原始数据：`/Users/katherine/Desktop/lidc_data`；初始 audit 仅读取 DICOM headers。已批准的 duplicate-plane 复核只读取 5 个目标 series 的 duplicate groups 像素数据以判定内容是否完全相同，且没有修改任何原始文件。
 - P1 初始 audit 输出：`artifacts/audit/p1/summary.json`、`series_audit.csv`、`anomalies.csv`（脱敏）。`anomalies.csv` 是原始数据异常记录。
 - P1 resolution 输出：`artifacts/audit/p1/duplicate_plane_resolution.json`、`duplicate_plane_resolution.csv`、`derived_volume_selection.csv`（均脱敏）。这些文件记录最终的 P1 后续可用性决定；可选逐切片明细保持本地 ignored。
@@ -336,4 +336,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_COMPLETED` | P0 | 用户确认 P0；阶段封存、交付并完成安全清理，P1 保持未开始 | `a16e3b5` |
 | 2026-08-09 | `PHASE_STARTED` | P1 | 用户批准 P1 DICOM/XML 审计实施计划；P1 开始开发，P2 保持未开始 | P1 本地分支 |
 | 2026-08-09 | `PHASE_BLOCKED` | P1 | 完整审计发现 5 个 CT series 中的 13 个阻断性 `DUPLICATE_SLICE_PLANE`；审计实现与精简证据已保存为本地 commits，等待用户审阅处理结论，P2 保持未开始 | `2584052`、`3fd5fcb`（未推送） |
-| 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P1 | 用户批准的 duplicate-plane policy 已完成并复核：1 个 exact duplicate 仅记录派生 volume selection，4 个不同内容 series 排除，原始 DICOM 未修改；P1 技术验收与阶段级双 agent 审查通过，等待用户确认，P2 保持未开始 | `c70e068`、`7d34cbf`；状态同步 commit 待创建（均未推送） |
+| 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P1 | 用户批准的 duplicate-plane policy 已完成并复核：1 个 exact duplicate 仅记录派生 volume selection，4 个不同内容 series 排除，原始 DICOM 未修改；P1 技术验收与阶段级双 agent 审查通过，等待用户确认，P2 保持未开始 | `c70e068`、`7d34cbf`、`fa73a1b`（均未推送） |
