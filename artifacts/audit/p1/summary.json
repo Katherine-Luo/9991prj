@@ -1,0 +1,91 @@
+{
+  "audit": "P1 DICOM/XML audit",
+  "counts": {
+    "canonical_ct_xml": 1035,
+    "canonical_ct_xml_mapped_to_ct_series": 1035,
+    "canonical_cxr_xml": 283,
+    "canonical_xml_files": 1318,
+    "canonical_xml_roots": {
+      "IdriReadMessage": 283,
+      "LidcReadMessage": 1035
+    },
+    "ct_series": 1018,
+    "ct_series_mapped_to_canonical_xml": 1018,
+    "dicom_files_parsed": 244527,
+    "dicom_modalities": {
+      "CR": 56,
+      "CT": 243958,
+      "DX": 513
+    },
+    "download_tree_xml_files": 1180,
+    "download_tree_xml_roots": {
+      "IdriReadMessage": 250,
+      "LidcReadMessage": 930
+    },
+    "patient_directories": 1010
+  },
+  "geometry_rules": {
+    "duplicate_projection_tolerance_mm": 0.0001,
+    "gap_multiplier": 1.5,
+    "orientation_tolerance": 1e-05,
+    "sort_rule": "dot(ImagePositionPatient, normalized(cross(row_cosine,column_cosine))), then SOP UID",
+    "spacing_absolute_tolerance_mm": 0.1,
+    "spacing_relative_tolerance": 0.1
+  },
+  "input_fingerprints": {
+    "canonical_xml_tree_sha256": "5c5a1711bcc4f44a349ced9f194664fd5875d23b3c37784c3035bf8df74536ef",
+    "dicom_header_inventory_sha256": "12543c25fd7763671cdc9d535ef61cae0b1fff0866e3f0312634c9abaf0ac9c2"
+  },
+  "issues": {
+    "by_code": {
+      "DUPLICATE_SLICE_PLANE": 13,
+      "SPACING_NONUNIFORM": 4,
+      "SUSPECTED_SLICE_GAP": 2
+    },
+    "by_severity": {
+      "BLOCKING": 13,
+      "WARNING": 6
+    },
+    "total": 19
+  },
+  "privacy": "Tracked reports use SHA-256-derived keys and omit raw identifiers and absolute paths.",
+  "program_version": "0.1.0",
+  "reference_reconciliation": {
+    "canonical_xml_files": {
+      "difference": -1,
+      "hard_gate": false,
+      "observed": 1318,
+      "reference": 1319
+    },
+    "cr_instances": {
+      "difference": 0,
+      "hard_gate": false,
+      "observed": 56,
+      "reference": 56
+    },
+    "ct_instances": {
+      "difference": 0,
+      "hard_gate": false,
+      "observed": 243958,
+      "reference": 243958
+    },
+    "ct_series": {
+      "difference": 0,
+      "hard_gate": false,
+      "observed": 1018,
+      "reference": 1018
+    },
+    "dx_instances": {
+      "difference": 0,
+      "hard_gate": false,
+      "observed": 513,
+      "reference": 513
+    },
+    "patient_directories": {
+      "difference": 0,
+      "hard_gate": false,
+      "observed": 1010,
+      "reference": 1010
+    }
+  }
+}
