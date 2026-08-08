@@ -10,7 +10,7 @@ active_bug_ids: []
 resume_phase: P0
 next_phase: P1
 last_updated: 2026-08-09
-last_verified_commit: 86cd959
+last_verified_commit: a16e3b5
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -39,7 +39,7 @@ last_verified_commit: 86cd959
 | 恢复阶段 | `P0` |
 | 下一阶段 | `P1 DICOM/XML 审计` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `86cd959` |
+| 状态依据 commit | `a16e3b5` |
 
 ## 3. 当前阶段：P0 工程环境与配置冻结
 
@@ -61,15 +61,16 @@ last_verified_commit: 86cd959
 - Mac 与 Katana 的 `pylidc` import、`pip check` 和 `setuptools 80.10.2` 验证均通过。
 - Katana PBS job `8942735.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上以 Exit 0 完成；远程 P0 工作集和剩余空间 gates 均通过。
 - 本地完整测试为 `37 passed`；Phase Compliance Reviewer 给出 `PASS`，Status Synchronization Reviewer 已完成状态同步。
-- 用户于 2026-08-09 明确批准执行 P0 完成、合并、推送与安全存储清理计划；P0 用户确认门已通过。该记录表示授权已取得，不表示后续交付动作已经执行。
+- 用户于 2026-08-09 明确批准执行 P0 完成、合并、推送与安全存储清理计划；P0 用户确认门已通过。
+- P0 完成状态 commit `a16e3b5` 已 fast-forward 合并至 `main` 并推送 GitHub；本地与远程 `main` SHA 已核对一致。
+- 安全存储清理已完成：Katana P0 临时目录已删除，Conda package cache 从 `899 MB` 降至 `629 MB`，scratch 总占用为 `6.5 GB`；已验证环境、pip 缓存、测试和审计证据均保留。本机临时下载副本、P0 worktree 和已合并分支已清理，用户的 `.DS_Store` 保持不变。
 
 ### 正在进行
 
-- P0 已封存完成；正在按已批准计划准备完成状态提交、fast-forward 合并、推送和安全存储清理，P1 尚未开始。
+- 无；P0 已完成交付与安全存储清理，P1 尚未开始。
 
 ### 尚未完成
 
-- 截至本次完成状态审查，P0 完成状态 commit、`p0-engineering` 到 `main` 的 fast-forward 合并、GitHub 推送和安全存储清理尚未执行；这些是阶段完成后的交付动作，不改变 P0 的 `COMPLETED` 结论。
 - P1 实施计划尚未制定或批准，P1 保持 `NOT_STARTED`。
 
 ### 验收进度
@@ -110,6 +111,7 @@ P0 技术验收、双 agent 审查和用户确认均已通过；阶段状态为 
 - Git commit `6012941`：`chore: record P0 audit evidence`
 - Git commit `1cfac33`：`docs: synchronize P0 project status`
 - Git commit `86cd959`：`style: normalize P0 file endings`
+- Git commit `a16e3b5`：`docs: complete P0 project status`
 - [Baseline-v1 source config](../configs/baseline_v1.yaml)
 - [Baseline-v1 resolved config](../configs/baseline_v1.resolved.yaml)
 - [Baseline-v1 config SHA-256](../configs/baseline_v1.sha256)
@@ -317,8 +319,9 @@ Bug 修复后：
 - 已解决 Bug：无。
 - 遗留困难：`DIF-P10-001` 继续为 `OPEN`，不影响 P0 完成结论。
 - 阶段门结论：`PASS`
-- 完成 commit：本阶段完成状态提交。
-- 交付状态：用户已授权；截至完成状态审查，完成状态 commit、fast-forward 合并、推送和安全存储清理尚未执行。
+- 完成 commit：`a16e3b5`。
+- 交付状态：`a16e3b5` 已 fast-forward 合并至 `main` 并推送 GitHub，远程 SHA 核对一致；合并后的完整测试为 `37 passed`。
+- 清理状态：Katana P0 临时目录和代码缓存已删除；Conda package cache 从 `899 MB` 降至 `629 MB`，scratch 总占用为 `6.5 GB`；保留 `5.7 GB` 已验证环境和 `2.9 GB` pip 缓存。本机约 `148 MB` 临时副本及 P0 worktree 已删除，测试、审计证据、原始数据、本机环境和 `.DS_Store` 均保留。
 
 ### 阶段完成记录模板
 
@@ -349,4 +352,4 @@ Bug 修复后：
 | 2026-08-08 | `PROTOCOL_FROZEN` | 全局 | Baseline-v1 科学需求确认并冻结 | `bdccb98` |
 | 2026-08-08 | `PHASE_STARTED` | P0 | 开始工程环境与配置冻结阶段 | 本状态文档初始化提交 |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P0 | 技术验收与双 agent 审查通过，等待用户确认；P1 保持未开始 | 本状态同步提交 |
-| 2026-08-09 | `PHASE_COMPLETED` | P0 | 用户确认 P0；阶段封存为完成，P1 保持未开始 | 本阶段完成状态提交 |
+| 2026-08-09 | `PHASE_COMPLETED` | P0 | 用户确认 P0；阶段封存、交付并完成安全清理，P1 保持未开始 | `a16e3b5` |
