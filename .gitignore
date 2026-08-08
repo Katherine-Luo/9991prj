@@ -20,6 +20,10 @@ artifacts/*
 !artifacts/audit/
 !artifacts/audit/p0/
 !artifacts/audit/p0/*.json
+!artifacts/audit/p1/
+!artifacts/audit/p1/*.json
+!artifacts/audit/p1/*.csv
+artifacts/audit/p1/local/
 
 runs/
 reports/baseline_v1/
