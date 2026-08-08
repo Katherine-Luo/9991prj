@@ -12,6 +12,7 @@ from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian, generate_uid
 
 from lidc_baseline.p1_audit import AuditPaths, resolve_paths, run_audit
+from lidc_baseline.p1_resolution import classify_duplicate_plane
 
 
 def _write_xml(path: Path, root_name: str, study_uid: str, series_uid: str | None) -> None:
@@ -220,3 +221,17 @@ def test_audit_is_byte_deterministic_and_reports_are_deidentified(tmp_path: Path
     assert ids["study"] not in tracked_text
     assert str(paths.raw_data) not in tracked_text
     assert json.loads((first / "summary.json").read_text(encoding="utf-8"))["privacy"].startswith("Tracked reports")
+
+
+def test_duplicate_plane_resolution_only_deduplicates_identical_pixel_bytes() -> None:
+    exact = classify_duplicate_plane([("2.25.1", b"identical"), ("2.25.2", b"identical")])
+    assert exact == {
+        "classification": "EXACT_DUPLICATE_IMAGE_CONTENT",
+        "action": "RETAIN_LEXICOGRAPHICALLY_SMALLEST_SOP_UID",
+        "retained_sop_uid": "2.25.1",
+        "discarded_sop_uids": ["2.25.2"],
+    }
+    different = classify_duplicate_plane([("2.25.1", b"first"), ("2.25.2", b"second")])
+    assert different["classification"] == "DIFFERENT_IMAGE_CONTENT"
+    assert different["action"] == "EXCLUDE_ENTIRE_SERIES"
+    assert different["retained_sop_uid"] is None
