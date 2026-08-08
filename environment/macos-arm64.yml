@@ -1,0 +1,9 @@
+name: lidc-baseline-v1
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11.15
+  - pip=26.2.1
+  - setuptools=80.10.2
+  - pip:
+      - -e .[dev]

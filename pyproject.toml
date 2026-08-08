@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools==80.10.2", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lidc-baseline"
+version = "0.1.0"
+description = "Reproducible LIDC-IDRI concept-model baselines."
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "torch==2.5.1",
+  "monai==1.4.0",
+  "pylidc==0.2.3",
+  "pydicom==2.4.4",
+  "numpy==1.26.4",
+  "pandas==2.2.3",
+  "pyarrow==18.1.0",
+  "scikit-learn==1.5.2",
+  "scipy==1.14.1",
+  "PyYAML==6.0.2",
+  "setuptools==80.10.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.4",
+  "pytest-cov==6.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "integration: exercises a full framework integration path",
+  "device: requires a requested hardware backend",
+  "local_audit: validates tracked evidence that is intentionally not uploaded",
+]
