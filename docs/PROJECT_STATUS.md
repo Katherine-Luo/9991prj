@@ -4,13 +4,13 @@ project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P0
-development_phase_status: AWAITING_USER_APPROVAL
+development_phase_status: COMPLETED
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P0
 next_phase: P1
 last_updated: 2026-08-09
-last_verified_commit: 6012941
+last_verified_commit: 86cd959
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -32,14 +32,14 @@ last_verified_commit: 6012941
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | 当前开发阶段 | `P0 工程环境与配置冻结` |
-| 阶段状态 | `AWAITING_USER_APPROVAL` |
+| 阶段状态 | `COMPLETED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
 | 当前阻塞项 | 无 |
 | 恢复阶段 | `P0` |
 | 下一阶段 | `P1 DICOM/XML 审计` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `6012941` |
+| 状态依据 commit | `86cd959` |
 
 ## 3. 当前阶段：P0 工程环境与配置冻结
 
@@ -61,16 +61,16 @@ last_verified_commit: 6012941
 - Mac 与 Katana 的 `pylidc` import、`pip check` 和 `setuptools 80.10.2` 验证均通过。
 - Katana PBS job `8942735.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上以 Exit 0 完成；远程 P0 工作集和剩余空间 gates 均通过。
 - 本地完整测试为 `37 passed`；Phase Compliance Reviewer 给出 `PASS`，Status Synchronization Reviewer 已完成状态同步。
+- 用户于 2026-08-09 明确批准执行 P0 完成、合并、推送与安全存储清理计划；P0 用户确认门已通过。该记录表示授权已取得，不表示后续交付动作已经执行。
 
 ### 正在进行
 
-- 等待用户明确确认 P0 阶段验收结果。
+- P0 已封存完成；正在按已批准计划准备完成状态提交、fast-forward 合并、推送和安全存储清理，P1 尚未开始。
 
 ### 尚未完成
 
-- 用户尚未确认 P0，阶段不得标记为 `COMPLETED`。
-- 尚未创建 P0 阶段完成状态 commit，也未将 P0 实现合并并推送到 `main`。
-- P1 实施计划尚未制定或批准，P1 不得开始。
+- 截至本次完成状态审查，P0 完成状态 commit、`p0-engineering` 到 `main` 的 fast-forward 合并、GitHub 推送和安全存储清理尚未执行；这些是阶段完成后的交付动作，不改变 P0 的 `COMPLETED` 结论。
+- P1 实施计划尚未制定或批准，P1 保持 `NOT_STARTED`。
 
 ### 验收进度
 
@@ -87,12 +87,12 @@ last_verified_commit: 6012941
 | Phase Compliance Reviewer | `PASS` | 2026-08-09：无冻结需求改动、无 P1 实现、无阻断缺口 |
 | Status Synchronization Reviewer | `PASS` | 2026-08-09：状态、代码、测试和审计证据已同步 |
 
-P0 技术验收与双 agent 审查均已通过，当前等待用户确认；阶段尚未 `COMPLETED`。
+P0 技术验收、双 agent 审查和用户确认均已通过；阶段状态为 `COMPLETED`。
 
 ### 未解决困难
 
 - P0 当前无开放困难；`DIF-P0-001` 已在 Katana CUDA 验证通过后标记为 `RESOLVED`。
-- `DIF-P10-001` 仍为 `OPEN`，但属于 P10 存储风险，不阻塞 P0 确认。
+- `DIF-P10-001` 仍为 `OPEN`，但属于 P10 存储风险，不影响 P0 完成结论。
 
 ### 当前证据与产物
 
@@ -108,6 +108,8 @@ P0 技术验收与双 agent 审查均已通过，当前等待用户确认；阶�
 - Git commit `bc77067`：`feat: add cross-device DenseNet smoke test`
 - Git commit `c1d4393`：`chore: add Katana P0 workflow`
 - Git commit `6012941`：`chore: record P0 audit evidence`
+- Git commit `1cfac33`：`docs: synchronize P0 project status`
+- Git commit `86cd959`：`style: normalize P0 file endings`
 - [Baseline-v1 source config](../configs/baseline_v1.yaml)
 - [Baseline-v1 resolved config](../configs/baseline_v1.resolved.yaml)
 - [Baseline-v1 config SHA-256](../configs/baseline_v1.sha256)
@@ -230,7 +232,7 @@ Bug 修复后：
 
 | 阶段 | 名称 | 生命周期 | 健康状态 | 阶段门 | 开放 Bug | 开放困难 |
 |---|---|---|---|---|---:|---:|
-| P0 | 工程环境与配置冻结 | `AWAITING_USER_APPROVAL` | `ON_TRACK` | 技术验收通过，待用户确认 | 0 | 0 |
+| P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P2 | Physical nodule cohort | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -303,18 +305,20 @@ Bug 修复后：
 
 ## 9. 阶段永久记录
 
-### P0 当前未封存记录
+### P0 完成记录
 
-- 开始日期：2026-08-08
-- 当前状态：`AWAITING_USER_APPROVAL`
-- 已完成：工程骨架、依赖与双平台环境锁定、机器可读配置及 SHA-256、固定 seed、CPU/MPS/CUDA DenseNet smoke、Katana PBS 与存储 gates、本地 37 项测试、Phase Compliance Reviewer 和 Status Synchronization Reviewer。
-- 未完成：仅剩用户阶段确认、确认后的 `COMPLETED` 状态 commit、合并到 `main` 和推送；P1 尚未开始。
-- 当前验收结果：技术验收与双 agent 审查 `PASS`，等待用户明确确认；P0 尚未 `COMPLETED`。
-- 验收证据：配置哈希 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c`；CPU/MPS/CUDA audit 均为 `PASS`；PBS job `8942735.kman.restech.unsw.edu.au` Exit 0；Katana 工作集 `7,543,988,928` bytes；本地 `37 passed`。
-- 开放困难：P0 无；`DIF-P10-001` 属于未来 P10，不阻塞 P0。
-- 开放 Bug：无。
-- 阶段完成日期：—
-- 阶段完成 commit：—
+- 完成日期：2026-08-09
+- 生命周期：`COMPLETED`
+- 健康状态：`ON_TRACK`
+- 已完成内容：工程骨架、依赖与双平台环境锁定、机器可读配置及 SHA-256、固定 seed、CPU/MPS/CUDA DenseNet smoke、Katana PBS 与存储 gates、本地 37 项测试、Phase Compliance Reviewer、Status Synchronization Reviewer 和用户阶段确认。
+- 明确未纳入内容：P1 DICOM/XML 审计及任何后续阶段实现；P1 保持 `NOT_STARTED`。
+- 验收标准与证据：配置哈希 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c`；CPU/MPS/CUDA audit 均为 `PASS`；PBS job `8942735.kman.restech.unsw.edu.au` Exit 0；Katana 工作集 `7,543,988,928` bytes；本地 `37 passed`；两位独立 reviewer 均为 `PASS`。
+- 产物路径：`configs/`、`environment/`、`artifacts/audit/p0/`、`scripts/katana/`、`tests/`。
+- 已解决 Bug：无。
+- 遗留困难：`DIF-P10-001` 继续为 `OPEN`，不影响 P0 完成结论。
+- 阶段门结论：`PASS`
+- 完成 commit：本阶段完成状态提交。
+- 交付状态：用户已授权；截至完成状态审查，完成状态 commit、fast-forward 合并、推送和安全存储清理尚未执行。
 
 ### 阶段完成记录模板
 
@@ -345,3 +349,4 @@ Bug 修复后：
 | 2026-08-08 | `PROTOCOL_FROZEN` | 全局 | Baseline-v1 科学需求确认并冻结 | `bdccb98` |
 | 2026-08-08 | `PHASE_STARTED` | P0 | 开始工程环境与配置冻结阶段 | 本状态文档初始化提交 |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P0 | 技术验收与双 agent 审查通过，等待用户确认；P1 保持未开始 | 本状态同步提交 |
+| 2026-08-09 | `PHASE_COMPLETED` | P0 | 用户确认 P0；阶段封存为完成，P1 保持未开始 | 本阶段完成状态提交 |
