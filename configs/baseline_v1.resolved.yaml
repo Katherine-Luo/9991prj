@@ -1,0 +1,379 @@
+checkpoints:
+  blackbox: minimum_validation_weighted_bce
+  cem: minimum_validation_total_loss
+  gam: minimum_validation_total_loss
+  standard_cbm_concept: minimum_validation_concept_loss
+  standard_cbm_task: minimum_validation_weighted_bce
+  test_data_in_selection: false
+  tie_break: earlier_epoch
+cohort:
+  audit_fields:
+    annotation_identifiers: true
+    per_concept_valid_reader_counts: true
+    source_xml_dicom_fingerprints: true
+  canonical_annotations: LIDC-XML-only
+  computed_diameter_primary_gate: false
+  computed_strict_diameter_threshold_mm: 3.0
+  excluded_annotation_classes:
+  - nodule <3 mm
+  - non-nodule
+  minimum_total_readers: 1
+  minimum_valid_readers_per_target: 1
+  patient_diagnoses_xls_in_primary_training: false
+  primary_annotation_class: nodule >=3 mm
+  reference_reconciliation:
+    hard_gate: false
+    nodules: 2651
+    patients: 875
+  require_at_least_3_readers: false
+  sample_unit: physical_pulmonary_nodule
+  stable_nodule_uid:
+    pylidc_sql_id_only: false
+    source_components:
+    - patient_uid
+    - study_uid
+    - series_uid
+    - canonical_xml_sha256
+    - reading_session_identifier
+    - source_nodule_identifier
+    - sop_contour_fingerprint
+    - sorted_annotation_fingerprints
+concepts:
+  categorical_ties:
+    exclude_from_hard_modal_macro_f1: true
+    retain_for_soft_metrics: true
+    retain_for_training: true
+  groups:
+  - legal_range:
+    - 1
+    - 5
+    name: subtlety
+    output_activation: sigmoid
+    type: continuous
+  - classes:
+    - 1
+    - 2
+    - 3
+    - 4
+    name: internalStructure
+    output_activation: softmax
+    type: categorical
+  - classes:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    name: calcification
+    output_activation: softmax
+    type: categorical
+  - legal_range:
+    - 1
+    - 5
+    name: sphericity
+    output_activation: sigmoid
+    type: continuous
+  - legal_range:
+    - 1
+    - 5
+    name: margin
+    output_activation: sigmoid
+    type: continuous
+  - legal_range:
+    - 1
+    - 5
+    name: lobulation
+    output_activation: sigmoid
+    type: continuous
+  - legal_range:
+    - 1
+    - 5
+    name: spiculation
+    output_activation: sigmoid
+    type: continuous
+  - legal_range:
+    - 1
+    - 5
+    name: texture
+    output_activation: sigmoid
+    type: continuous
+  target_aggregation:
+    categorical: valid_reader_vote_distribution
+    continuous: normalized_valid_reader_mean
+contributions:
+  applies_to:
+  - standard_cbm
+  - cem
+  - gam
+  centered_bias_adjustment: add_sum_of_training_means
+  centering_statistic: training_fold_mean
+  reconstruction_tolerance: 1.0e-06
+encoder_initialization:
+  architecture: MONAI DenseNet-121 3D
+  hash: sha256
+  input_channels: 1
+  pretrained: false
+  shared_across_models: true
+  state_per_fold: 1
+gradcam:
+  blackbox_maps_per_sample: 1
+  categorical_target: predicted_class_logit
+  concept_model_maps_per_sample: 9
+  continuous_target: pre_sigmoid_concept_logit
+  interpretation: nodule_level_spatial_proxy
+  target_layer: final_convolutional_feature_layer
+  upsample_shape:
+  - 64
+  - 64
+  - 64
+  zero_heatmap: undefined
+interventions:
+  applies_to:
+  - standard_cbm
+  - cem
+  - gam
+  categorical_ground_truth: reader_vote_distribution
+  continuous_ground_truth: normalized_reader_mean
+  delta_iauc: iauc - baseline_auroc
+  error_first:
+    categorical_error: total_variation_distance
+    continuous_error: absolute_error
+    malignancy_label_in_ordering: false
+  iauc: trapezoidal
+  levels:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  primary_aggregation: pooled_oof_at_each_permutation_and_k
+  random_permutations_per_fold: 100
+  secondary_aggregation: fold_mean_and_standard_deviation
+  x_axis: k / 8
+katana:
+  code_directory: $HOME/lidc_baseline
+  compute_on_login_node: false
+  conda_directory: /srv/scratch/z5448417/conda
+  data_mover_host: kdm.restech.unsw.edu.au
+  default_scratch_quota_gib: 128
+  gpu_request:
+    memory_gib: 46
+    ncpus: 8
+    ngpus: 1
+    walltime: 02:00:00
+  login_host: katana.restech.unsw.edu.au
+  maximum_p0_working_set_gib: 20
+  minimum_remaining_scratch_gib: 20
+  p0_temporary_directory: /srv/scratch/z5448417/lidc-baseline-p0
+  upload_raw_dicom: false
+  username: z5448417
+labels:
+  aggregation: valid_reader_mean
+  benign:
+    condition: mean_malignancy <= 2
+    label: 0
+  malignant:
+    condition: mean_malignancy >= 4
+    label: 1
+  target: malignancy
+  uncertain:
+    condition: 2 < mean_malignancy < 4
+    excluded_from_primary: true
+losses:
+  blackbox: weighted_bce
+  cem:
+    concept_weight: 0.01
+    expression: weighted_bce + 0.01 * concept
+  concept:
+    categorical: soft_target_cross_entropy
+    continuous: mse
+    group_reduction: mean_of_8_groups
+  gam:
+    concept_weight: 1.0
+    expression: weighted_bce + concept
+  standard_cbm:
+    concept_stage: concept
+    task_stage: weighted_bce
+  weighted_bce:
+    implementation: BCEWithLogitsLoss
+    pos_weight: train_negative_count / train_positive_count
+metrics:
+  categorical_concepts:
+  - soft_cross_entropy
+  - multiclass_brier
+  - hard_modal_macro_f1
+  continuous_concepts:
+  - mae
+  - rmse
+  - pearson
+  - spearman
+  ece:
+    binning: equal_width
+    bins: 15
+    final_bin_includes_one: true
+    first_14_bins: left_closed_right_open
+    ignore_empty_bins: true
+    posthoc_calibration: false
+  malignancy:
+    threshold_dependent:
+    - accuracy
+    - balanced_accuracy
+    - sensitivity
+    - specificity
+    - macro_f1
+    threshold_free:
+    - auroc
+    - auprc
+    - brier
+    - ece
+  primary: pooled_oof_auroc
+models:
+  blackbox:
+    output_scope:
+    - malignancy_logit
+    - malignancy_probability
+    - malignancy_gradcam
+    reads_concepts: false
+  cem:
+    embedding_size_per_group: 16
+    method_label: A project-specific mixed-type extension of the original CEM.
+    output_scope:
+    - malignancy_logit
+    - malignancy_probability
+    - concept_predictions
+    - raw_group_contributions
+    - centered_group_contributions
+    - centered_bias
+    - malignancy_gradcam
+    - concept_specific_gradcams
+    sample_conditioned_states: true
+    static_state_embedding_table: false
+    task_head: linear
+    training_intervention_probability_per_group: 0.25
+  gam:
+    categorical_hidden_layers:
+    - 32
+    - 16
+    choices_label: Baseline-v1 pre-registered choices
+    continuous_subnetwork:
+    - 1
+    - 32
+    - 16
+    - 1
+    ensemble_weight_normalization: softmax
+    ensemble_weighting: learned_softmax
+    feature_bypass: false
+    group_contribution: softmax_weighted_sum
+    hidden_activation: relu
+    output_activation: none
+    output_scope:
+    - malignancy_logit
+    - malignancy_probability
+    - concept_predictions
+    - raw_group_contributions
+    - centered_group_contributions
+    - centered_bias
+    - malignancy_gradcam
+    - concept_specific_gradcams
+    subnetworks_per_group: 5
+    task_head: additive
+  standard_cbm:
+    explicit_concept_vector_size: 16
+    feature_bypass: false
+    output_scope:
+    - malignancy_logit
+    - malignancy_probability
+    - concept_predictions
+    - raw_group_contributions
+    - centered_group_contributions
+    - centered_bias
+    - malignancy_gradcam
+    - concept_specific_gradcams
+    task_head: linear_logistic
+    training: sequential
+occlusion:
+  baseline_hu: -1000
+  fraction: 0.1
+  inplace: false
+  normalized_baseline: 0.0
+  random_masks_per_target: 20
+  random_sampling: uniform_without_replacement_full_roi
+  seed_components:
+  - base_seed
+  - fold
+  - nodule_uid
+  - target
+  tie_break: smaller_flat_index
+  voxel_count: 26215
+paths:
+  encoder_initialization_directory: artifacts/encoder_initializations
+  manifest: artifacts/manifests/nodules.parquet
+  raw_data: /Users/katherine/Desktop/lidc_data
+  report_directory: reports/baseline_v1
+  repository: /Users/katherine/Desktop/lidc_baseline
+  roi_directory: artifacts/rois
+  run_directory: runs
+  split_directory: artifacts/splits
+protocol:
+  clinical_diagnostic_system: false
+  pathology_confirmed: false
+  target_source: LIDC-IDRI XML reader malignancy ratings
+  task_name: Radiologist-assessed pulmonary nodule malignancy classification
+  version: Baseline-v1
+reproducibility:
+  base_seed: 20260808
+  deterministic_algorithms: true
+  fold_seed_rule: base_seed + fold_index
+  formal_seeds_per_fold: 1
+roi:
+  clip_hu:
+  - -1000
+  - 700
+  consensus_threshold: 0.5
+  crop: nonzero_consensus_mask_tight_bbox
+  cube_padding: max_bbox_dimension
+  image_interpolation: trilinear
+  image_padding_hu: -1000
+  mask_interpolation: nearest
+  mask_padding_value: 0
+  normalized_range:
+  - 0.0
+  - 1.0
+  odd_padding_extra_side: high_index
+  shape:
+  - 64
+  - 64
+  - 64
+splits:
+  approximate_overall_fractions:
+    test: 0.2
+    train: 0.7
+    validation: 0.1
+  outer_development_fraction: 0.8
+  outer_folds: 5
+  outer_test_fraction: 0.2
+  shared_across_models: true
+  unit: patient
+  validation_fraction_of_development: 0.125
+statistics:
+  bootstrap_replicates: 2000
+  bootstrap_unit: patient
+  confidence_interval: 95_percentile
+  paired_model_differences: true
+  reject_single_class_replicates: true
+  shared_patient_draws: true
+thresholds:
+  primary: validation_youden_j
+  secondary_sensitivity: 0.5
+  test_time_tuning: false
+  tie_break: largest_threshold
+  youden_expression: tpr - fpr
+training:
+  dense_net_pretrained: false
+  max_epochs: 80
+  official_seeds_per_fold: 1
