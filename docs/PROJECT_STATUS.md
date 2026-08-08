@@ -3,14 +3,14 @@ schema_version: 1
 project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P0
-development_phase_status: COMPLETED
+development_phase: P1
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P0
-next_phase: P1
+resume_phase: P1
+next_phase: P2
 last_updated: 2026-08-09
-last_verified_commit: a16e3b5
+last_verified_commit: cf767d3
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -31,120 +31,81 @@ last_verified_commit: a16e3b5
 |---|---|
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
-| 当前开发阶段 | `P0 工程环境与配置冻结` |
-| 阶段状态 | `COMPLETED` |
+| 当前开发阶段 | `P1 DICOM/XML 审计` |
+| 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
 | 当前阻塞项 | 无 |
-| 恢复阶段 | `P0` |
-| 下一阶段 | `P1 DICOM/XML 审计` |
+| 恢复阶段 | `P1` |
+| 下一阶段 | `P2 Physical nodule cohort` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `a16e3b5` |
+| 状态依据 commit | `cf767d3` |
 
-## 3. 当前阶段：P0 工程环境与配置冻结
+## 3. 当前阶段：P1 DICOM/XML 审计
 
 ### 阶段目标
 
-建立可复现的 Python/PyTorch/MONAI/pylidc 工程环境，完成本地 CPU/MPS 与 Katana CUDA smoke tests，并冻结机器可读的 Baseline-v1 配置及其 SHA-256。
+确认 `LIDC-XML-only` 为唯一 canonical annotation source，盘点 CT/DX/CR/CXR 数据，建立 XML–DICOM UID mapping，并验证 CT series 的几何完整性和确定性空间切片排序。
 
 ### 已完成
 
-- Baseline-v1 科学需求已确认并冻结。
-- Git 仓库已创建并连接 GitHub。
-- 冻结需求文档已提交。
-- 项目状态文档已建立。
-- 仓库级 `AGENTS.md` 开发治理、双 agent 审查和 Git 门禁规则已建立、提交并推送至 `origin/main`。
-- Python 3.11 `src` 工程骨架、项目依赖、macOS-arm64 与 Katana-CUDA 环境定义及精确环境锁定文件已完成。
-- `configs/baseline_v1.yaml`、只读 resolved config 和 SHA-256 已冻结；配置哈希为 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c`。
-- 全局 seed `20260808` 与 `base_seed + fold_index` 派生规则已实现并验证。
-- 合成 `64³` ROI 的 CPU、MPS、CUDA DenseNet-121 forward/backward smoke tests 均通过，三种设备使用相同配置哈希。
-- Mac 与 Katana 的 `pylidc` import、`pip check` 和 `setuptools 80.10.2` 验证均通过。
-- Katana PBS job `8942735.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上以 Exit 0 完成；远程 P0 工作集和剩余空间 gates 均通过。
-- 本地完整测试为 `37 passed`；Phase Compliance Reviewer 给出 `PASS`，Status Synchronization Reviewer 已完成状态同步。
-- 用户于 2026-08-09 明确批准执行 P0 完成、合并、推送与安全存储清理计划；P0 用户确认门已通过。
-- P0 完成状态 commit `a16e3b5` 已 fast-forward 合并至 `main` 并推送 GitHub；本地与远程 `main` SHA 已核对一致。
-- 安全存储清理已完成：Katana P0 临时目录已删除，Conda package cache 从 `899 MB` 降至 `629 MB`，scratch 总占用为 `6.5 GB`；已验证环境、pip 缓存、测试和审计证据均保留。本机临时下载副本、P0 worktree 和已合并分支已清理，用户的 `.DS_Store` 保持不变。
+- P0 已完成、确认并推送；冻结配置与 P0 环境/审计证据可复用。
+- P1 实施计划已获用户明确批准；审计产物采用精简提交策略：提交脱敏摘要、每-series 报告与异常清单，不提交逐切片明细。
+- 已确认本地原始数据根目录为 `/Users/katherine/Desktop/lidc_data`，其中 canonical XML 与 DICOM 下载树均存在。
 
 ### 正在进行
 
-- 无；P0 已完成交付与安全存储清理，P1 尚未开始。
+- 实现 canonical XML 分类、DICOM header inventory、XML–CT series mapping、CT geometry validation 与稳定审计报告。
 
 ### 尚未完成
 
-- P1 实施计划尚未制定或批准，P1 保持 `NOT_STARTED`。
+- P1-R1：canonical XML source 审计、CT/DX/CR/CXR 盘点、XML–DICOM UID mapping 与异常清单。
+- P1-R2：CT geometry validation、空间投影排序、duplicate/missing slice 与 spacing/orientation 异常检测。
+- 完整本地数据审计、阶段级双 agent 审查与用户阶段确认。
 
 ### 验收进度
 
-| P0 验收项 | 状态 | 证据 |
+| P1 验收项 | 状态 | 证据 |
 |---|---|---|
-| CPU forward/backward smoke test | `PASS` | `artifacts/audit/p0/cpu.json` |
-| MPS forward/backward smoke test | `PASS` | `artifacts/audit/p0/mps.json`；记录唯一允许的 `aten::max_pool3d_with_indices` CPU fallback |
-| CUDA forward/backward smoke test | `PASS` | `artifacts/audit/p0/cuda.json`；PBS `8942735.kman.restech.unsw.edu.au`，Exit 0，NVIDIA L40S |
-| 环境版本已记录 | `PASS` | `artifacts/audit/p0/*-environment.json` 与 `environment/locks/`；两平台 `pylidc` import、`pip check` 通过 |
-| 随机 seed 规则已冻结 | `PASS` | base seed `20260808`；fold seed 为 `base_seed + fold_index`；测试通过 |
-| Resolved config 与 SHA-256 已冻结 | `PASS` | `configs/baseline_v1.resolved.yaml`、`configs/baseline_v1.sha256`；哈希 `6a17fd6f3731eb3307cf296fb203e58cf35adb08c3cfd984b136424421fe4a1c` |
-| 本地自动测试 | `PASS` | 2026-08-09：`37 passed` |
-| Katana 存储 gates | `PASS` | `artifacts/audit/p0/katana-storage-preflight.json`；工作集 `7,543,988,928` bytes |
-| Phase Compliance Reviewer | `PASS` | 2026-08-09：无冻结需求改动、无 P1 实现、无阻断缺口 |
-| Status Synchronization Reviewer | `PASS` | 2026-08-09：状态、代码、测试和审计证据已同步 |
+| P1-R1 canonical XML 与 UID mapping | `IN_PROGRESS` | 实施计划已获批准；尚未生成审计产物 |
+| P1-R2 DICOM geometry | `IN_PROGRESS` | 实施计划已获批准；尚未生成审计产物 |
+| P1 自动测试 | `NOT_STARTED` | 待实现 |
+| Phase Compliance Reviewer | `NOT_STARTED` | 待 P1 原子改动完成后执行 |
+| Status Synchronization Reviewer | `NOT_STARTED` | 待 P1 原子改动完成后执行 |
 
-P0 技术验收、双 agent 审查和用户确认均已通过；阶段状态为 `COMPLETED`。
+P1 已由用户批准进入开发，尚未满足任何阶段门验收。
 
 ### 未解决困难
 
-- P0 当前无开放困难；`DIF-P0-001` 已在 Katana CUDA 验证通过后标记为 `RESOLVED`。
-- `DIF-P10-001` 仍为 `OPEN`，但属于 P10 存储风险，不影响 P0 完成结论。
+- 当前无 P1 特有开放困难。
+- `DIF-P10-001` 继续为 `OPEN`，但不影响 P1 的本地 header-only audit。
 
 ### 当前证据与产物
 
 - [冻结需求文档](./LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md)
 - [仓库开发规则](../AGENTS.md)
-- Git commit `bdccb98`：`docs: freeze Baseline-v1 requirements`
-- Git commit `d6e37d4`：`docs: add project status tracking`
-- Git commit `5388425`：`docs: add repository agent workflow`
-- Git commit `d7de8c0`：`docs: align project status approval gates`
-- Git commit `8a91863`：`docs: record Katana storage risk`
-- Git commit `5f65be3`：`chore: scaffold P0 project environment`
-- Git commit `d10d958`：`feat: add deterministic baseline configuration`
-- Git commit `bc77067`：`feat: add cross-device DenseNet smoke test`
-- Git commit `c1d4393`：`chore: add Katana P0 workflow`
-- Git commit `6012941`：`chore: record P0 audit evidence`
-- Git commit `1cfac33`：`docs: synchronize P0 project status`
-- Git commit `86cd959`：`style: normalize P0 file endings`
-- Git commit `a16e3b5`：`docs: complete P0 project status`
-- [Baseline-v1 source config](../configs/baseline_v1.yaml)
-- [Baseline-v1 resolved config](../configs/baseline_v1.resolved.yaml)
-- [Baseline-v1 config SHA-256](../configs/baseline_v1.sha256)
-- [P0 audit artifacts](../artifacts/audit/p0/)
-- [Platform environment definitions and locks](../environment/)
-- [Katana P0 scripts](../scripts/katana/)
-- 本地验证命令：`/Users/katherine/.conda/envs/lidc-baseline-v1-p0/bin/python -m pytest -q`；结果 `37 passed`。
+- P1 分支基线：`cf767d3`（已推送的 P0 交付状态）。
+- 原始数据：`/Users/katherine/Desktop/lidc_data`；审计仅读取 DICOM headers，不读取像素数据。
+- P1 输出目标：`artifacts/audit/p1/summary.json`、`series_audit.csv`、`anomalies.csv`；可选逐切片明细保持本地 ignored。
 
-## 4. 下一阶段：P1 DICOM/XML 审计
+## 4. 下一阶段：P2 Physical nodule cohort
 
 ### 阶段目标
 
-确认 canonical XML source，盘点 CT/DX/CR/CXR 数据，建立 XML–DICOM UID 映射，并验证 CT series 的几何完整性和确定性切片排序。
+基于已审计的 canonical XML 与 CT volumes，将 reader annotations 聚类为 physical nodules，并建立 Baseline-v1 primary cohort、reader aggregation 和 stable provenance。
 
 ### 进入条件
 
-- P0 全部验收项通过。
-- Baseline-v1 resolved config 和 SHA-256 已冻结。
-- 本地审计环境可以读取 DICOM headers 和 canonical XML。
+- P1 canonical XML、XML–DICOM mapping 与 CT geometry 审计通过并已获用户确认。
+- P1 的阻断性异常已解决或形成明确审阅结论。
 
 ### 第一批任务
 
-- 统计本地 patient directories、DICOM modalities、CT series 和 XML 类型。
-- 确认 `LIDC-XML-only` 为唯一 canonical annotation source。
-- 建立 Study/Series/SOP UID 映射。
-- 检查 orientation、position、spacing、重复切片和异常 slice gaps。
-- 生成可审计的异常清单和 Phase 1 报告。
+- 尚未制定；P2 保持 `NOT_STARTED`。
 
 ### 已知风险
 
-- Canonical XML 中包含 CXR XML，必须与 CT annotations 分离。
-- DICOM 下载目录内的 XML 只能用于交叉核对，不能与 canonical XML 合并生成重复 annotation。
-- 切片必须根据空间坐标投影排序，不能只依赖文件名或 InstanceNumber。
+- P2 不能绕过 P1 的 canonical source、mapping 或 geometry 审计结论。
 
 <!-- NORMAL_READING_END -->
 
@@ -235,7 +196,7 @@ Bug 修复后：
 | 阶段 | 名称 | 生命周期 | 健康状态 | 阶段门 | 开放 Bug | 开放困难 |
 |---|---|---|---|---|---:|---:|
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
-| P1 | DICOM/XML 审计 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P1 | DICOM/XML 审计 | `IN_PROGRESS` | `ON_TRACK` | 实施中 | 0 | 0 |
 | P2 | Physical nodule cohort | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -353,3 +314,4 @@ Bug 修复后：
 | 2026-08-08 | `PHASE_STARTED` | P0 | 开始工程环境与配置冻结阶段 | 本状态文档初始化提交 |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P0 | 技术验收与双 agent 审查通过，等待用户确认；P1 保持未开始 | 本状态同步提交 |
 | 2026-08-09 | `PHASE_COMPLETED` | P0 | 用户确认 P0；阶段封存、交付并完成安全清理，P1 保持未开始 | `a16e3b5` |
+| 2026-08-09 | `PHASE_STARTED` | P1 | 用户批准 P1 DICOM/XML 审计实施计划；P1 开始开发，P2 保持未开始 | P1 本地分支 |
