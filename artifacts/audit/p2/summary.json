@@ -1,0 +1,57 @@
+{
+  "audit": "P2 physical nodule cohort",
+  "clustering_tolerance": {
+    "configured_tol": null,
+    "effective_tolerance_max_mm": 5.0,
+    "effective_tolerance_min_mm": 0.10131387882547446,
+    "series_metadata_file": "clustering_tolerances.csv",
+    "tol_none_resolution": "scan.slice_thickness"
+  },
+  "counts": {
+    "EXCLUDED_MISSING_REQUIRED_TARGET": 1,
+    "EXCLUDED_UNCERTAIN_MALIGNANCY": 1560,
+    "PRIMARY_BINARY": 1073,
+    "binary_primary_cohort": 1073,
+    "binary_primary_cohort_at_least_3_readers": 438,
+    "canonical_ct_xml_series": 1018,
+    "canonical_xml_redundant_copies": 17,
+    "clusters_excluded_more_than_4_readers": 14,
+    "eligible_series_clustered": 1014,
+    "p1_excluded_series": 4,
+    "patients_binary": 578,
+    "patients_total": 868,
+    "physical_clusters": 2634,
+    "physical_clusters_total": 2634,
+    "source_annotations_not_in_pylidc": 13184,
+    "source_non_nodule_annotations": 21662,
+    "source_small_nodule_annotations": 0,
+    "source_unblinded_reader_annotations": 20097
+  },
+  "privacy": "Tracked P2 reports contain only SHA-256 derived identifiers; the full manifest and annotation mapping are local-only.",
+  "program_version": "0.1.0",
+  "pylidc": {
+    "cluster_parameters": {
+      "factor": 0.9,
+      "metric": "min",
+      "min_tol": 0.1,
+      "tol": null,
+      "verbose": false
+    },
+    "np_int_compatibility_enabled": true,
+    "numpy_version": "1.26.4",
+    "version": "0.2.3"
+  },
+  "reader_count_distribution": {
+    "1": 770,
+    "2": 488,
+    "3": 481,
+    "4": 895
+  },
+  "reference_reconciliation": {
+    "hard_gate": false,
+    "nodules": 2651,
+    "observed_binary_nodules": 1073,
+    "observed_binary_patients": 578,
+    "patients": 875
+  }
+}

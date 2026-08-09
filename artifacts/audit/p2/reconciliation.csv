@@ -1,0 +1,10 @@
+stage,count
+canonical_ct_xml_series,1018
+p1_eligible_series_clustered,1014
+source_unblinded_reader_annotations,20097
+source_annotations_not_in_pylidc,13184
+physical_clusters,2634
+primary_binary_cohort,1073
+primary_binary_cohort_at_least_3_readers,438
+uncertain_malignancy,1560
+missing_required_target,1
