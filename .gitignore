@@ -24,6 +24,9 @@ artifacts/*
 !artifacts/audit/p1/*.json
 !artifacts/audit/p1/*.csv
 artifacts/audit/p1/local/
+!artifacts/audit/p2/
+!artifacts/audit/p2/*.json
+!artifacts/audit/p2/*.csv
 
 runs/
 reports/baseline_v1/
