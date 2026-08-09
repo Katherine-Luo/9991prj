@@ -4,13 +4,13 @@ project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P2
-development_phase_status: IN_PROGRESS
+development_phase_status: AWAITING_USER_APPROVAL
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P2
 next_phase: P3
 last_updated: 2026-08-09
-last_verified_commit: 1f0ed33
+last_verified_commit: 28e46b1
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -32,14 +32,14 @@ last_verified_commit: 1f0ed33
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | 当前开发阶段 | `P2 Physical nodule cohort` |
-| 阶段状态 | `IN_PROGRESS` |
+| 阶段状态 | `AWAITING_USER_APPROVAL` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | `DIF-P2-001`：pylidc 0.2.3 在锁定 NumPy 1.26.4 环境中使用已移除的 `np.int`；P2 将以最小运行时兼容层验证，不改依赖或原始数据 |
+| 当前阻塞项 | 无技术阻塞；P2 技术阶段门已通过，正在等待用户明确确认 |
 | 恢复阶段 | `P2` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 commit | `1f0ed33`：P1 已封存并推送至 `origin/main`；P2 获批后在本地分支 `p2-physical-nodule-cohort` 开始 |
+| 状态依据 | `c1c1b95` 保存 P2 implementation/tests/.gitignore，`28e46b1` 保存 P2 deidentified audit evidence；二者均为本地、未推送 commits。P2 技术验收已通过，未经用户确认不得推送 |
 
 ## 3. 当前阶段：P2 Physical nodule cohort
 
@@ -52,28 +52,37 @@ last_verified_commit: 1f0ed33
 - P1 的 canonical XML、CT geometry、series eligibility 和 4 个不同图像内容 series 的排除决定均已确认并推送。
 - P2 实施计划已获用户批准：使用 pylidc 默认 clustering rule 与最小 `np.int` runtime compatibility adapter；完整 manifest 本地私有，Git 仅保存脱敏审计证据。
 - strict computed `>3 mm` flag 固定为 cluster 内 reader axial diameter 的最大值严格大于 `3.0 mm`；不影响 primary inclusion。
+- 已实现 canonical XML source parser、pylidc matching/clustering、annotation-to-cluster mapping、stable source-derived `nodule_uid`、reader aggregation、私有 manifest schema validation 和脱敏审计报告。
+- 完整本地 cohort audit 已在 1,014 个 P1-eligible CT series 上完成：2,634 个 physical clusters；1,073 个 binary primary nodules、578 位 binary-cohort patients；`>=3 readers` sensitivity cohort 为 438 个 nodules。另有 1,560 个 uncertain malignancy clusters 与 1 个 missing-required-target cluster，均保留审计记录且不进入 primary binary cohort。
+- P1 已排除的 4 个 series 继续排除；14 个超过 4 readers 的 clusters 记录为排除；primary inclusion 始终以 XML `nodule >=3 mm` annotation class 决定，而非 computed diameter。与 reference 2,651 nodules / 875 patients 的差异仅在 reconciliation 中报告，`hard_gate=false`。
+- 私有 `artifacts/manifests/nodules.parquet` 与 `annotation_mapping.parquet` 已生成且保持 Git ignore；前者含 2,634 个唯一 `nodule_uid`、source XML/DICOM SOP fingerprints、annotation class、diagnostic-only pylidc SQL IDs、9 个逐 target valid-reader counts、原始/聚合 targets、tie flags 和 strict-diameter flag。
+- 已生成可提交的脱敏审计证据：`artifacts/audit/p2/summary.json`、`reconciliation.csv`、`exclusions.csv`、`clustering_tolerances.csv`。全部仅使用 SHA-256 derived identifiers，不含原始 UID、patient ID 或绝对路径。
+- 每-series clustering tolerance 已保存 1,014 行；`tol=None` 按 scan slice thickness 解析，effective tolerance 范围为 `0.10131387882547446–5.0 mm`。
+- 所有 64 项自动测试通过；P2 阶段级 Phase Compliance Reviewer 已给出 `PASS`。
 
 ### 正在进行
 
-- 建立 XML source annotation parser、pylidc matching/clustering、stable provenance、reader aggregation 和 cohort reconciliation。
+- 无待实现的 P2 技术工作；正在等待用户对 P2 阶段结果的明确确认。
 
 ### 尚未完成
 
-- P2 代码、自动测试、完整本地 cohort audit、private manifest、脱敏审计产物、阶段级双 agent 审查和用户阶段确认。
+- 用户阶段确认。
+- P2 本地原子 commits 已创建；等待确认期间不得推送 GitHub，不得进入或制定 P3 实施计划。
 
 ### 验收进度
 
 | P2 验收项 | 状态 | 证据 |
 |---|---|---|
-| P2-R1 primary cohort 与 reconciliation | `NOT_STARTED` | P2 已获批准，尚未运行 cohort audit |
-| P2-R2 stable provenance 与 `nodule_uid` | `NOT_STARTED` | 尚未生成 source-derived fingerprint 或 manifest |
-| P2-R3 reader aggregation | `NOT_STARTED` | 尚未生成逐 target valid-reader counts |
-| P2-R4 categorical ties | `NOT_STARTED` | 尚未生成 vote distributions 或 tie flags |
+| P2-R1 primary cohort 与 reconciliation | `PASS` | XML class-selected canonical source、1,014 P1-eligible series、2,634 physical clusters、1,073 binary primary nodules / 578 patients；2,651/875 仅 reconciliation，`hard_gate=false` |
+| P2-R2 stable provenance 与 `nodule_uid` | `PASS` | `nodule_uid` 由 patient/study/series source identifiers、canonical XML hash 和排序 source fingerprints 导出；SQL ID independence、source/SOP-content sensitivity、mapping determinism 与 duplicate UID checks 通过 |
+| P2-R3 reader aggregation | `PASS` | 9 个逐 target valid-reader counts、raw ratings、normalized continuous targets、categorical soft vote distributions、reader count、reader dispersion、`>=3 readers` 和 strict diameter flag 已写入 private manifest；缺失 target 具体记录 |
+| P2-R4 categorical ties | `PASS` | all target-ready clusters 的 internalStructure/calcification modal ties 分别为 8/55；binary primary subset 为 2/46；ties 保留在 soft-target cohort，未从 primary cohort 删除 |
+| P2 自动测试与阶段级合规审查 | `PASS` | `64 passed`；Phase Compliance Reviewer `PASS`，无越阶段实现或冻结需求 diff |
 
 ### 未解决困难
 
-- `DIF-P2-001`：锁定 pylidc/NumPy 组合的 `np.int` compatibility defect；必须由测试覆盖的最小 adapter 解决，且不得修改 pylidc database、依赖锁定或原始数据。
 - `DIF-P10-001` 继续为 `OPEN`，不影响 P2 本地 cohort 开发。
+- P2 当前无开放技术困难；唯一的阶段门等待项是用户确认。
 
 ## 4. 下一阶段：P3 Consensus mask 与 ROI
 
@@ -255,7 +264,7 @@ Bug 修复后：
 |---|---|---|---|---|---:|---:|
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
-| P2 | Physical nodule cohort | `IN_PROGRESS` | `AT_RISK` | 已获批并开始；等待 compatibility adapter、cohort audit 与阶段门 | 0 | 1 |
+| P2 | Physical nodule cohort | `AWAITING_USER_APPROVAL` | `ON_TRACK` | P2-R1–P2-R4、自动测试与阶段级 Phase Compliance Reviewer 均为 `PASS`；等待用户确认，P3 保持未开始 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -302,13 +311,14 @@ Bug 修复后：
 
 ### DIF-P2-001：pylidc 与锁定 NumPy 的 `np.int` compatibility defect
 
-- 状态：`OPEN`
+- 状态：`RESOLVED`
 - 所属阶段：P2
 - 首次记录：2026-08-09
+- 解决日期：2026-08-09
 - 影响：直接调用 pylidc 0.2.3 的 contour/clustering 代码会在 NumPy 1.26.4 因已移除的 `np.int` 失败，阻止 physical nodule clustering。
-- 当前结论：P2 已获用户批准，采用经过测试的最小运行时 compatibility adapter，仅在缺失时恢复 `np.int = int`；不修改 pylidc 源码、SQLite database、依赖锁定或原始数据。
-- 下一步：实现 adapter 并覆盖 pylidc default clustering、determinism 与 source mapping 测试；完整 cohort audit 成功后标记为 `RESOLVED`。
-- 解除条件：adapter 在锁定环境通过直接 clustering 测试和完整 P2 cohort audit，且无原始数据、数据库或依赖文件修改。
+- 当前结论：最小运行时 adapter 仅在 alias 缺失时设置 `np.int = int`，未修改 pylidc 源码、SQLite database、依赖锁定或原始数据。
+- 解决证据：固定 default clustering 参数、effective-tolerance reconstruction、source mapping determinism 与 complete P2 cohort audit 均通过；`summary.json` 记录 `np_int_compatibility_enabled=true`，全量测试 `64 passed`。
+- 解除条件：已满足；P2 full audit 成功，且无原始数据、数据库或依赖文件修改。
 - 关联 Bug：无；这是第三方已锁定依赖的 compatibility defect。
 
 ### DIF-P1-001：CT series 重复 slice plane 的处理结论
@@ -417,3 +427,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P1 | 用户批准的 duplicate-plane policy 已完成并复核：1 个 exact duplicate 仅记录派生 volume selection，4 个不同内容 series 排除，原始 DICOM 未修改；P1 技术验收与阶段级双 agent 审查通过，等待用户确认，P2 保持未开始 | `c70e068`、`7d34cbf`、`fa73a1b`（均未推送） |
 | 2026-08-09 | `PHASE_COMPLETED` | P1 | 用户确认 P1；阶段永久记录已写入 4 个不同图像内容 CT series 的排除决定、影响范围和验收证据，P2 保持未开始 | 本次 P1 完成状态提交 |
 | 2026-08-09 | `PHASE_STARTED` | P2 | 用户批准 P2 physical nodule cohort 与 stable provenance 实施计划；采用 pylidc 默认 clustering、最小 runtime compatibility adapter 和本地私有 manifest，P3 保持未开始 | P2 本地分支 |
+| 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P2 | P2-R1–P2-R4、64 项测试、完整 local cohort audit 和阶段级 Phase Compliance Reviewer 已通过；等待用户确认，P3 保持未开始且不得推送 | `c1c1b95`、`28e46b1`（local, unpushed） |
