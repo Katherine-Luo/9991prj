@@ -4,13 +4,13 @@ project: LIDC-IDRI Baseline-v1
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P2
-development_phase_status: AWAITING_USER_APPROVAL
+development_phase_status: COMPLETED
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P2
 next_phase: P3
 last_updated: 2026-08-09
-last_verified_commit: 28e46b1
+last_verified_commit: d3f3995; P2 completion state commit pending
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -32,14 +32,14 @@ last_verified_commit: 28e46b1
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | 当前开发阶段 | `P2 Physical nodule cohort` |
-| 阶段状态 | `AWAITING_USER_APPROVAL` |
+| 阶段状态 | `COMPLETED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞；P2 技术阶段门已通过，正在等待用户明确确认 |
+| 当前阻塞项 | 无；用户已明确确认 P2，阶段封存与交付进行中 |
 | 恢复阶段 | `P2` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 | `c1c1b95` 保存 P2 implementation/tests/.gitignore，`28e46b1` 保存 P2 deidentified audit evidence；二者均为本地、未推送 commits。P2 技术验收已通过，未经用户确认不得推送 |
+| 状态依据 | `c1c1b95` 保存 P2 implementation/tests/.gitignore，`28e46b1` 保存 P2 deidentified audit evidence，`d3f3995` 保存待确认状态；用户已确认 P2，正在创建单独封存状态 commit，随后合并并推送 |
 
 ## 3. 当前阶段：P2 Physical nodule cohort
 
@@ -62,12 +62,12 @@ last_verified_commit: 28e46b1
 
 ### 正在进行
 
-- 无待实现的 P2 技术工作；正在等待用户对 P2 阶段结果的明确确认。
+- 无 P2 开发工作；用户已确认，正在执行状态封存、合并与 GitHub 推送。
 
 ### 尚未完成
 
-- 用户阶段确认。
-- P2 本地原子 commits 已创建；等待确认期间不得推送 GitHub，不得进入或制定 P3 实施计划。
+- P2 completion state commit、`main` fast-forward merge 与 GitHub push；此为交付动作，不属于 P3 开发。
+- P3 保持 `NOT_STARTED`；在 P2 推送成功后才允许制定其实施计划。
 
 ### 验收进度
 
@@ -77,12 +77,12 @@ last_verified_commit: 28e46b1
 | P2-R2 stable provenance 与 `nodule_uid` | `PASS` | `nodule_uid` 由 patient/study/series source identifiers、canonical XML hash 和排序 source fingerprints 导出；SQL ID independence、source/SOP-content sensitivity、mapping determinism 与 duplicate UID checks 通过 |
 | P2-R3 reader aggregation | `PASS` | 9 个逐 target valid-reader counts、raw ratings、normalized continuous targets、categorical soft vote distributions、reader count、reader dispersion、`>=3 readers` 和 strict diameter flag 已写入 private manifest；缺失 target 具体记录 |
 | P2-R4 categorical ties | `PASS` | all target-ready clusters 的 internalStructure/calcification modal ties 分别为 8/55；binary primary subset 为 2/46；ties 保留在 soft-target cohort，未从 primary cohort 删除 |
-| P2 自动测试与阶段级合规审查 | `PASS` | `64 passed`；Phase Compliance Reviewer `PASS`，无越阶段实现或冻结需求 diff |
+| P2 自动测试、双 agent 审查与用户确认 | `PASS` | `64 passed`；Phase Compliance Reviewer `PASS`、Status Synchronization Reviewer `UPDATED`；用户已明确确认 P2 |
 
 ### 未解决困难
 
 - `DIF-P10-001` 继续为 `OPEN`，不影响 P2 本地 cohort 开发。
-- P2 当前无开放技术困难；唯一的阶段门等待项是用户确认。
+- P2 无开放技术困难或待确认阶段门。
 
 ## 4. 下一阶段：P3 Consensus mask 与 ROI
 
@@ -264,7 +264,7 @@ Bug 修复后：
 |---|---|---|---|---|---:|---:|
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
-| P2 | Physical nodule cohort | `AWAITING_USER_APPROVAL` | `ON_TRACK` | P2-R1–P2-R4、自动测试与阶段级 Phase Compliance Reviewer 均为 `PASS`；等待用户确认，P3 保持未开始 | 0 | 0 |
+| P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -392,6 +392,22 @@ Bug 修复后：
 - 阶段门结论：`PASS`
 - 完成 commit：本次 P1 完成状态提交。
 
+### P2 完成记录
+
+- 完成日期：2026-08-09
+- 生命周期：`COMPLETED`
+- 健康状态：`ON_TRACK`
+- 已完成内容：canonical XML `nodule >=3 mm` source parser、pylidc physical-nodule clustering、annotation-to-cluster mapping、stable source-derived `nodule_uid`、reader aggregation、per-target valid-reader counts、categorical soft targets/tie flags、computed strict `>3 mm` sensitivity flag、private manifest schema validation 和脱敏 cohort audit。
+- Cohort 证据：处理 1,014 个 P1-eligible CT series，生成 2,634 个 physical clusters；primary binary cohort 为 1,073 nodules / 578 patients，`>=3 readers` sensitivity cohort 为 438 nodules；1,560 uncertain clusters 与 1 个明确缺失 `internalStructure` target 的 cluster 未进入 primary binary cohort。reference 2,651 nodules / 875 patients 仅用于 reconciliation，`hard_gate=false`。
+- P1 继承结论：4 个不同图像内容 duplicate-plane series 持续排除；14 个超过 4 readers 的 clusters 记录为排除，不任意选择 reader annotation。
+- Provenance 与审计：private `artifacts/manifests/nodules.parquet` 和 `annotation_mapping.parquet` 保持 Git ignored；脱敏 `artifacts/audit/p2/summary.json`、`reconciliation.csv`、`exclusions.csv`、`clustering_tolerances.csv` 已提交。每个 eligible series 的 effective clustering tolerance 可审计（范围 `0.10131387882547446–5.0 mm`），不含原始 UID、patient ID 或绝对路径。
+- 验收标准与证据：P2-R1–P2-R4 `PASS`；P2 专项 20 项测试及完整 64 项测试均通过；Phase Compliance Reviewer `PASS`，Status Synchronization Reviewer `UPDATED`；用户已明确确认。
+- 已解决困难：`DIF-P2-001`；runtime compatibility adapter 仅在缺失时设置 `np.int = int`，未修改 pylidc 源码、SQLite database、依赖锁定或原始数据。
+- 遗留困难：`DIF-P10-001` 继续为 `OPEN`，不影响 P2 完成结论。
+- 明确未纳入内容：P3 consensus mask/ROI、P4 split 及任何模型或训练开发；P3 保持 `NOT_STARTED`。
+- 阶段门结论：`PASS`
+- P2 实现与审计 commits：`979706a`、`c1c1b95`、`28e46b1`、`d3f3995`；完成状态 commit：本提交。
+
 ### 阶段完成记录模板
 
 每个阶段门通过时，在本节追加一条永久记录：
@@ -428,3 +444,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_COMPLETED` | P1 | 用户确认 P1；阶段永久记录已写入 4 个不同图像内容 CT series 的排除决定、影响范围和验收证据，P2 保持未开始 | 本次 P1 完成状态提交 |
 | 2026-08-09 | `PHASE_STARTED` | P2 | 用户批准 P2 physical nodule cohort 与 stable provenance 实施计划；采用 pylidc 默认 clustering、最小 runtime compatibility adapter 和本地私有 manifest，P3 保持未开始 | P2 本地分支 |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P2 | P2-R1–P2-R4、64 项测试、完整 local cohort audit 和阶段级 Phase Compliance Reviewer 已通过；等待用户确认，P3 保持未开始且不得推送 | `c1c1b95`、`28e46b1`（local, unpushed） |
+| 2026-08-09 | `PHASE_COMPLETED` | P2 | 用户确认 P2；永久记录已保存 cohort、provenance、审计与验收证据；P3 保持未开始，随后仅执行合并和推送 | 本次 P2 completion state commit |
