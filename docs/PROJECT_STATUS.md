@@ -10,7 +10,7 @@ active_bug_ids: []
 resume_phase: P2
 next_phase: P3
 last_updated: 2026-08-09
-last_verified_commit: d3f3995; P2 completion state commit pending
+last_verified_commit: 11e164e
 ---
 
 # LIDC-IDRI Baseline-v1 项目状态
@@ -35,11 +35,11 @@ last_verified_commit: d3f3995; P2 completion state commit pending
 | 阶段状态 | `COMPLETED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；用户已明确确认 P2，阶段封存与交付进行中 |
+| 当前阻塞项 | 无；P2 已封存并推送至 GitHub，P3 尚未开始 |
 | 恢复阶段 | `P2` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-09 |
-| 状态依据 | `c1c1b95` 保存 P2 implementation/tests/.gitignore，`28e46b1` 保存 P2 deidentified audit evidence，`d3f3995` 保存待确认状态；用户已确认 P2，正在创建单独封存状态 commit，随后合并并推送 |
+| 状态依据 | P2 已 fast-forward 合并到 `main` 并推送：本地 `main` 与 `origin/main` 均为 `11e164e5b9de45554d7f55c4080f864c078479e2`；P3 继续保持 `NOT_STARTED` |
 
 ## 3. 当前阶段：P2 Physical nodule cohort
 
@@ -62,12 +62,12 @@ last_verified_commit: d3f3995; P2 completion state commit pending
 
 ### 正在进行
 
-- 无 P2 开发工作；用户已确认，正在执行状态封存、合并与 GitHub 推送。
+- 无 P2 开发工作。P2 已封存并交付；P3 在用户批准实施计划前保持 `NOT_STARTED`。
 
 ### 尚未完成
 
-- P2 completion state commit、`main` fast-forward merge 与 GitHub push；此为交付动作，不属于 P3 开发。
-- P3 保持 `NOT_STARTED`；在 P2 推送成功后才允许制定其实施计划。
+- P2 无待完成项。
+- P3 保持 `NOT_STARTED`；仅在单独制定并获得用户批准的 P3 实施计划后才能开始。
 
 ### 验收进度
 
@@ -407,6 +407,7 @@ Bug 修复后：
 - 明确未纳入内容：P3 consensus mask/ROI、P4 split 及任何模型或训练开发；P3 保持 `NOT_STARTED`。
 - 阶段门结论：`PASS`
 - P2 实现与审计 commits：`979706a`、`c1c1b95`、`28e46b1`、`d3f3995`；完成状态 commit：本提交。
+- 交付状态：`11e164e` 已 fast-forward 合并至 `main` 并推送 GitHub；本地 `main` 与 `origin/main` SHA 已核对一致，合并后的完整测试为 `64 passed`。
 
 ### 阶段完成记录模板
 
@@ -444,4 +445,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_COMPLETED` | P1 | 用户确认 P1；阶段永久记录已写入 4 个不同图像内容 CT series 的排除决定、影响范围和验收证据，P2 保持未开始 | 本次 P1 完成状态提交 |
 | 2026-08-09 | `PHASE_STARTED` | P2 | 用户批准 P2 physical nodule cohort 与 stable provenance 实施计划；采用 pylidc 默认 clustering、最小 runtime compatibility adapter 和本地私有 manifest，P3 保持未开始 | P2 本地分支 |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P2 | P2-R1–P2-R4、64 项测试、完整 local cohort audit 和阶段级 Phase Compliance Reviewer 已通过；等待用户确认，P3 保持未开始且不得推送 | `c1c1b95`、`28e46b1`（local, unpushed） |
-| 2026-08-09 | `PHASE_COMPLETED` | P2 | 用户确认 P2；永久记录已保存 cohort、provenance、审计与验收证据；P3 保持未开始，随后仅执行合并和推送 | 本次 P2 completion state commit |
+| 2026-08-09 | `PHASE_COMPLETED` | P2 | 用户确认 P2；永久记录已保存 cohort、provenance、审计与验收证据；已 fast-forward 合并至 main 并推送，P3 保持未开始 | `11e164e` |
