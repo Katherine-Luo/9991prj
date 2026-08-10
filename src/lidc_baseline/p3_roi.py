@@ -553,10 +553,21 @@ def reusable_pilot_statistics(cached: Iterable[dict[str, Any]], rows: Iterable[d
 
 def _write_index(path: Path, rows: list[dict[str, Any]]) -> None:
     frame = pd.DataFrame(rows).sort_values("nodule_uid")
+    _atomic_parquet(path, frame)
+
+
+def _atomic_parquet(path: Path, frame: pd.DataFrame) -> None:
+    """Atomically replace a private parquet file with a unique sibling temporary."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp")
-    frame.to_parquet(temporary, index=False)
-    os.replace(temporary, path)
+    descriptor, temporary_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    temporary = Path(temporary_name)
+    try:
+        os.close(descriptor)
+        frame.to_parquet(temporary, index=False)
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def update_private_failures(path: Path, attempted_uids: Iterable[str], rows: list[dict[str, Any]]) -> None:
@@ -564,10 +575,7 @@ def update_private_failures(path: Path, attempted_uids: Iterable[str], rows: lis
     attempted = set(attempted_uids)
     existing = pd.read_parquet(path).to_dict(orient="records") if path.exists() else []
     combined = [row for row in existing if str(row["nodule_uid"]) not in attempted] + rows
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp")
-    pd.DataFrame(combined, columns=["nodule_uid", "patient_id", "series_instance_uid", "reason"]).sort_values("nodule_uid").to_parquet(temporary, index=False)
-    os.replace(temporary, path)
+    _atomic_parquet(path, pd.DataFrame(combined, columns=["nodule_uid", "patient_id", "series_instance_uid", "reason"]).sort_values("nodule_uid"))
 
 
 def assert_deidentified_audit(path: Path, forbidden_values: Iterable[str]) -> None:

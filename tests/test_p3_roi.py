@@ -16,6 +16,7 @@ from lidc_baseline.p3_roi import (
     DicomSlice,
     HU_MIN,
     ROI_SHAPE,
+    _atomic_parquet,
     _qa_image,
     assert_deidentified_audit,
     apply_duplicate_policy,
@@ -366,3 +367,12 @@ def test_failure_registry_clears_successful_retry_but_keeps_unrelated_failures(t
     ]).to_parquet(path, index=False)
     update_private_failures(path, ["retry"], [])
     assert pd.read_parquet(path)["nodule_uid"].tolist() == ["other"]
+
+
+def test_atomic_parquet_uses_unique_temporary_not_legacy_fixed_name(tmp_path: Path) -> None:
+    target = tmp_path / "roi_index.parquet"
+    legacy = tmp_path / ".roi_index.parquet.tmp"
+    legacy.write_bytes(b"another writer")
+    _atomic_parquet(target, pd.DataFrame({"nodule_uid": ["one"], "status": ["WRITTEN"]}))
+    assert pd.read_parquet(target).to_dict(orient="records") == [{"nodule_uid": "one", "status": "WRITTEN"}]
+    assert legacy.read_bytes() == b"another writer"
