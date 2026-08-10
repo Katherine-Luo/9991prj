@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P5
 next_phase: P6
 last_updated: 2026-08-11
-last_verified_commit: 3429b62
+last_verified_commit: dff1356
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 3429b62
 | 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P5 Katana Stage A delta/transfer verification、KDM sync、preflight PBS 和 formal-fold PBS interfaces 已实现并通过本地验证，interface batch 已由 `3429b62` 本地提交但尚未推送。Fold 0 正式执行前仍须实际执行 KDM sync 和 Stage A PBS，并取得 train-only overfit 与 L40S batch-16 preflight 的远程通过证据。 |
+| 当前阻塞项 | 无；P5 private whitelist 已通过 KDM 同步至 `/srv/scratch/z5448417/lidc-baseline-v2`，remote Stage A integrity verify 为 `PASS`。Stage A PBS job `8964315.kman.restech.unsw.edu.au` 已提交，当前因 `insufficient gpu_model` 在 `csegpu12` 排队，scheduler 预计 2026-08-11 11:00 AEST 开始；排队本身不登记为 Bug 或阻断。Job 尚未运行，因此 train-only overfit、L40S batch-16 preflight 与 formal Fold 0 均仍待完成。 |
 | 恢复阶段 | `P5` |
 | 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 startup/common-config/core/recent-status/interface anchors 分别为 `b9088e4`、`68cc73e`、`64f01c7`、`b5ab173`、`3429b62`。Katana interface batch 已本地提交但尚未推送；实际 KDM sync 和 PBS 均未运行。Private Stage A manifest 复用已验证 P4 base 2,666 files / `1,233,219,041` bytes，仅增加 P5 delta 7 files / `89,257` bytes，delta manifest hash 为 `1d926f455d12c1ed17d317c50037489ac879d1ec1aa004e90bc94b999d2b7ee6`；本地 Stage A verify 为 `PASS`。P5 direct tests `31 passed`、完整测试 `166 passed`、Phase Compliance Reviewer `PASS`；冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
+| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 startup/common-config/core/interface/recent-status/audit anchors 分别为 `b9088e4`、`68cc73e`、`64f01c7`、`3429b62`、`3e8671f`、`dff1356`，均仅位于本地 P5 分支、尚未推送。Private Stage A manifest 复用已验证 P4 base 2,666 files / `1,233,219,041` bytes，仅增加 P5 delta 7 files / `89,257` bytes，delta manifest hash 为 `1d926f455d12c1ed17d317c50037489ac879d1ec1aa004e90bc94b999d2b7ee6`；实际 KDM sync 和 remote integrity verify 均已完成。PBS job `8964315.kman.restech.unsw.edu.au` 已提交但仍在排队，尚未产生 overfit/preflight 证据。Audit implementation、tests 与 `.gitignore` 已由 `dff1356` 本地提交但尚未推送；最终设计分离 formal 与 Stage A 的 real-compatible provenance schemas，并强制 formal runtime 为 CUDA L40S、纯 FP32，AMP/BF16/TF32 全部关闭。P5 audit combined tests `33 passed`、完整测试 `168 passed`、最终 Phase Compliance Reviewer `PASS`，尚无 formal Fold 0 tracked audit artifact。冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
 
 ## 3. 当前阶段：P5 Reference-aligned Black-box Regression
 
@@ -65,17 +65,18 @@ last_verified_commit: 3429b62
 - 已创建并冻结四模型共用的 `configs/experiments/baseline_v2_reference_training.yaml`、canonical resolved YAML 与 SHA-256；config hash 为 `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327`。Config 明确分隔 reference-reported policy 与 Baseline-v2 project pre-registered exact choices，并固定已批准的 optimizer、scheduler、batching、augmentation、FP32 和 L40S preflight 约束。
 - Common execution config 直接测试为 `3 passed`、完整测试为 `138 passed`；`git diff --check`、冻结 V1/V2 requirements/config 检查和本批次 Phase Compliance Reviewer 均为 `PASS`。该 config/test batch 已由 `68cc73e` 本地提交，尚未推送。
 - 已实现 `src/lidc_baseline/p5_blackbox.py` 及 direct tests，覆盖 frozen execution-config enforcement、P4 shared encoder hash 验证、fold-specific deterministic unconstrained linear head、manifest/split/ROI data loading、train-only deterministic augmentation、Adam 与 validation-MSE scheduler、80-epoch training/checkpoint selection、atomic checkpoint/history artifacts、完整 RNG/optimizer/scheduler resume、single-writer fold lifecycle、one-time test transaction/recovery、prediction provenance、unclipped regression metrics、verify、overfit-check 和 L40S batch-16 preflight interfaces。
-- Core direct tests 为 `26 passed`、完整测试为 `161 passed`；冻结协议检查和本批次 Phase Compliance Reviewer 均为 `PASS`。上一轮 interim `FAIL` 的五项阻断发现已全部修复并由最终合规复核验证；它们属于提交前审查缺口，未造成已交付阶段或正式结果失效，因此不登记为 Bug。Core batch 已由 `64f01c7` 本地提交但尚未推送或同步 Katana，也未实际运行 overfit、preflight 或 Fold 0。
+- Core direct tests 为 `26 passed`、完整测试为 `161 passed`；冻结协议检查和本批次 Phase Compliance Reviewer 均为 `PASS`。上一轮 interim `FAIL` 的五项阻断发现已全部修复并由最终合规复核验证；它们属于提交前审查缺口，未造成已交付阶段或正式结果失效，因此不登记为 Bug。Core batch 已由 `64f01c7` 本地提交但尚未推送；P5 delta 后续已同步 Katana，但 overfit、preflight 和 Fold 0 尚未实际运行。
 - 已实现 `src/lidc_baseline/p5_katana.py`、`sync_p5_stage_a.sh`、`p5_stage_a.pbs`、`p5_fold.pbs` 和 direct tests。接口固定通过 KDM manifest whitelist 传输 P5 code/config delta，Stage A PBS 只运行 remote integrity verify、train-only overfit 与 L40S batch-16 preflight；formal-fold PBS 支持 resume/one-time test/verify，并在未获 Stage B 批准时阻止 folds 1–4。
-- Private Stage A transfer manifest 已构建并在本地验证：P4 immutable base 为 2,666 files / `1,233,219,041` bytes；P5 delta 为 7 files / `89,257` bytes；transfer manifest SHA-256 为 `1d926f455d12c1ed17d317c50037489ac879d1ec1aa004e90bc94b999d2b7ee6`。本地 Stage A verify 为 `PASS`，P5 direct tests 为 `31 passed`、完整测试为 `166 passed`、冻结检查和本批次 Phase Compliance Reviewer 均为 `PASS`。该 interface batch 已由 `3429b62` 本地提交但尚未推送，实际 KDM sync/PBS 尚未运行。
+- Private Stage A transfer manifest 已构建并在本地验证：P4 immutable base 为 2,666 files / `1,233,219,041` bytes；P5 delta 为 7 files / `89,257` bytes；transfer manifest SHA-256 为 `1d926f455d12c1ed17d317c50037489ac879d1ec1aa004e90bc94b999d2b7ee6`。该 interface batch 已由 `3429b62` 本地提交但尚未推送。实际 KDM sync 已完成，remote integrity verify 对 P4 base 及 P5 delta 均为 `PASS`；Stage A job `8964315.kman.restech.unsw.edu.au` 已提交但尚未运行。
+- 已实现 P5 aggregate audit batch：成功完成 formal fold 后，`p5_audit.py` 将先验证 private run、one-time test、formal provenance、CUDA L40S runtime 和纯 FP32 invariants（AMP/BF16/CUDA matmul TF32/cuDNN TF32 均关闭），再使用与真实 Stage A outputs 兼容的独立 provenance schema 验证 overfit/preflight 证据，最后生成脱敏 tracked fold JSON。`.gitignore`、audit implementation 与 tests 已由 `dff1356` 本地提交但尚未推送；因为 Fold 0 尚未完成，当前没有生成任何 P5 audit artifact。P5 audit combined tests 为 `33 passed`、完整测试为 `168 passed`，最终 Phase Compliance Reviewer 为 `PASS`。
 
 ### 正在进行
 
-- 正在准备按 private whitelist 实际执行 KDM sync 和 Stage A PBS。
+- 正在等待已提交的 Stage A PBS job `8964315.kman.restech.unsw.edu.au` 获得 L40S 资源并执行 train-only overfit 与 batch-16 preflight。
 
 ### 尚未完成
 
-- Katana interface batch 尚未推送；实际 KDM sync、Stage A PBS、train-only overfit、L40S batch-16 preflight、Fold 0 80-epoch formal run 和一次性 test evaluation 均尚未执行。
+- Katana interface 与 audit implementation/test batches 均已本地提交但尚未推送。Stage A PBS job 仍在排队，train-only overfit、L40S batch-16 preflight、Fold 0 80-epoch formal run、一次性 test evaluation 和 tracked fold audit artifact 均尚未完成。
 - Fold 0 技术门通过后仍须等待用户中间确认；未经确认不得提交 folds 1–4 jobs。
 - Folds 1–4、五折 OOF reconciliation、P5 阶段双审查、最终用户确认、合并与推送均尚未完成。
 
@@ -84,9 +85,10 @@ last_verified_commit: 3429b62
 | P5 验收项 | 状态 | 证据 |
 |---|---|---|
 | Common execution config 与来源标签 | `PASS` | Source/resolved/hash 已生成；SHA-256 为 `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327`；reference-reported 与 project pre-registered choices 明确分隔；直接 `3 passed`、完整 `138 passed`、Phase Compliance Reviewer `PASS` |
-| P5 core model/data/augmentation/scheduler/checkpoint/resume/test transaction/verify interfaces | `PASS` | `p5_blackbox.py` 与 direct tests 已实现并由 `64f01c7` 本地提交；direct `26 passed`、完整 `161 passed`、冻结检查与最终 Phase Compliance Reviewer `PASS`；尚未推送或远程执行 |
-| Katana Stage A transfer/PBS interfaces | `PASS` | P4 base 2,666 files / `1,233,219,041` bytes；P5 delta 7 files / `89,257` bytes，manifest hash `1d926f...7ee6`；local Stage A verify、direct `31 passed`、完整 `166 passed` 和 Phase Compliance Reviewer 均通过；interface batch 已由 `3429b62` 本地提交但尚未推送，KDM/PBS 尚未实际运行 |
-| Fold 0 local overfit 与 L40S batch-16 preflight | `PENDING` | 尚未执行 |
+| P5 core model/data/augmentation/scheduler/checkpoint/resume/test transaction/verify interfaces | `PASS` | `p5_blackbox.py` 与 direct tests 已实现并由 `64f01c7` 本地提交；direct `26 passed`、完整 `161 passed`、冻结检查与最终 Phase Compliance Reviewer `PASS`；尚未推送，远程计算尚未执行 |
+| Katana Stage A transfer/PBS interfaces | `PASS` | P4 base 2,666 files / `1,233,219,041` bytes 与 P5 delta 7 files / `89,257` bytes 已通过 KDM 同步；remote integrity verify 为 `PASS`。Interface batch 已由 `3429b62` 本地提交但尚未推送；job `8964315.kman.restech.unsw.edu.au` 已提交并排队 |
+| P5 aggregate audit implementation | `PASS` | Formal 与 Stage A 使用独立 real-compatible provenance schemas；formal evidence 强制 CUDA L40S、FP32 true 且 AMP/BF16/TF32 false。Audit batch 已由 `dff1356` 本地提交但尚未推送，并通过 combined `33 passed`、完整 `168 passed` 与最终 Phase Compliance Reviewer；只在成功 formal Fold 0 后生成脱敏 tracked evidence，当前无 audit artifact |
+| Fold 0 local overfit 与 L40S batch-16 preflight | `PENDING` | Stage A job `8964315.kman.restech.unsw.edu.au` 因 `insufficient gpu_model` 在 `csegpu12` 排队，尚未运行 |
 | Fold 0 formal 80 epochs、best checkpoint 与一次性 test | `PENDING` | 尚未执行；完成后必须等待用户中间确认 |
 | Folds 1–4 与 2,633 OOF reconciliation | `PENDING` | Fold 0 获用户确认前禁止开始 |
 | 冻结协议保护、双 agent 审查与阶段治理 | `PENDING` | 启动前冻结文件 diff 为零；后续每个开发批次继续执行双审查 |
@@ -280,7 +282,7 @@ Bug 修复后：
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
-| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | Common config/core 和 Katana interface batch 已本地提交但尚未推送；Katana delta/transfer/PBS interfaces 和 private manifest 已通过 local verify、direct `31 passed`、完整 `166 passed` 与合规复核，但实际 KDM/PBS、overfit/preflight 与 Fold 0 尚未执行 | 0 | 0 |
+| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | Common config/core/interface/audit batches 已本地提交但尚未推送；实际 KDM sync 与 remote Stage A integrity verify 已通过，job `8964315.kman.restech.unsw.edu.au` 已提交并排队。Audit batch `dff1356` 已通过 combined `33 passed`、完整 `168 passed` 与合规复核；overfit/preflight、Fold 0 和 tracked fold audit 尚未完成 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 完成、确认并推送前禁止开始 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
