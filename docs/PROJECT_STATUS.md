@@ -59,25 +59,27 @@ last_verified_commit: c81390b
 - Baseline-v2 为唯一 `ACTIVE` protocol；V2M 已完成、确认并推送。P0–P2 的环境、P1 geometry eligibility、P2 stable provenance 与 V2 primary manifest 可复用。
 - 用户已批准 P3 plan：只实现 consensus mask、ROI、pilot/full QA 与审计；不进入 P4 split、模型或训练。
 - 已确认的输入为 2,633 primary regression nodules、876 个 CT series 和 6,768 条可回连 pylidc 的 reader annotations；P1 exact-duplicate series 含 1 个 primary nodule，必须沿用已批准的 hashed-SOP selection policy。
+- 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
+- 已完成功能批次验证：P3 专项测试和完整测试均通过（完整套件 `107 passed`）；Phase Compliance Reviewer 已给出 `PASS`。本批次尚未执行真实 pilot build，故没有生成或审阅 QA 图，也没有 full ROI/audit 证据。
 
 ### 正在进行
 
-- 创建 P3 本地分支并更新阶段启动状态。
-- 正在实现只读取原始 DICOM 的 spatially sorted volume loader、50% consensus、tight-bbox/cube/resize pipeline 与确定性私有 ROI writer。
-- 自动测试与 pipeline 完成后，只生成 41 个 pilot QA 图；将在用户明确确认配准正确前暂停，不生成 full ROI。
+- P3 已位于本地 `p3-consensus-roi` 分支；pipeline、测试及 Git ignore 规则正等待状态同步后形成原子本地提交，尚未推送。
+- 下一项唯一允许的运行工作是执行 41 个 deterministic pilot QA build/verify，并向用户展示私有 QA 图与聚合统计。
+- 在用户明确确认 pilot 配准正确前暂停，不生成 full ROI，也不生成/提交 P3 full aggregate audit。
 
 ### 尚未完成
 
-- P3 command、synthetic tests、pilot build/verify、私有 ROI index、脱敏 aggregate audit 与 full build 均尚未完成。
-- Pilot QA 的用户确认、full 2,633 ROI、阶段级验收、双 agent 审查、阶段确认与推送均尚未发生。
+- 真实 pilot build/verify、私有 pilot ROI/index/QA 图及其统计尚未生成。
+- Pilot QA 的用户确认、full 2,633 ROI、私有 full index、脱敏 aggregate audit、阶段级验收、双 agent 审查、阶段确认与推送均尚未发生。
 
 ### 验收进度
 
 | P3 验收项 | 状态 | 证据 |
 |---|---|---|
-| P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；正式 pipeline/审计待实现 |
-| P3-R2 fixed crop/resize | `NOT_STARTED` | 待实现 D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation 与 deterministic NPZ |
-| P3-R3 QA | `NOT_STARTED` | 待生成 41 个 deterministic pilot QA 并等待用户确认 |
+| P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；正式 pipeline 与 synthetic boundary/alignment tests 已通过，真实 pilot/full execution 待完成 |
+| P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ 与 synthetic tests 已完成；真实 pilot/full ROI 证据待生成 |
+| P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection 与 QA writer 已实现；pilot QA 尚未运行，尚未获用户人工确认 |
 | 冻结协议保护 | `IN_PROGRESS` | 启动前 V1/V2 requirements/config 无 diff；每批次继续验证 |
 
 ### 未解决困难
@@ -267,7 +269,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | 已批准 pilot-first 实施计划；pipeline、pilot QA 与 full 验收待完成 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、synthetic tests 和 Phase Compliance Reviewer 已通过（完整 `107 passed`）；pilot QA 未运行，full 验收待完成 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
