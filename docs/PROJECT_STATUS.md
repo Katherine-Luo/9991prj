@@ -9,7 +9,7 @@ protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: V2M
-development_phase_status: AWAITING_USER_APPROVAL
+development_phase_status: COMPLETED
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: V2M
@@ -20,7 +20,7 @@ last_verified_commit: 8d9dc7b
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 技术验收与阶段合规审查已通过，正在等待用户确认；确认前不得进入 P3。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 已通过技术验收、双 agent 审查和用户确认并完成封存；P3 仍为 `NOT_STARTED`，其实施计划尚未制定或批准。
 
 ## 1. 阅读规则
 
@@ -39,14 +39,14 @@ last_verified_commit: 8d9dc7b
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `V2M Baseline-v2 Protocol Migration` |
-| 阶段状态 | `AWAITING_USER_APPROVAL` |
+| 阶段状态 | `COMPLETED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；V2M 技术阶段门已通过，正在等待用户明确确认 |
+| 当前阻塞项 | 无；V2M 已完成，P3 尚未开始 |
 | 恢复阶段 | `V2M` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-10 |
-| 状态依据 | 当前分支 `v2-protocol-migration`，HEAD `8d9dc7bb6af46e1b74a2737431ed0bd7406c3e83`；V2M 协议、配置、实现和脱敏审计已保存为 5 个本地 commits，86 项测试已验收，Phase Compliance Reviewer 为 `PASS`；分支尚未推送，`origin/main` 保持 `9b5202c098767b1de6c7faba3e438619107085e7`；P3 继续为 `NOT_STARTED` |
+| 状态依据 | V2M 技术证据 HEAD `8d9dc7bb6af46e1b74a2737431ed0bd7406c3e83` 与 approval-gate 状态 commit `8007319e29086d16dc4c17fc50d078d0bcb3b3c8` 已通过最终双 agent 审查；用户于 2026-08-10 明确确认 V2M。86 项测试通过，Baseline-v1 冻结文件无 diff；P3 继续为 `NOT_STARTED` |
 
 ## 3. 当前阶段：V2M Baseline-v2 Protocol Migration
 
@@ -67,18 +67,17 @@ last_verified_commit: 8d9dc7b
 - V1 requirements/config/resolved/hash immutable check 为 `PASS`，无 diff。
 - 完整测试为 `86 passed`；阶段级 Phase Compliance Reviewer 为 `PASS`，确认 V2M-R1–V2M-R5 证据充分且无 P3 或后续阶段实现。
 - `DIF-V2M-001` 已解决；`DIF-P10-001` 继续为 `OPEN`，不影响 V2M 阶段门。
-- 已创建本地 `v2-protocol-migration` 分支；V2M 已保存为 5 个原子 commits：`b4155c3`（迁移启动状态）、`5d8dffd`（V2 requirements 与协议治理）、`f07067e`（V2 config/resolved/hash）、`51528ea`（implementation/tests/Katana tooling）、`8d9dc7b`（脱敏 audit evidence）。这些 commits 均尚未推送。
+- V2M 实现与证据已保存为原子 commits：`b4155c3`（迁移启动状态）、`5d8dffd`（V2 requirements 与协议治理）、`f07067e`（V2 config/resolved/hash）、`51528ea`（implementation/tests/Katana tooling）、`8d9dc7b`（脱敏 audit evidence）、`8007319`（approval gate 状态）。
+- 用户已于 2026-08-10 明确确认 V2M，阶段生命周期已封存为 `COMPLETED`。
 
 ### 正在进行
 
-- 等待用户明确确认 V2M 阶段结果。
-- 在用户确认前保留当前本地 commits、审计和状态证据，不进入 P3、不合并、不推送。
+- 无 V2M 开发工作；本批次只完成确认后的状态封存与 GitHub 交付。
 
 ### 尚未完成
 
-- 用户尚未确认 V2M 阶段。
-- 用户确认后的完成状态封存、合并与 GitHub 推送尚未执行。
-- P3 保持 `NOT_STARTED`。
+- V2M 无尚未完成的验收项。
+- P3 保持 `NOT_STARTED`；其实施计划必须另行制定并获得用户批准。
 
 ### 验收进度
 
@@ -92,7 +91,8 @@ last_verified_commit: 8d9dc7b
 | V1 immutable artifacts | `PASS` | V1 requirements/config/resolved/hash 无 diff |
 | 完整自动测试 | `PASS` | `/Users/katherine/.conda/envs/lidc-baseline-v1-p0/bin/python -m pytest -q`：`86 passed` |
 | Phase Compliance Reviewer | `PASS` | 阶段级审查确认 V2M-R1–V2M-R5 全部满足、无越阶段实现，P3 保持未开始 |
-| Status Synchronization Reviewer | `UPDATED` | 状态已同步最终代码、配置、审计、测试、困难和阶段门结果；等待用户确认 |
+| Status Synchronization Reviewer | `UPDATED` | 独立审查已将用户确认、`COMPLETED` 生命周期、永久记录和未推送交付边界同步；P3 保持 `NOT_STARTED` |
+| 用户阶段确认 | `PASS` | 用户于 2026-08-10 明确回复“确认” |
 
 ### 未解决困难
 
@@ -107,8 +107,8 @@ last_verified_commit: 8d9dc7b
 
 ### 进入条件
 
-- V2M requirements/config、linear-regression smoke、V2 cohort rematerialization 和双 agent 审查全部通过。
-- V2M 获得用户明确确认并推送。
+- V2M requirements/config、linear-regression smoke、V2 cohort rematerialization、双 agent 审查和用户确认全部通过。
+- V2M 完成 commits 必须合并并推送，且本地 `main` 与 `origin/main` SHA 一致。
 
 ### 第一批任务
 
@@ -281,7 +281,7 @@ Bug 修复后：
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
-| V2M | Baseline-v2 Protocol Migration | `AWAITING_USER_APPROVAL` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试和阶段级 Phase Compliance Reviewer 均为 `PASS`；等待用户确认，P3 未开始 | 0 | 0 |
+| V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；P3 未开始 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -438,6 +438,25 @@ Bug 修复后：
 - P2 实现与审计 commits：`979706a`、`c1c1b95`、`28e46b1`、`d3f3995`；完成状态 commit：本提交。
 - 交付状态：`11e164e` 已 fast-forward 合并至 `main` 并推送 GitHub；本地 `main` 与 `origin/main` SHA 已核对一致，合并后的完整测试为 `64 passed`。
 
+### V2M 完成记录
+
+- 完成日期：2026-08-10
+- 生命周期：`COMPLETED`
+- 健康状态：`ON_TRACK`
+- 已完成内容：创建并冻结 Baseline-v2 requirements、protocol index、source/resolved config 与 SHA-256；将 active protocol 治理切换至 Baseline-v2；实现 unconstrained linear regression task interface、V2 cohort rematerialization、CPU/MPS/CUDA smoke 和 Katana CUDA job；保存 versioned 脱敏审计证据。
+- 科学协议结论：四模型只使用一个未裁剪连续 regression task head，`output_activation=none`、`output_constraint=unbounded`，直接以 normalized malignancy target 训练 MSE；不存在独立 binary head，secondary extreme binary evaluation 复用同一连续 score。
+- Cohort 证据：2,634 个 stable physical clusters 的 `nodule_uid` 集合与顺序均保持不变；2,633 primary regression nodules / 868 patients；1,073 secondary extreme nodules / 578 patients，其中 782 low、291 high；1,560 middle-spectrum nodules 保留在 primary；1 个 missing-required-target cluster 排除。
+- 配置与环境证据：V2 config SHA-256 为 `07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce`；CPU、MPS 和 Katana CUDA audit 均为 `PASS`。首次 Blackwell job `8960330` 的 `sm_120` incompatibility 已通过固定兼容 L40S request 解决，最终 job `8960395.kman.restech.unsw.edu.au` Exit 0。
+- 验收标准与证据：V2M-R1–V2M-R5 `PASS`；完整测试 `86 passed`；Phase Compliance Reviewer `PASS`；Status Synchronization Reviewer `UPDATED`；用户于 2026-08-10 明确确认。
+- 产物路径：`docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md`、`docs/PROTOCOL_INDEX.md`、`configs/baseline_v2.*`、`artifacts/baseline_v2/audit/`、本地 ignored 的 `artifacts/baseline_v2/manifests/nodules.parquet`、`src/lidc_baseline/regression.py`、`src/lidc_baseline/v2_migration.py`、`scripts/katana/v2_cuda_smoke.pbs` 和对应测试。
+- Baseline-v1 保护：V1 requirements/config/resolved/hash 无任何 diff；Baseline-v1 继续为 `SUPERSEDED/audit-only`。
+- 已解决困难：`DIF-V2M-001`。
+- 遗留困难：`DIF-P10-001` 继续为 `OPEN`，不影响 V2M 完成结论。
+- 明确未纳入内容：P3 consensus mask/ROI、split、模型训练或 P4–P10 实现；P3 保持 `NOT_STARTED`，实施计划尚未制定。
+- 阶段门结论：`PASS`
+- V2M commits：`b4155c3`、`5d8dffd`、`f07067e`、`51528ea`、`8d9dc7b`、`8007319`；完成状态 commit：本记录所在 commit。
+- 交付规则：本完成记录提交后，V2M 提交链必须 fast-forward 合并至 `main` 并推送 GitHub；本地 `main` 与 `origin/main` SHA 一致后才关闭本次交付。
+
 ### 阶段完成记录模板
 
 每个阶段门通过时，在本节追加一条永久记录：
@@ -477,3 +496,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_COMPLETED` | P2 | 用户确认 P2；永久记录已保存 cohort、provenance、审计与验收证据；已 fast-forward 合并至 main 并推送，P3 保持未开始 | `11e164e` |
 | 2026-08-10 | `PROTOCOL_MIGRATION_STARTED` | V2M | 用户批准 Baseline-v2 连续评分协议与 unconstrained linear regression output；开始 V2 requirements/config、smoke 和 cohort rematerialization，P3 保持未开始 | `v2-protocol-migration` 本地分支 |
 | 2026-08-10 | `PHASE_AWAITING_APPROVAL` | V2M | V2 requirements/config、CPU/MPS/CUDA smoke、cohort rematerialization、86 项测试与阶段级 Phase Compliance Reviewer 均为 `PASS`；5 个 V2M commits 已保存于本地但未推送，等待用户确认，P3 保持 `NOT_STARTED` | `b4155c3`、`5d8dffd`、`f07067e`、`51528ea`、`8d9dc7b`（local, unpushed） |
+| 2026-08-10 | `PHASE_COMPLETED` | V2M | 用户确认 V2M；Baseline-v2 active protocol、配置、linear-regression smoke、cohort rematerialization 和验收证据已永久封存，GitHub 交付按确认后流程执行；P3 保持 `NOT_STARTED` | 本次 V2M 完成状态提交 |
