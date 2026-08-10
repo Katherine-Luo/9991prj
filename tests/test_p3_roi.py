@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -24,6 +27,7 @@ from lidc_baseline.p3_roi import (
     consensus_physical_volume_mm3,
     deterministic_npz_bytes,
     enable_pylidc_numpy_compatibility,
+    exclusive_p3_build_lock,
     map_pylidc_mask_to_dhw,
     pad_to_cube,
     padding_ratio_for_dimensions,
@@ -376,3 +380,44 @@ def test_atomic_parquet_uses_unique_temporary_not_legacy_fixed_name(tmp_path: Pa
     _atomic_parquet(target, pd.DataFrame({"nodule_uid": ["one"], "status": ["WRITTEN"]}))
     assert pd.read_parquet(target).to_dict(orient="records") == [{"nodule_uid": "one", "status": "WRITTEN"}]
     assert legacy.read_bytes() == b"another writer"
+
+
+def test_p3_build_lock_rejects_a_second_writer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import fcntl
+    calls: list[int] = []
+
+    def flock(_: int, flags: int) -> None:
+        calls.append(flags)
+        if flags & fcntl.LOCK_EX:
+            raise BlockingIOError("busy")
+
+    monkeypatch.setattr("lidc_baseline.p3_roi.fcntl.flock", flock)
+    with pytest.raises(RuntimeError, match="P3_BUILD_ALREADY_RUNNING"):
+        with exclusive_p3_build_lock(tmp_path / ".p3_build.lock"):
+            pass
+    assert calls and calls[0] == (fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def test_p3_build_lock_rejects_an_actual_second_process(tmp_path: Path) -> None:
+    lock = tmp_path / ".p3_build.lock"
+    ready = tmp_path / "ready"
+    script = (
+        "import fcntl, pathlib, sys, time\n"
+        "lock, ready = map(pathlib.Path, sys.argv[1:])\n"
+        "with lock.open('a+') as stream:\n"
+        "    fcntl.flock(stream.fileno(), fcntl.LOCK_EX)\n"
+        "    ready.write_text('locked')\n"
+        "    time.sleep(5)\n"
+    )
+    process = subprocess.Popen([sys.executable, "-c", script, str(lock), str(ready)])
+    try:
+        deadline = time.monotonic() + 3.0
+        while not ready.exists() and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert ready.exists()
+        with pytest.raises(RuntimeError, match="P3_BUILD_ALREADY_RUNNING"):
+            with exclusive_p3_build_lock(lock):
+                pass
+    finally:
+        process.terminate()
+        process.wait(timeout=3)

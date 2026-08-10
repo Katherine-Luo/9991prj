@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import fcntl
 import hashlib
 import io
 import json
@@ -12,9 +13,10 @@ import os
 import tempfile
 import zipfile
 from collections import Counter, defaultdict
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Iterator, Sequence
 
 import numpy as np
 import pandas as pd
@@ -570,6 +572,21 @@ def _atomic_parquet(path: Path, frame: pd.DataFrame) -> None:
             temporary.unlink()
 
 
+@contextmanager
+def exclusive_p3_build_lock(path: Path) -> Iterator[None]:
+    """Allow exactly one P3 build to read, merge, and replace private progress."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+", encoding="utf-8") as stream:
+        try:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError("P3_BUILD_ALREADY_RUNNING") from error
+        try:
+            yield
+        finally:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
 def update_private_failures(path: Path, attempted_uids: Iterable[str], rows: list[dict[str, Any]]) -> None:
     """Replace failure state for attempted nodules while retaining unrelated failures."""
     attempted = set(attempted_uids)
@@ -725,6 +742,12 @@ def _process_one(row: dict[str, Any], annotations: list[Any], scan: Any, raw_dat
 
 
 def build(arguments: argparse.Namespace) -> dict[str, Any]:
+    """Run one serialized P3 build, guarding the private index merge lifecycle."""
+    with exclusive_p3_build_lock(Path("artifacts/baseline_v2/manifests/.p3_build.lock")):
+        return _build(arguments)
+
+
+def _build(arguments: argparse.Namespace) -> dict[str, Any]:
     config = load_config(arguments.config)
     config_hash = compute_config_sha256(config)
     raw_data, manifest, mapping, p1_audit = (Path(value).expanduser().resolve() for value in (arguments.raw_data, arguments.manifest, arguments.annotation_mapping, arguments.p1_audit))
