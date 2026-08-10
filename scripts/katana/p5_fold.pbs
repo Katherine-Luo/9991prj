@@ -1,0 +1,44 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:ngpus=1:mem=46gb:gpu_model=L40S
+#PBS -l walltime=48:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+fold_index="${P5_FOLD_INDEX:?Set P5_FOLD_INDEX to an approved fold index}"
+case "$fold_index" in
+  0|1|2|3|4) ;;
+  *) echo "Invalid P5_FOLD_INDEX: $fold_index" >&2; exit 2;;
+esac
+if [[ "$fold_index" != "0" && "${P5_STAGE_B_APPROVED:-0}" != "1" ]]; then
+  echo "Folds 1-4 require explicit Stage B approval." >&2
+  exit 2
+fi
+
+code_directory="${KATANA_P5_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+run_directory="$code_directory/runs/baseline_v2/blackbox/fold_$fold_index"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+nvidia-smi
+"$python_binary" -m lidc_baseline.p5_katana verify-stage-a \
+  --repository-root "$code_directory"
+
+if [[ ! -f "$run_directory/training_complete.json" ]]; then
+  if [[ -f "$run_directory/last.pt" ]]; then
+    "$python_binary" -m lidc_baseline.p5_blackbox train \
+      --fold "$fold_index" --device cuda --num-workers 4 --resume
+  else
+    "$python_binary" -m lidc_baseline.p5_blackbox train \
+      --fold "$fold_index" --device cuda --num-workers 4
+  fi
+fi
+
+if [[ ! -f "$run_directory/test_evaluation.json" ]]; then
+  "$python_binary" -m lidc_baseline.p5_blackbox evaluate-test \
+    --fold "$fold_index" --device cuda --num-workers 4
+fi
+
+"$python_binary" -m lidc_baseline.p5_blackbox verify --fold "$fold_index"
