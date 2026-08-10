@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P4
 next_phase: P5
 last_updated: 2026-08-11
-last_verified_commit: d1f9b39
+last_verified_commit: 6b2342f
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: d1f9b39
 | 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P4 本地实现、Katana 同步与 CUDA smoke 尚未完成。P5 仍不得开始。 |
+| 当前阻塞项 | 无；P4 本地 split/statistics/shared-initialization 实现与真实 build/verify 已通过，Katana 同步、L40S CUDA smoke 和 tracked aggregate audit 尚未完成。P5 仍不得开始。 |
 | 恢复阶段 | `P4` |
 | 下一阶段 | `P5 Black-box DenseNet regression`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P3 已由 `d1f9b39` 完成最终状态交付，本地 `main` 与 `origin/main` 一致。用户已批准 P4 patient-grouped split、train-only statistics、fold-specific shared encoder initialization 与 Katana CUDA loading/hash smoke 计划；本地分支为 `p4-splits-shared-init`。P4 技术产物、测试和审查尚未完成；P5 为 `NOT_STARTED`。 |
+| 状态依据 | P3 已由 `d1f9b39` 完成最终状态交付；P4 启动状态 commit 为 `4658038`，split/statistics/shared-encoder 实现与测试 commit 为 `6b2342f`，均位于本地分支 `p4-splits-shared-init` 且未推送。真实 private manifest/ROI build/verify 为 2,633 nodules / 868 patients；五折固定 counts、exact ROI hash、train-only statistics 和四 consumer shared encoder hashes 均通过；P4 专项 `9 passed`、完整套件 `127 passed`，当前批次 Phase Compliance Reviewer 为 `PASS`。Katana 尚未同步或运行 smoke，P4 继续为 `IN_PROGRESS`，P5 为 `NOT_STARTED`。 |
 
 ## 3. 当前阶段：P4 Patient-level split 与共享初始化
 
@@ -60,26 +60,33 @@ last_verified_commit: d1f9b39
 - 用户已批准 P4 实施计划，固定采用结节五级 strata + patient group 约束的 deterministic `StratifiedGroupKFold`。
 - 已确认 P4 包含 Katana 早期同步：仅传输代码、V2 ROI、private manifest、splits 和 encoder initializations，不上传原始 DICOM，不进行训练。
 - 当前 Katana scratch 约有 122 GiB 可用，P4 预计新增工作集低于 2 GiB；扩容申请未回复不阻塞本阶段。
+- `6b2342f` 已实现 `p4_prepare build/verify`、patient-key domain-separated hashing、patient-grouped outer/inner split、train-only statistics guard、shared encoder artifact writer/loader 与 provenance/hash 验证；该 commit 仅在本地 P4 分支，尚未推送。
+- 已在真实 private V2 manifest、ROI index 和 2,633 个 ROI 上完成 build/verify：primary cohort 为 2,633 nodules / 868 patients，ROI 文件集合与逐文件 SHA-256 均匹配，`roi_set_sha256=7b3865d3a587ea485457ce5d1cc9e348bf722958469f84e7e016fe79d0981977`，总量为 `1,002,688,586` bytes。
+- 五折 train/validation/test 的 nodule/patient counts 精确匹配预注册表：fold 0 为 `1882/611, 272/86, 479/171`；fold 1 为 `1858/602, 273/86, 502/180`；fold 2 为 `1853/612, 241/87, 539/169`；fold 3 为 `1813/608, 271/86, 549/174`；fold 4 为 `1811/607, 258/87, 564/174`。
+- 每折 split 均保存并验证 train-only statistics、五级 strata、low/high extremes、source fingerprints 与 canonical split SHA-256；patient/nodule partitions 互斥，pooled outer-test 精确覆盖全部 2,633 nodules / 868 patients。
+- 已生成并验证五个 private encoder initialization artifacts。每折 Black-box、Standard CBM、CEM、GAM 四个独立 consumer 加载后的 semantic encoder hash 完全一致；不同 fold hashes 不同，artifact 使用 deterministic legacy serialization，重复生成字节一致。
+- P4 专项测试为 `9 passed`，完整测试套件为 `127 passed`；当前批次 Phase Compliance Reviewer 为 `PASS`，确认本地实现属于 P4 且未进入 P5。
 
 ### 正在进行
 
-- P4 启动状态已建立；正在实现 split/statistics、shared initialization 与 Katana smoke 接口。
+- P4 本地实现与测试已提交为 `6b2342f`；正在继续实现 P4 aggregate audit、KDM transfer manifest 和 Katana L40S loading/hash smoke。
 
 ### 尚未完成
 
-- P4 split JSON、train-only statistics、五个 encoder initialization artifacts、tracked aggregate audit 尚未生成。
-- 本地 P4 自动测试、真实 manifest/ROI verify、Katana 同步与 L40S smoke 尚未完成。
-- P4 阶段级双 agent 审查和用户确认尚未完成；P5 不得开始。
+- Tracked P4 aggregate audit、Katana transfer manifest/PBS smoke interface 尚未生成。
+- P4 private inputs/outputs 尚未同步至 Katana，L40S CUDA loading/hash smoke 尚未执行。
+- P4 实现与测试已保存为本地原子 commit `6b2342f`，未经 P4 最终确认不得推送。
+- P4 阶段级最终双 agent 审查和用户确认尚未完成；P5 不得开始。
 
 ### 验收进度
 
 | P4 验收项 | 状态 | 证据 |
 |---|---|---|
-| P4-R1 patient-grouped outer/inner split | `PENDING` | 待实现和生成五折 split |
-| P4-R2 train-only statistics | `PENDING` | 待实现 leakage guard 和 fold statistics |
-| P4-R3 shared encoder initialization | `PENDING` | 待生成五折 artifacts 并验证四模型 consumer hashes |
+| P4-R1 patient-grouped outer/inner split | `LOCAL_PASS` | 真实 build/verify 为 2,633 nodules / 868 patients；五折 counts 精确匹配预注册表；patient partitions 互斥且 pooled outer-test 完整覆盖 cohort；validation/test 均含 low/high extremes |
+| P4-R2 train-only statistics | `LOCAL_PASS` | 每折统计只读取注册的 train UID；validation/unknown UID leakage guard、split/source hash guard 和 patient leakage tests 通过 |
+| P4-R3 shared encoder initialization | `LOCAL_PASS` | 五折 private artifacts 已生成；每折四 consumer semantic hashes 一致，不同 folds 不同；deterministic legacy bytes、provenance/corruption/overwrite guards 通过 |
 | Katana CUDA loading/hash smoke | `PENDING` | 待通过 KDM 同步并提交 L40S PBS job |
-| 冻结协议保护与自动测试 | `PENDING` | 待完成最终验证与双 agent 审查 |
+| 冻结协议保护与自动测试 | `LOCAL_PASS` | P4 专项 `9 passed`、完整 `127 passed`；当前批次 Phase Compliance Reviewer `PASS`。阶段级最终复验仍须在 Katana smoke 与 aggregate audit 后执行 |
 
 ### 未解决困难
 
@@ -268,7 +275,7 @@ Bug 修复后：
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
-| P4 | Patient-level split 与共享初始化 | `IN_PROGRESS` | `ON_TRACK` | 用户已批准实施计划；split/statistics、shared initialization 和 Katana smoke 正在实现 | 0 | 0 |
+| P4 | Patient-level split 与共享初始化 | `IN_PROGRESS` | `ON_TRACK` | 本地 split/statistics/shared initialization、真实 2,633/868 build/verify、P4 `9 passed` 与完整 `127 passed` 均为 `LOCAL_PASS`；Katana 同步/smoke、tracked audit、最终阶段审查与用户确认待完成 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -561,3 +568,4 @@ Bug 修复后：
 | 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `BUG_RESOLVED` | P3 | full verify 为 2,633/2,633，aggregate audit 为 2,633 个成功/非空 ROI、0 failures、876 个 CT series、1 次 exact-duplicate policy；P3 tests `32 passed`、完整 tests `118 passed`。`a790e54` 的 exclusive `flock` 已以实际第二进程回归测试验证，`BUG-P3-002` 关闭。P3 技术阶段门和双 agent 审查均通过，当时正在等待用户最终确认；P4 当时保持 `NOT_STARTED`。 | `a790e54`、`ac5c9ec`（本地，未推送）；本次状态同步提交 |
 | 2026-08-11 | `PHASE_COMPLETED` / `DELIVERED` | P3 | 用户明确确认 P3；P3 永久记录已写入 full ROI/QA/audit、测试、Bug 与 storage 证据，并已 fast-forward 合并、推送至 GitHub。`main`、`origin/main` 与 `HEAD` 当时均为 `dc8c356`；P4 在该交付记录形成时保持 `NOT_STARTED`。 | `dc8c356` |
 | 2026-08-11 | `PHASE_STARTED` | P4 | 用户批准 patient-grouped five-fold split、train-only statistics、每折 shared DenseNet initialization 与 Katana L40S loading/hash smoke 计划；P4 进入 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `p4-splits-shared-init` 本地分支 |
+| 2026-08-11 | `LOCAL_IMPLEMENTATION_VERIFIED` | P4 | 本地 P4 implementation/tests 已完成真实 private build/verify：2,633 nodules / 868 patients、五折固定 counts、exact ROI file hashes、train-only statistics 与每折四 consumer shared encoder hashes 均通过；P4 `9 passed`、完整 `127 passed`，当前批次 Phase Compliance Reviewer `PASS`。Katana 同步/L40S smoke 与 tracked aggregate audit 尚未完成，因此 P4 保持 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `6b2342f`（本地，未推送） |
