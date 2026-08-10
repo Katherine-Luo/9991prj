@@ -17,11 +17,16 @@ from lidc_baseline.p3_roi import (
     assert_deidentified_audit,
     apply_duplicate_policy,
     convert_pixels_to_hu,
+    consensus_physical_volume_mm3,
     deterministic_npz_bytes,
     enable_pylidc_numpy_compatibility,
     map_pylidc_mask_to_dhw,
     pad_to_cube,
+    padding_ratio_for_dimensions,
+    pilot_statistics_source_fingerprint,
     require_pilot_confirmation,
+    reusable_pilot_statistics,
+    scan_geometry_fingerprint,
     resize_roi,
     sort_dicom_slices,
     tight_bbox,
@@ -121,6 +126,9 @@ def test_different_content_duplicate_blocks_even_with_selection(monkeypatch: pyt
 def test_rescale_slope_intercept_hu_conversion() -> None:
     pixels = np.array([[-1000, 100]], dtype=np.int16)
     assert np.array_equal(convert_pixels_to_hu(pixels, 2.0, -1024.0), np.array([[-3024.0, -824.0]], dtype=np.float32))
+    assert consensus_physical_volume_mm3(10, (2.0, 0.5, 0.5)) == pytest.approx(5.0)
+    with pytest.raises(ValueError, match="CONSENSUS_VOLUME_SPACING_INVALID"):
+        consensus_physical_volume_mm3(1, (1.0, 0.0, 1.0))
 
 
 def test_tight_bbox_and_high_side_odd_padding() -> None:
@@ -133,6 +141,7 @@ def test_tight_bbox_and_high_side_odd_padding() -> None:
     assert cube_image.shape == cube_mask.shape == (3, 3, 3)
     assert padding == ((0, 0), (0, 1), (1, 1))
     assert cube_image[0, 2, 0] == HU_MIN
+    assert padding_ratio_for_dimensions([3, 2, 1]) == pytest.approx(1.0 - (6 / 27))
 
 
 def test_resize_uses_trilinear_without_align_corners_and_nearest_binary_mask() -> None:
@@ -209,6 +218,22 @@ def test_full_build_requires_matching_user_pilot_confirmation(tmp_path: Path, mo
     import hashlib
     marker.write_text(json.dumps({"user_confirmation": True, "config_sha256": "config", "pilot_selection_sha256": hashlib.sha256(selection.read_bytes()).hexdigest()}), encoding="utf-8")
     require_pilot_confirmation("config", selection)
+
+
+def test_pilot_statistics_cache_reuses_only_matching_source_geometry() -> None:
+    row = {"nodule_uid": "one", "canonical_xml_sha256": "xml", "annotation_source_fingerprints": "annotations", "source_dicom_sop_fingerprints": "sops-a", "series_instance_uid": "series"}
+    class Scan:
+        slice_zvals = np.array([1.0, 2.0])
+        slice_spacing = 1.0
+        pixel_spacing = 0.5
+    first_geometry = scan_geometry_fingerprint(Scan())
+    matching = {"nodule_uid": "one", "source_fingerprint": pilot_statistics_source_fingerprint(row, first_geometry), "physical_volume_mm3": 1.0}
+    assert reusable_pilot_statistics([matching], [row], {"one": first_geometry}) == {"one": matching}
+    changed_geometry = scan_geometry_fingerprint(type("Changed", (), {"slice_zvals": np.array([1.0, 3.0]), "slice_spacing": 2.0, "pixel_spacing": 0.5})())
+    assert reusable_pilot_statistics([matching], [row], {"one": changed_geometry}) == {}
+    missing = {"nodule_uid": "two", **{key: value for key, value in row.items() if key != "nodule_uid"}}
+    resumed = reusable_pilot_statistics([matching], [row, missing], {"one": first_geometry, "two": first_geometry})
+    assert set(resumed) == {"one"}
 
 
 def test_roi_verifier_rejects_bad_status_uid_and_metadata_hash(tmp_path: Path) -> None:

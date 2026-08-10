@@ -432,7 +432,7 @@ def validate_annotation_mapping(rows: list[dict[str, Any]], mapping_path: Path) 
         raise ValueError("ANNOTATION_MAPPING_MANIFEST_MISMATCH")
 
 
-def _pilot_uids(rows: list[dict[str, Any]], masks: dict[str, np.ndarray], seed: int, exact_uid: str | None) -> list[str]:
+def _pilot_uids(rows: list[dict[str, Any]], statistics: dict[str, dict[str, Any]], seed: int, exact_uid: str | None) -> list[str]:
     """Select 41 deterministic QA samples according to the approved strata."""
     rng = np.random.default_rng(seed)
     selected: list[str] = []
@@ -443,7 +443,7 @@ def _pilot_uids(rows: list[dict[str, Any]], masks: dict[str, np.ndarray], seed: 
         options = sorted(by_readers[count], key=lambda item: str(item["nodule_uid"]))
         picks = rng.choice(len(options), size=min(6, len(options)), replace=False) if options else []
         selected.extend(str(options[int(index)]["nodule_uid"]) for index in sorted(picks))
-    ordered_volume = sorted(rows, key=lambda row: (int(masks[str(row["nodule_uid"])].sum()), str(row["nodule_uid"])))
+    ordered_volume = sorted(rows, key=lambda row: (float(statistics[str(row["nodule_uid"])]["physical_volume_mm3"]), str(row["nodule_uid"])))
     selected.extend(str(row["nodule_uid"]) for row in ordered_volume[:8])
     selected.extend(str(row["nodule_uid"]) for row in ordered_volume[-8:])
     if exact_uid is not None:
@@ -452,7 +452,7 @@ def _pilot_uids(rows: list[dict[str, Any]], masks: dict[str, np.ndarray], seed: 
     for uid in selected:
         if uid not in unique:
             unique.append(uid)
-    fallback = sorted(rows, key=lambda row: (-padding_ratio_for_mask(masks[str(row["nodule_uid"])]), str(row["nodule_uid"])))
+    fallback = sorted(rows, key=lambda row: (-float(statistics[str(row["nodule_uid"])]["padding_ratio"]), str(row["nodule_uid"])))
     for row in fallback:
         if len(unique) >= PILOT_SIZE:
             break
@@ -464,11 +464,42 @@ def _pilot_uids(rows: list[dict[str, Any]], masks: dict[str, np.ndarray], seed: 
     return unique
 
 
-def padding_ratio_for_mask(mask: np.ndarray) -> float:
-    bbox = tight_bbox(mask)
-    dimensions = [item.stop - item.start for item in bbox]
+def padding_ratio_for_dimensions(dimensions: Sequence[int]) -> float:
     edge = max(dimensions)
     return 1.0 - (math.prod(dimensions) / float(edge ** 3))
+
+
+def consensus_physical_volume_mm3(voxels: int, spacing_dhw: Sequence[float]) -> float:
+    """Calculate consensus physical volume from its voxel count and D,H,W spacing."""
+    if len(spacing_dhw) != 3 or any(not math.isfinite(float(value)) or float(value) <= 0.0 for value in spacing_dhw):
+        raise ValueError("CONSENSUS_VOLUME_SPACING_INVALID")
+    return float(voxels) * math.prod(float(value) for value in spacing_dhw)
+
+
+def scan_geometry_fingerprint(scan: Any) -> str:
+    """Fingerprint geometry values on which mask mapping and physical volume depend."""
+    return _sha256(_canonical_json({
+        "slice_zvals": [float(value) for value in scan.slice_zvals],
+        "slice_spacing": abs(float(scan.slice_spacing)),
+        "pixel_spacing": float(scan.pixel_spacing),
+    }))
+
+
+def pilot_statistics_source_fingerprint(row: dict[str, Any], geometry_fingerprint: str) -> str:
+    """Bind resumable pilot statistics to annotation and DICOM geometry provenance."""
+    return _sha256(_canonical_json({
+        "canonical_xml_sha256": str(row["canonical_xml_sha256"]),
+        "annotation_source_fingerprints": str(row["annotation_source_fingerprints"]),
+        "source_dicom_sop_fingerprints": str(row["source_dicom_sop_fingerprints"]),
+        "series_instance_uid": str(row["series_instance_uid"]),
+        "dicom_geometry_fingerprint": geometry_fingerprint,
+    }))
+
+
+def reusable_pilot_statistics(cached: Iterable[dict[str, Any]], rows: Iterable[dict[str, Any]], geometry_fingerprints: dict[str, str]) -> dict[str, dict[str, Any]]:
+    """Return only cache rows whose source provenance matches the current manifest."""
+    expected = {str(row["nodule_uid"]): pilot_statistics_source_fingerprint(row, geometry_fingerprints[str(row["nodule_uid"])]) for row in rows}
+    return {str(row["nodule_uid"]): row for row in cached if str(row.get("source_fingerprint", "")) == expected.get(str(row["nodule_uid"]))}
 
 
 def _write_index(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -578,17 +609,35 @@ def confirm_pilot(config_path: str | Path, confirmation_note: str) -> dict[str, 
     return payload
 
 
-def _precompute_masks(rows: list[dict[str, Any]], grouped: dict[str, list[Any]], scans: dict[str, Any]) -> dict[str, np.ndarray]:
-    """Create consensus in pylidc I,J,K frame for deterministic pilot sampling."""
+def _precompute_pilot_statistics(rows: list[dict[str, Any]], grouped: dict[str, list[Any]], scans: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Cache resumable local consensus volumes/bboxes for deterministic pilot selection."""
     from pylidc.utils import consensus
 
-    result: dict[str, np.ndarray] = {}
+    cache_path = Path("artifacts/baseline_v2/manifests/pilot_consensus_statistics.parquet")
+    cached = pd.read_parquet(cache_path).to_dict(orient="records") if cache_path.exists() else []
+    geometries = {str(row["nodule_uid"]): scan_geometry_fingerprint(scans[str(row["nodule_uid"])]) for row in rows}
+    expected_source = {str(row["nodule_uid"]): pilot_statistics_source_fingerprint(row, geometries[str(row["nodule_uid"])]) for row in rows}
+    result = reusable_pilot_statistics(cached, rows, geometries)
+    changed = False
     for row in rows:
         uid = str(row["nodule_uid"])
+        if uid in result:
+            continue
         mask, _ = consensus(grouped[uid], clevel=0.5, ret_masks=False)
         if not bool(mask.any()):
             raise ValueError(f"CONSENSUS_MASK_EMPTY:{uid}")
-        result[uid] = np.transpose(mask.astype(np.uint8), (2, 0, 1))
+        bbox = tight_bbox(np.transpose(mask.astype(np.uint8), (2, 0, 1)))
+        dimensions = [item.stop - item.start for item in bbox]
+        spacing = (abs(float(scans[uid].slice_spacing)), float(scans[uid].pixel_spacing), float(scans[uid].pixel_spacing))
+        voxels = int(mask.sum())
+        result[uid] = {"nodule_uid": uid, "source_fingerprint": expected_source[uid], "mask_voxels": voxels, "physical_volume_mm3": consensus_physical_volume_mm3(voxels, spacing), "bbox_dimensions_dhw": _canonical_json(dimensions), "padding_ratio": padding_ratio_for_dimensions(dimensions)}
+        changed = True
+        if len(result) % 20 == 0:
+            _write_index(cache_path, list(result.values()))
+    if changed:
+        _write_index(cache_path, list(result.values()))
+    if len(result) != len(rows):
+        raise ValueError("PILOT_CONSENSUS_STATISTICS_INCOMPLETE")
     return result
 
 
@@ -624,11 +673,11 @@ def build(arguments: argparse.Namespace) -> dict[str, Any]:
     rows = _manifest_rows(manifest)
     validate_annotation_mapping(rows, mapping)
     grouped, scans = _consensus_for_rows(rows)
-    all_masks = _precompute_masks(rows, grouped, scans)
     exact_uid = _exact_primary_uid(rows, p1_audit)
     selection_path = Path("reports/baseline_v2/p3_qa/pilot_selection.json")
     if arguments.scope == "pilot":
-        selected = _pilot_uids(rows, all_masks, int(config["reproducibility"]["base_seed"]), exact_uid)
+        statistics = _precompute_pilot_statistics(rows, grouped, scans)
+        selected = _pilot_uids(rows, statistics, int(config["reproducibility"]["base_seed"]), exact_uid)
         write_json(selection_path, {"scope": "pilot", "nodule_uids": selected, "seed": int(config["reproducibility"]["base_seed"]), "count": len(selected)})
         targets = [row for row in rows if str(row["nodule_uid"]) in set(selected)]
     else:
