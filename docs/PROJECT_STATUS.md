@@ -63,7 +63,7 @@ last_verified_commit: c81390b
 - 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
 - 已完成可断点续跑的 pilot 选择统计保护：私有 `pilot_consensus_statistics.parquet` 记录 consensus physical volume、bbox/cube padding ratio，并以 canonical XML、annotation/SOP provenance 和 scan geometry fingerprint 验证缓存复用；来源或几何变化时必须重新计算，不能复用旧统计。
 - 已完成首次真实 pilot build：固定选择的 41 个样本均已完成 ROI 写入；其中 33 个样本成功生成 QA 图。其余 8 个 single-slice source crop 在 QA contour rendering 时失败，但该错误发生在 ROI 原子写入之后，8 个 ROI 均已写入，未发生原始数据修改或 sample exclusion。
-- 已定位并修复 `BUG-P3-001`：Matplotlib 不能为 `1×N` 或 `N×1` 的 single-slice plane 绘制 contour。QA writer 现仅在二维平面每个维度均至少为 2 且 mask 非空时叠加 contour；已新增回归测试，修复后 P3 专项测试为 `23 passed`、完整套件为 `109 passed`，Phase Compliance Reviewer 为 `PASS`。仍须以最终代码完成完整 41-sample pilot retry/verify。
+- 已定位并修复 `BUG-P3-001`：Matplotlib 不能为 `1×N` 或 `N×1` 的 single-slice plane 绘制 contour。QA writer 对尺寸不足的 plane 不调用 contour；若原本可绘制的 contour 仍因退化 topology 抛出 `TypeError`，则回退为半透明 binary-mask overlay，以保留可见空间证据。已新增回归测试；修复后 P3 专项测试为 `24 passed`、完整套件为 `110 passed`，Phase Compliance Reviewer 为 `PASS`。仍须以最终代码完成完整 41-sample pilot retry/verify。
 
 ### 正在进行
 
@@ -272,7 +272,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `AT_RISK` | pipeline、cache provenance protection、synthetic tests 和 Phase Compliance Reviewer 已通过（修复后完整 `109 passed`）；首次 pilot 为 33/41 QA 图成功，single-slice QA rendering 修复处于验证中；full 验收待完成 | 1 | 0 |
+| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `AT_RISK` | pipeline、cache provenance protection、synthetic tests 和 Phase Compliance Reviewer 已通过（修复后完整 `110 passed`）；首次 pilot 为 33/41 QA 图成功，QA visible-mask fallback 修复处于真实 pilot 验证中；full 验收待完成 | 1 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -320,8 +320,8 @@ Bug 修复后：
 - 现象：首次 pilot 的 41 个确定性样本中，33 个 QA 图成功生成；8 个 source crop 在 depth、height 或 width 方向只有一个 voxel，Matplotlib contour 对该 `1×N` 或 `N×1` plane 抛出 `TypeError`。
 - 复现方式：对含单 voxel 轴的 non-empty source mask 调用 `_qa_image`；修复前会在 contour overlay 处失败。
 - 根因：QA writer 未在调用 Matplotlib contour 前检查 plane 的两个空间维度是否均至少为 2。
-- 修复：仅当 plane 两维均至少为 2 且 binary mask 非空时绘制 contour；QA image 和 ROI 构建的其余逻辑不变。新增 single-slice QA writer 回归测试。
-- 验证命令与结果：修复后 `pytest -q tests/test_p3_roi.py` 为 `23 passed`。仍须用最终代码重试完整 41-sample pilot build/verify，确认 41 个 QA 图均可生成后，才可请求用户进行配准确认。
+- 修复：仅当 plane 两维均至少为 2 且 binary mask 非空时尝试绘制 contour；如果 Matplotlib 对退化 contour topology 仍抛出 `TypeError`，改用半透明 binary-mask overlay，确保 QA 不会因绘图失败而丢失可见 mask 证据。QA image 和 ROI 构建的其余逻辑不变。新增 single-slice 与 contour-raises visible-fallback 回归测试。
+- 验证命令与结果：修复后 `pytest -q tests/test_p3_roi.py` 为 `24 passed`，完整套件为 `110 passed`；冻结 V1/V2 requirements/config 无 diff。仍须用最终代码重试完整 41-sample pilot build/verify，确认 41 个 QA 图均可生成后，才可请求用户进行配准确认。
 - 未解决事项：完整 pilot retry/verify 与用户 QA 确认尚未完成；不得据首次 33 个成功图声明 pilot 通过。
 - 修复 commit：待本开发批次的功能原子 commit。
 
