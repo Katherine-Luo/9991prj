@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P3
-development_phase_status: COMPLETED
+development_phase: P4
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P3
-next_phase: P4
+resume_phase: P4
+next_phase: P5
 last_updated: 2026-08-11
-last_verified_commit: dc8c356
+last_verified_commit: d1f9b39
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 与 P3 均已完成、确认并推送；P4 尚未开始。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 与 P3 均已完成、确认并推送；用户已批准 P4 实施计划，P4 正在开发，P5 尚未开始。
 
 ## 1. 阅读规则
 
@@ -38,73 +38,66 @@ last_verified_commit: dc8c356
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P3 Consensus mask、确定性 3D ROI 与 QA` |
-| 阶段状态 | `COMPLETED` |
+| 当前开发阶段 | `P4 Patient-level split 与共享初始化` |
+| 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
-| 活动 Bug | 无；`BUG-P3-001` 与 `BUG-P3-002` 均已解决 |
-| 当前阻塞项 | 无；P3 已完成、fast-forward 合并并推送。P4 仍不得开始，直至其实施计划获批准。 |
-| 恢复阶段 | `P3` |
-| 下一阶段 | `P4 Patient-level split 与共享初始化`（保持 `NOT_STARTED`） |
+| 活动 Bug | 无 |
+| 当前阻塞项 | 无；P4 本地实现、Katana 同步与 CUDA smoke 尚未完成。P5 仍不得开始。 |
+| 恢复阶段 | `P4` |
+| 下一阶段 | `P5 Black-box DenseNet regression`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | 用户已于 2026-08-11 明确确认 P3。P3 已由 `dc8c356` fast-forward 合并并推送；本地 `main`、`origin/main` 与 `HEAD` 均为 `dc8c356`。full build/verify 为 2,633/2,633，0 private failures；P3 专项测试 `32 passed`、合并后完整测试 `118 passed`；P3-R1–P3-R3、冻结协议保护与阶段级双 agent 审查均为 `PASS`。P4 仍为 `NOT_STARTED`。 |
+| 状态依据 | P3 已由 `d1f9b39` 完成最终状态交付，本地 `main` 与 `origin/main` 一致。用户已批准 P4 patient-grouped split、train-only statistics、fold-specific shared encoder initialization 与 Katana CUDA loading/hash smoke 计划；本地分支为 `p4-splits-shared-init`。P4 技术产物、测试和审查尚未完成；P5 为 `NOT_STARTED`。 |
 
-## 3. 当前阶段：P3 Consensus mask、确定性 3D ROI 与 QA
+## 3. 当前阶段：P4 Patient-level split 与共享初始化
 
 ### 阶段目标
 
-为 2,633 个 primary regression physical nodules 构建 50% consensus masks、确定性 `64³` image/mask ROIs 与脱敏 aggregate QA audit；本批次先完成并人工确认 41 个 pilot QA 样本。
+为 2,633 个 primary regression nodules 建立 patient-grouped five-fold outer/inner split、严格 train-only statistics 边界，以及每折供四模型共同加载的 DenseNet-121 encoder initialization；随后在 Katana L40S 上完成真实 ROI CUDA 加载和 hash smoke，不进行训练。
 
 ### 已完成
 
-- Baseline-v2 为唯一 `ACTIVE` protocol；V2M 已完成、确认并推送。P0–P2 的环境、P1 geometry eligibility、P2 stable provenance 与 V2 primary manifest 可复用。
-- 用户已批准 P3 plan：只实现 consensus mask、ROI、pilot/full QA 与审计；不进入 P4 split、模型或训练。
-- 已确认的输入为 2,633 primary regression nodules、876 个 CT series 和 6,768 条可回连 pylidc 的 reader annotations；P1 exact-duplicate series 含 1 个 primary nodule，必须沿用已批准的 hashed-SOP selection policy。
-- 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
-- 已完成可断点续跑的 pilot 选择统计保护：私有 `pilot_consensus_statistics.parquet` 记录 consensus physical volume、bbox/cube padding ratio，并以 canonical XML、annotation/SOP provenance 和 scan geometry fingerprint 验证缓存复用；来源或几何变化时必须重新计算，不能复用旧统计。
-- 已完成最终真实 pilot build/verify：固定的 41 个选中样本均已写入可复用 ROI，41/41 个 QA 图均已生成，`verify --scope pilot` 验证 41/41 个 ROI。私有 `roi_failures.parquet` 当前为 0 条记录；原始 DICOM 修改数为 0。
-- 已完成 full-build 可恢复性实现与回归测试：已有 ROI 只有在 `nodule_uid`、config hash、source provenance、ROI content hash、interface 和非空 binary mask 全部复核通过时才可复用；不匹配或损坏的已有 ROI 默认阻断，只有显式 `--overwrite` 才允许重建。full build 按 CT series 加载一次 volume，并在每个 series 完成后持久化私有 ROI index 与 failure registry，因此中断后不会信任未验证 index 或重复读取已验证 ROI。该批次 P3 专项测试 `29 passed`、完整套件 `115 passed`，Phase Compliance Reviewer 为 `PASS`。
-- 已完成真实 private full build 与 verify。`roi_index.parquet` 记录 2,633/2,633 个 primary ROI（`1,967 WRITTEN`、`666 REUSED`），`roi_failures.parquet` 为 0 行；`p3_roi verify --scope full` 复核 2,633/2,633 个 ROI。脱敏 aggregate audit 报告 `roi_success=2,633`、`nonempty_masks=2,633`、876 个 CT series、1 次 exact-duplicate policy 应用、0 failures 与 0 个原始 DICOM 修改。
-- 已复核 P3 输出存储量：2,633 个私有 ROI 合计 `1,002,688,586` bytes（约 `0.93 GiB`）；这一已测量值已作为 P10 storage 风险后续估算的输入，未上传原始 DICOM。
-- Pilot 覆盖 reader count `1–4`（分别为 16、9、9、7 个样本），并包含 8 个最小与 8 个最大 consensus physical-volume 候选和 exact-duplicate series 的 1 个 primary nodule（其 hashed-SOP selection 已应用）。41 个样本的 consensus physical volume 覆盖全 cohort 范围 `4.39453125–29067.248916625977 mm³`。
-- 已定位并修复 `BUG-P3-001`：Matplotlib 不能为 `1×N` 或 `N×1` 的 single-slice plane 绘制 contour。QA writer 对尺寸不足的 plane 不调用 contour；若原本可绘制的 contour 仍因退化 topology 抛出 `TypeError`，则回退为半透明 binary-mask overlay，以保留可见空间证据。补充修复 failure registry，使重试成功的结节会从私有 failure registry 清除、未尝试的失败仍保留；已新增回归测试。修复后 P3 专项测试为 `25 passed`、完整套件为 `111 passed`，最终 pilot 41/41 build/QA/verify 完成，Phase Compliance Reviewer 为 `PASS`。该 Bug 已为 `RESOLVED`。
-- 早期 pilot retry 留下的 6 条非当前 selection index 状态已由 full build 的 provenance-checked reuse/重建覆盖；最终 full index 只含 2,633 条 primary ROI 记录，private failure registry 为 0。
-- 已关闭 `BUG-P3-002`：`a790e54` 为 full build 的私有 progress read–merge–replace 生命周期增加排他 `flock`，同时保留 invocation-unique Parquet temporary files；mock 和实际第二进程锁回归测试均通过。该修复与 full verify、P3/full test 共同证明 resumable single-writer persistence 可用。
+- P3 已完成、确认并由 `d1f9b39` 推送；2,633 个 private ROI 与 roi index 可作为 P4 固定输入。
+- 用户已批准 P4 实施计划，固定采用结节五级 strata + patient group 约束的 deterministic `StratifiedGroupKFold`。
+- 已确认 P4 包含 Katana 早期同步：仅传输代码、V2 ROI、private manifest、splits 和 encoder initializations，不上传原始 DICOM，不进行训练。
+- 当前 Katana scratch 约有 122 GiB 可用，P4 预计新增工作集低于 2 GiB；扩容申请未回复不阻塞本阶段。
 
 ### 正在进行
 
-- P3 的技术实施、full verify、aggregate audit、P3/full tests、阶段级审查、用户确认、状态封存、fast-forward 合并与 GitHub 推送均已完成。
-- 未制定或开始 P4。
+- P4 启动状态已建立；正在实现 split/statistics、shared initialization 与 Katana smoke 接口。
 
 ### 尚未完成
 
-- P3 无未完成交付项。P4 仍不得开始。
+- P4 split JSON、train-only statistics、五个 encoder initialization artifacts、tracked aggregate audit 尚未生成。
+- 本地 P4 自动测试、真实 manifest/ROI verify、Katana 同步与 L40S smoke 尚未完成。
+- P4 阶段级双 agent 审查和用户确认尚未完成；P5 不得开始。
 
 ### 验收进度
 
-| P3 验收项 | 状态 | 证据 |
+| P4 验收项 | 状态 | 证据 |
 |---|---|---|
-| P3-R1 50% consensus mask | `PASS` | full audit：2,633/2,633 nonempty masks、0 failures；`verify --scope full` 为 2,633/2,633；source annotation provenance 和 0 raw-DICOM modification 均已审计 |
-| P3-R2 fixed crop/resize | `PASS` | 2,633 个 `[1,64,64,64]` deterministic ROI 经 full verify；D,H,W mapping、tight bbox/cube padding、fixed interpolation 和 binary mask 由 32 项 P3 测试及 full audit 复核；`BUG-P3-002` 的 unique temporary + single-writer lock 修复已验证 |
-| P3-R3 QA | `PASS` | 41-sample pilot 覆盖 reader count、最小/最大和 exact-duplicate sample，41/41 QA/verify 完成且用户明确确认；full aggregate QA audit 报告 volume、bbox、padding、reader-count 分布与 0 failure |
-| 冻结协议保护 | `PASS` | V1/V2 requirements/config/resolved/hash 无 diff；P3 专项 `32 passed`、完整 `118 passed`，Phase Compliance Reviewer `PASS`，Status Synchronization Reviewer 已同步 |
+| P4-R1 patient-grouped outer/inner split | `PENDING` | 待实现和生成五折 split |
+| P4-R2 train-only statistics | `PENDING` | 待实现 leakage guard 和 fold statistics |
+| P4-R3 shared encoder initialization | `PENDING` | 待生成五折 artifacts 并验证四模型 consumer hashes |
+| Katana CUDA loading/hash smoke | `PENDING` | 待通过 KDM 同步并提交 L40S PBS job |
+| 冻结协议保护与自动测试 | `PENDING` | 待完成最终验证与双 agent 审查 |
 
 ### 未解决困难
 
-- `DIF-P10-001` 继续为 `OPEN`，不阻止已完成的 P3；P3 full 后已测量 ROI 产物，P10 前仍必须估算 checkpoints、predictions、contributions、Grad-CAM 与临时文件所需空间。
+- `DIF-P10-001` 继续为 `OPEN`，不阻止 P4；P4 将记录同步后的 remote working-set 大小，但 P10 前仍须估算正式训练与解释产物空间。
 
-## 4. 下一阶段：P4 Patient-level split 与共享初始化
+## 4. 下一阶段：P5 Black-box DenseNet regression
 
 ### 阶段目标
 
-创建 patient-grouped five-fold split、train-only statistics 和每 fold shared DenseNet initialization。
+实现并训练 Black-box 3D DenseNet-121 continuous-regression sanity baseline。
 
 ### 进入条件
 
-- P3 full ROI、QA、审计、完整自动测试、双 agent 审查和用户最终确认均必须完成并推送。
+- P4 split、train-only statistics、shared encoder initialization、Katana CUDA smoke、自动测试、双 agent 审查和用户确认均必须完成并推送。
 
 ### 第一批任务
 
-- 尚未制定或批准；P4 保持 `NOT_STARTED`。
+- 尚未制定或批准；P5 保持 `NOT_STARTED`。
 
 <!-- NORMAL_READING_END -->
 
@@ -274,8 +267,8 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P4 保持未开始 | 0 | 0 |
-| P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
+| P4 | Patient-level split 与共享初始化 | `IN_PROGRESS` | `ON_TRACK` | 用户已批准实施计划；split/statistics、shared initialization 和 Katana smoke 正在实现 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -287,7 +280,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 已完成并推送；P4 仍为 `NOT_STARTED`。
+当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 已完成并推送；P4 当前为 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。
 
 ### Bug 状态
 
@@ -318,7 +311,7 @@ Bug 修复后：
 - 影响阶段：P3
 - 影响验收标准：是；影响 P3-R3 pilot QA 的完整 41-sample 可视化审阅，但不影响已写入 ROI 的 image/mask 内容。
 - 恢复阶段：P3
-- 受影响下游阶段：P4（保持 `NOT_STARTED`，未受实现影响）
+- 受影响下游阶段：P4（该 Bug 处理期间保持 `NOT_STARTED`，未受实现影响）
 - 现象：首次 pilot 的 41 个确定性样本中，33 个 QA 图成功生成；8 个 source crop 在 depth、height 或 width 方向只有一个 voxel，Matplotlib contour 对该 `1×N` 或 `N×1` plane 抛出 `TypeError`。
 - 复现方式：对含单 voxel 轴的 non-empty source mask 调用 `_qa_image`；修复前会在 contour overlay 处失败。
 - 根因：QA writer 未在调用 Matplotlib contour 前检查 plane 的两个空间维度是否均至少为 2。
@@ -335,7 +328,7 @@ Bug 修复后：
 - 影响阶段：P3
 - 影响验收标准：是；若多个 resumable full-build invocation 在同一 private index/failure-registry 路径使用固定临时名，可能使阶段进度持久化失败或覆盖，影响 P3 full ROI 的可恢复性证据。
 - 恢复阶段：P3
-- 受影响下游阶段：P4（保持 `NOT_STARTED`，未受实现影响）
+- 受影响下游阶段：P4（该 Bug 处理期间保持 `NOT_STARTED`，未受实现影响）
 - 现象：此前 `_write_index` 与 `update_private_failures` 均使用由目标文件名固定派生的 `.tmp` 路径；重入、并行或残留 temporary 情况下无法保证两个 writer 使用不同临时文件。
 - 复现方式：保留 legacy fixed-name temporary file 后调用新的 private Parquet writer；回归测试确认 writer 不会读取、覆盖或删除该旧路径，并生成唯一 sibling temporary 后原子 replace。
 - 根因：临时 Parquet 文件名不是 invocation-unique，不能满足 resumable full build 的安全持久化要求。
@@ -515,7 +508,7 @@ Bug 修复后：
 - 产物路径：`src/lidc_baseline/p3_roi.py`、`tests/test_p3_roi.py`、`artifacts/baseline_v2/audit/p3/`；ROI、QA 图、private manifest/index/failure registry 保持本地 Git ignored。
 - 已解决 Bug：`BUG-P3-001`（single-slice QA contour rendering）与 `BUG-P3-002`（private Parquet temporary/reentrant persistence）；后者使用 unique sibling temporary、exclusive `flock` 和实际第二进程回归测试保证 single-writer lifecycle。
 - 遗留困难：`DIF-P10-001` 继续为 `OPEN`；已测量 ROI 为约 0.93 GiB，但 P10 前仍须估算 checkpoints、predictions、contributions、Grad-CAM 与临时文件，且可用 Katana storage 必须达到预计工作集的 120%。
-- 明确未纳入内容：P4 patient-level split、shared initialization、任何模型/训练或 P4–P10 开发；P4 保持 `NOT_STARTED`。
+- 明确未纳入内容：P4 patient-level split、shared initialization、任何模型/训练或 P4–P10 开发；截至 P3 完成记录形成时，P4 保持 `NOT_STARTED`。
 - 阶段门结论：`PASS`
 - P3 commits：`0575bcf` 至 `dc8c356` 的 P3 implementation/status commits。
 - 交付状态：已 fast-forward 合并至 `main` 并推送 GitHub；本地 `main`、`origin/main` 与 `HEAD` 已核对为同一 `dc8c356`，合并后完整测试为 `118 passed`。
@@ -561,9 +554,10 @@ Bug 修复后：
 | 2026-08-10 | `PHASE_AWAITING_APPROVAL` | V2M | V2 requirements/config、CPU/MPS/CUDA smoke、cohort rematerialization、86 项测试与阶段级 Phase Compliance Reviewer 均为 `PASS`；5 个 V2M commits 已保存于本地但未推送，等待用户确认，P3 保持 `NOT_STARTED` | `b4155c3`、`5d8dffd`、`f07067e`、`51528ea`、`8d9dc7b`（local, unpushed） |
 | 2026-08-10 | `PHASE_COMPLETED` | V2M | 用户确认 V2M；Baseline-v2 active protocol、配置、linear-regression smoke、cohort rematerialization 和验收证据已永久封存，GitHub 交付按确认后流程执行；P3 保持 `NOT_STARTED` | 本次 V2M 完成状态提交 |
 | 2026-08-10 | `BUG_RESOLVED` | V2M | 交付前发现 Git checkout 不持久化 tracked `0444` mode；仅移除不可移植测试断言，保留生成时 `0444`、canonical bytes 和 SHA-256 保护。V2M 保持 `COMPLETED`，P3 保持 `NOT_STARTED` | `f28484f` |
-| 2026-08-10 | `PHASE_STARTED` | P3 | 用户批准 P3 consensus mask、确定性 `64³` ROI 与 pilot-first QA 实施计划；P3 进入 `IN_PROGRESS`，P4 保持 `NOT_STARTED` | `p3-consensus-roi` 本地分支 |
-| 2026-08-10 | `BUG_RESOLVED` / `PILOT_QA_COMPLETE` | P3 | `BUG-P3-001` 修复后，deterministic pilot 41/41 ROI、QA 图和 verify 均通过，failure registry 为 0；P3 仍为 `IN_PROGRESS`，必须等待用户确认 pilot alignment，P4 保持 `NOT_STARTED` | 本次状态同步提交 |
+| 2026-08-10 | `PHASE_STARTED` | P3 | 用户批准 P3 consensus mask、确定性 `64³` ROI 与 pilot-first QA 实施计划；P3 进入 `IN_PROGRESS`，P4 当时保持 `NOT_STARTED` | `p3-consensus-roi` 本地分支 |
+| 2026-08-10 | `BUG_RESOLVED` / `PILOT_QA_COMPLETE` | P3 | `BUG-P3-001` 修复后，deterministic pilot 41/41 ROI、QA 图和 verify 均通过，failure registry 为 0；P3 当时仍为 `IN_PROGRESS`，必须等待用户确认 pilot alignment，P4 当时保持 `NOT_STARTED` | 本次状态同步提交 |
 | 2026-08-10 | `PILOT_QA_APPROVED` | P3 | 用户明确确认 41 个 deterministic pilot QA 图配准正确；仅授权构建 P3 full 私有 ROI/index 和脱敏 aggregate audit，不授权进入 P4、P3 阶段完成或推送 | 用户确认 |
-| 2026-08-11 | `FULL_BUILD_OUTPUTS_WRITTEN` / `BUG_VERIFYING` | P3 | private full ROI/index 的当前 outputs 与 local aggregate audit 均报告 2,633/2,633、0 private failures；尚未完成 full verify、完整测试或阶段门。`72c4979` 已创建唯一 temporary 的 atomic Parquet 修复与回归测试，仍待最终验证；P3 保持 `IN_PROGRESS`，P4 保持 `NOT_STARTED` | `72c4979`（本地，未推送） |
-| 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `BUG_RESOLVED` | P3 | full verify 为 2,633/2,633，aggregate audit 为 2,633 个成功/非空 ROI、0 failures、876 个 CT series、1 次 exact-duplicate policy；P3 tests `32 passed`、完整 tests `118 passed`。`a790e54` 的 exclusive `flock` 已以实际第二进程回归测试验证，`BUG-P3-002` 关闭。P3 技术阶段门和双 agent 审查均通过，等待用户最终确认；P4 保持 `NOT_STARTED`。 | `a790e54`、`ac5c9ec`（本地，未推送）；本次状态同步提交 |
-| 2026-08-11 | `PHASE_COMPLETED` / `DELIVERED` | P3 | 用户明确确认 P3；P3 永久记录已写入 full ROI/QA/audit、测试、Bug 与 storage 证据，并已 fast-forward 合并、推送至 GitHub。`main`、`origin/main` 与 `HEAD` 均为 `dc8c356`；P4 保持 `NOT_STARTED`。 | `dc8c356` |
+| 2026-08-11 | `FULL_BUILD_OUTPUTS_WRITTEN` / `BUG_VERIFYING` | P3 | private full ROI/index 的当时 outputs 与 local aggregate audit 均报告 2,633/2,633、0 private failures；当时尚未完成 full verify、完整测试或阶段门。`72c4979` 已创建唯一 temporary 的 atomic Parquet 修复与回归测试，仍待最终验证；P3 当时保持 `IN_PROGRESS`，P4 当时保持 `NOT_STARTED` | `72c4979`（本地，未推送） |
+| 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `BUG_RESOLVED` | P3 | full verify 为 2,633/2,633，aggregate audit 为 2,633 个成功/非空 ROI、0 failures、876 个 CT series、1 次 exact-duplicate policy；P3 tests `32 passed`、完整 tests `118 passed`。`a790e54` 的 exclusive `flock` 已以实际第二进程回归测试验证，`BUG-P3-002` 关闭。P3 技术阶段门和双 agent 审查均通过，当时正在等待用户最终确认；P4 当时保持 `NOT_STARTED`。 | `a790e54`、`ac5c9ec`（本地，未推送）；本次状态同步提交 |
+| 2026-08-11 | `PHASE_COMPLETED` / `DELIVERED` | P3 | 用户明确确认 P3；P3 永久记录已写入 full ROI/QA/audit、测试、Bug 与 storage 证据，并已 fast-forward 合并、推送至 GitHub。`main`、`origin/main` 与 `HEAD` 当时均为 `dc8c356`；P4 在该交付记录形成时保持 `NOT_STARTED`。 | `dc8c356` |
+| 2026-08-11 | `PHASE_STARTED` | P4 | 用户批准 patient-grouped five-fold split、train-only statistics、每折 shared DenseNet initialization 与 Katana L40S loading/hash smoke 计划；P4 进入 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `p4-splits-shared-init` 本地分支 |
