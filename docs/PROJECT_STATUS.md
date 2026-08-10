@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P3
 next_phase: P4
 last_updated: 2026-08-10
-last_verified_commit: c81390b
+last_verified_commit: 58ba4e1
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -46,7 +46,7 @@ last_verified_commit: c81390b
 | 恢复阶段 | `P3` |
 | 下一阶段 | `P4 Patient-level split 与共享初始化`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-10 |
-| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；本地 `main` 与 `origin/main` 已验证一致。用户已批准 P3 consensus mask、确定性 ROI 与 pilot-first QA 实施计划，并于 2026-08-10 明确确认 41 个 pilot QA 图配准正确，仅授权继续 P3 full ROI 构建；冻结 V1/V2 requirements/config 必须保持无 diff。 |
+| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；本地 `main` 与 `origin/main` 已验证一致。当前本地 `p3-consensus-roi` 分支累计 14 个未推送 P3 commits，最新为 `58ba4e1`（full-build 可恢复性）；用户已批准 P3 consensus mask、确定性 ROI 与 pilot-first QA 实施计划，并于 2026-08-10 明确确认 41 个 pilot QA 图配准正确，仅授权继续 P3 full ROI 构建；冻结 V1/V2 requirements/config 必须保持无 diff。 |
 
 ## 3. 当前阶段：P3 Consensus mask、确定性 3D ROI 与 QA
 
@@ -62,13 +62,14 @@ last_verified_commit: c81390b
 - 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
 - 已完成可断点续跑的 pilot 选择统计保护：私有 `pilot_consensus_statistics.parquet` 记录 consensus physical volume、bbox/cube padding ratio，并以 canonical XML、annotation/SOP provenance 和 scan geometry fingerprint 验证缓存复用；来源或几何变化时必须重新计算，不能复用旧统计。
 - 已完成最终真实 pilot build/verify：固定的 41 个选中样本均已写入可复用 ROI，41/41 个 QA 图均已生成，`verify --scope pilot` 验证 41/41 个 ROI。私有 `roi_failures.parquet` 当前为 0 条记录；原始 DICOM 修改数为 0。
+- 已完成 full-build 可恢复性实现与回归测试：已有 ROI 只有在 `nodule_uid`、config hash、source provenance、ROI content hash、interface 和非空 binary mask 全部复核通过时才可复用；不匹配或损坏的已有 ROI 默认阻断，只有显式 `--overwrite` 才允许重建。full build 按 CT series 加载一次 volume，并在每个 series 完成后原子持久化私有 ROI index 与 failure registry，因此中断后不会信任未验证 index 或重复读取已验证 ROI。该批次 P3 专项测试 `29 passed`、完整套件 `115 passed`，Phase Compliance Reviewer 为 `PASS`。该实现尚未启动 full 2,633 ROI 执行。
 - Pilot 覆盖 reader count `1–4`（分别为 16、9、9、7 个样本），并包含 8 个最小与 8 个最大 consensus physical-volume 候选和 exact-duplicate series 的 1 个 primary nodule（其 hashed-SOP selection 已应用）。41 个样本的 consensus physical volume 覆盖全 cohort 范围 `4.39453125–29067.248916625977 mm³`。
 - 已定位并修复 `BUG-P3-001`：Matplotlib 不能为 `1×N` 或 `N×1` 的 single-slice plane 绘制 contour。QA writer 对尺寸不足的 plane 不调用 contour；若原本可绘制的 contour 仍因退化 topology 抛出 `TypeError`，则回退为半透明 binary-mask overlay，以保留可见空间证据。补充修复 failure registry，使重试成功的结节会从私有 failure registry 清除、未尝试的失败仍保留；已新增回归测试。修复后 P3 专项测试为 `25 passed`、完整套件为 `111 passed`，最终 pilot 41/41 build/QA/verify 完成，Phase Compliance Reviewer 为 `PASS`。该 Bug 已为 `RESOLVED`。
-- 私有 `roi_index.parquet` 仍有 6 条不属于当前 41-sample selection 的早期 retry 残留失败记录；它们不属于当前 pilot 的状态、不会影响 41/41 verify 或 failure registry（0 条），不得将其解释为当前 pilot 失败或据此开始 full。
+- 私有 `roi_index.parquet` 仍有 6 条不属于当前 41-sample selection 的早期 retry 残留失败记录；它们不属于当前 pilot 的状态、不会影响 41/41 verify 或 failure registry（0 条），不得将其解释为当前 pilot 失败。full build 将对这些 primary nodule 重新执行 provenance-checked reuse 或构建，并将相应状态持久化。
 
 ### 正在进行
 
-- P3 已位于本地 `p3-consensus-roi` 分支；pilot pipeline、cache provenance 保护和 QA retry 修复的本地原子提交尚未推送。
+- P3 已位于本地 `p3-consensus-roi` 分支；截至 `58ba4e1`，pilot pipeline、cache provenance 保护、QA retry 修复与 full-build 可恢复性实现共 14 个本地原子提交均尚未推送。
 - 用户已于 2026-08-10 明确确认 deterministic 41-sample pilot QA 配准正确；当前唯一允许的下一项实施工作为 full 2,633 ROI、私有 full index 和脱敏 aggregate audit，尚未启动。
 - Pilot confirmation 只授权 P3 full ROI 构建，不等于 P3 最终阶段确认，不授权 P4、P3 推送或协议修改。
 
@@ -81,7 +82,7 @@ last_verified_commit: c81390b
 | P3 验收项 | 状态 | 证据 |
 |---|---|---|
 | P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；最终 pilot 41/41 consensus/ROI/verify 成功；用户已确认 pilot alignment，full execution 已获授权、尚未启动 |
-| P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ 与 synthetic tests 已完成；最终 pilot 41/41 ROI/verify 成功；full ROI 证据待生成 |
+| P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ、provenance-checked resumable full build 与 synthetic tests 已完成；最终 pilot 41/41 ROI/verify 成功；full ROI 证据待生成 |
 | P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection、41/41 QA 图和 41/41 verify 均已完成；用户已明确确认 pilot 配准正确；full aggregate QA 审计待完成 |
 | 冻结协议保护 | `IN_PROGRESS` | 启动前 V1/V2 requirements/config 无 diff；每批次继续验证 |
 
@@ -272,7 +273,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、synthetic tests、最终 pilot 41/41 ROI QA/verify 和 Phase Compliance Reviewer 均为 `PASS`；用户已确认 pilot alignment，full 构建与阶段验收待完成 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、provenance-checked resumable full build、synthetic tests、最终 pilot 41/41 ROI QA/verify 和 Phase Compliance Reviewer 均为 `PASS`；用户已确认 pilot alignment，full 构建与阶段验收待完成 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
