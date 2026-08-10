@@ -88,9 +88,9 @@ def test_p5_delta_manifest_rejects_unsafe_or_duplicate_paths(tmp_path: Path) -> 
 
 def test_p5_delta_is_code_only_and_contains_required_stage_a_files() -> None:
     assert set(P5_DELTA_FILES) == {
-        "configs/experiments/baseline_v2_reference_training.yaml",
-        "configs/experiments/baseline_v2_reference_training.resolved.yaml",
-        "configs/experiments/baseline_v2_reference_training.sha256",
+        "configs/experiments/baseline_v2_reference_training_h200.yaml",
+        "configs/experiments/baseline_v2_reference_training_h200.resolved.yaml",
+        "configs/experiments/baseline_v2_reference_training_h200.sha256",
         "scripts/katana/p5_fold.pbs",
         "scripts/katana/p5_stage_a.pbs",
         "src/lidc_baseline/p5_blackbox.py",
@@ -110,12 +110,12 @@ def test_p5_katana_scripts_are_valid_and_enforce_stage_gates() -> None:
         result = subprocess.run(["bash", "-n", str(path)], check=False, capture_output=True, text=True)
         assert result.returncode == 0, result.stderr
     stage = paths[1].read_text(encoding="utf-8")
-    assert "gpu_model=L40S" in stage
+    assert "gpu_model=H200" in stage
     assert "overfit-check" in stage
     assert "preflight" in stage
     assert "p5_blackbox train" not in stage
     formal = paths[2].read_text(encoding="utf-8")
-    assert "gpu_model=L40S" in formal
+    assert "gpu_model=H200" in formal
     assert "P5_STAGE_B_APPROVED" in formal
     assert "p5_blackbox train" in formal
     assert "evaluate-test" in formal
@@ -155,7 +155,7 @@ def test_sync_p5_uses_kdm_and_manifest_whitelist(tmp_path: Path) -> None:
         "#!/bin/bash\n"
         "printf '%s\\n' "
         "'artifacts/baseline_v2/manifests/p5_stage_a_transfer_manifest.json' "
-        "'configs/experiments/baseline_v2_reference_training.yaml' "
+        "'configs/experiments/baseline_v2_reference_training_h200.yaml' "
         "'scripts/katana/p5_stage_a.pbs' "
         "'src/lidc_baseline/p5_blackbox.py'\n",
         encoding="utf-8",

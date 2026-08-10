@@ -48,7 +48,7 @@ AUGMENTATION_DOMAIN = b"Baseline-v2/common-augmentation\0"
 MODEL_NAME = "blackbox"
 EXPECTED_FOLD_TEST_COUNTS = (479, 502, 539, 549, 564)
 EXECUTION_CONFIG_DEFAULT = Path(
-    "configs/experiments/baseline_v2_reference_training.yaml"
+    "configs/experiments/baseline_v2_reference_training_h200.yaml"
 )
 
 
@@ -243,6 +243,17 @@ def validate_execution_config(
         or batching.get("drop_last") is not False
     ):
         raise ValueError("EXECUTION_CONFIG_BATCH_POLICY_MISMATCH")
+    profile = config.get("execution_profile", {})
+    if (
+        profile.get("profile_id") != "baseline-v2-formal-h200"
+        or profile.get("amendment_type") != "execution_hardware_profile"
+        or profile.get("formal_gpu_model") != "H200"
+        or profile.get("applies_to_formal_training")
+        != ["blackbox", "standard_cbm", "cem", "gam"]
+    ):
+        raise ValueError("EXECUTION_CONFIG_H200_PROFILE_MISMATCH")
+    if project.get("preflight", {}).get("device") != "NVIDIA_H200":
+        raise ValueError("EXECUTION_CONFIG_H200_PREFLIGHT_MISMATCH")
     return config, observed
 
 
@@ -258,14 +269,15 @@ def configure_fp32_determinism(device: Any) -> None:
         torch.cuda.manual_seed_all(torch.initial_seed())
 
 
-def require_l40s_for_cuda(device: Any) -> None:
-    """Block formal CUDA execution on a GPU other than the pre-registered L40S."""
+def require_formal_gpu_for_cuda(device: Any, execution_config: Mapping[str, Any]) -> None:
+    """Block formal CUDA execution outside the frozen execution hardware profile."""
     if device.type != "cuda":
         return
     torch = _torch()
     name = torch.cuda.get_device_name(device)
-    if "L40S" not in name.upper():
-        raise RuntimeError(f"P5_REQUIRES_NVIDIA_L40S:{name}")
+    expected = str(execution_config["execution_profile"]["formal_gpu_model"])
+    if expected.upper() not in name.upper():
+        raise RuntimeError(f"P5_REQUIRES_NVIDIA_{expected.upper()}:{name}")
 
 
 def seed_training(seed: int) -> None:
@@ -833,8 +845,9 @@ def _provenance(
     execution_config_sha256: str,
     split: Mapping[str, Any],
     initialization: Mapping[str, Any],
+    execution_config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    provenance = {
         "schema_version": SCHEMA_VERSION,
         "protocol_version": scientific_config["protocol"]["version"],
         "scientific_config_sha256": compute_config_sha256(scientific_config),
@@ -846,6 +859,10 @@ def _provenance(
         "task_loss": "mean_squared_error_on_normalized_target",
         **dict(initialization),
     }
+    if execution_config is not None:
+        provenance["execution_profile_id"] = execution_config["execution_profile"]["profile_id"]
+        provenance["formal_gpu_model"] = execution_config["execution_profile"]["formal_gpu_model"]
+    return provenance
 
 
 def checkpoint_payload(
@@ -991,8 +1008,6 @@ def _train_fold_locked(
     device = torch.device(device_name)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA_UNAVAILABLE")
-    require_l40s_for_cuda(device)
-    configure_fp32_determinism(device)
     scientific, execution, execution_hash, split, manifest, roi_index, encoder_path = _prepare_sources(
         scientific_config_path,
         execution_config_path,
@@ -1000,12 +1015,14 @@ def _train_fold_locked(
         roi_index_path,
         fold_index,
     )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device)
     model, initialization = build_initialized_model(scientific, split, encoder_path)
     seed_training(int(initialization["fold_seed"]))
     model.to(device)
     optimizer = _optimizer(model, execution)
     scheduler = _scheduler(optimizer, execution)
-    provenance = _provenance(scientific, execution_hash, split, initialization)
+    provenance = _provenance(scientific, execution_hash, split, initialization, execution)
     train_records = build_partition_records(manifest, roi_index, split, "train", roi_index_path)
     validation_records = build_partition_records(manifest, roi_index, split, "validation", roi_index_path)
     output = run_directory(fold_index, output_root)
@@ -1180,9 +1197,10 @@ def _load_best_model(
     encoder_path: Path,
     checkpoint_path: Path,
     execution_hash: str,
+    execution_config: Mapping[str, Any],
 ) -> tuple[Any, dict[str, Any], dict[str, Any]]:
     model, initialization = build_initialized_model(scientific, split, encoder_path)
-    provenance = _provenance(scientific, execution_hash, split, initialization)
+    provenance = _provenance(scientific, execution_hash, split, initialization, execution_config)
     payload = _load_checkpoint(checkpoint_path, provenance)
     model.load_state_dict(payload["model_state_dict"], strict=True)
     return model, initialization, payload
@@ -1345,8 +1363,6 @@ def _evaluate_test_once_locked(
     device = torch.device(device_name)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA_UNAVAILABLE")
-    require_l40s_for_cuda(device)
-    configure_fp32_determinism(device)
     scientific, execution, execution_hash, split, manifest, roi_index, encoder_path = _prepare_sources(
         scientific_config_path,
         execution_config_path,
@@ -1365,16 +1381,19 @@ def _evaluate_test_once_locked(
     best_path = output / "best.pt"
     if sha256_file(best_path) != completion["best_checkpoint_sha256"]:
         raise ValueError("P5_BEST_CHECKPOINT_SEAL_MISMATCH")
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device)
     model, initialization, checkpoint = _load_best_model(
         scientific,
         split,
         encoder_path,
         best_path,
         execution_hash,
+        execution,
     )
     if int(checkpoint["epoch_index"]) != int(completion["best_epoch_index"]):
         raise ValueError("P5_BEST_EPOCH_SEAL_MISMATCH")
-    expected_provenance = _provenance(scientific, execution_hash, split, initialization)
+    expected_provenance = _provenance(scientific, execution_hash, split, initialization, execution)
     row_provenance = _test_row_provenance(
         scientific,
         execution_hash,
@@ -1488,8 +1507,6 @@ def overfit_check(
     device = torch.device(device_name)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA_UNAVAILABLE")
-    require_l40s_for_cuda(device)
-    configure_fp32_determinism(device)
     scientific, execution, execution_hash, split, manifest, roi_index, encoder_path = _prepare_sources(
         scientific_config_path,
         execution_config_path,
@@ -1497,6 +1514,8 @@ def overfit_check(
         roi_index_path,
         fold_index,
     )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device)
     model, initialization = build_initialized_model(scientific, split, encoder_path)
     seed_training(int(initialization["fold_seed"]))
     model.to(device)
@@ -1541,6 +1560,8 @@ def overfit_check(
         "relative_final_mse": final_mse / initial_mse,
         "scientific_config_sha256": compute_config_sha256(scientific),
         "execution_config_sha256": execution_hash,
+        "execution_profile_id": execution["execution_profile"]["profile_id"],
+        "formal_gpu_model": execution["execution_profile"]["formal_gpu_model"],
         "split_sha256": split["split_sha256"],
         **initialization,
         **_runtime_environment(device),
@@ -1562,8 +1583,6 @@ def preflight(
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA_UNAVAILABLE")
     device = torch.device("cuda:0")
-    require_l40s_for_cuda(device)
-    configure_fp32_determinism(device)
     scientific, execution, execution_hash, split, manifest, roi_index, encoder_path = _prepare_sources(
         scientific_config_path,
         execution_config_path,
@@ -1571,6 +1590,8 @@ def preflight(
         roi_index_path,
         fold_index,
     )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device)
     model, initialization = build_initialized_model(scientific, split, encoder_path)
     seed_training(int(initialization["fold_seed"]))
     model.to(device)
@@ -1624,6 +1645,8 @@ def preflight(
         "cuda_runtime": torch.version.cuda,
         "scientific_config_sha256": compute_config_sha256(scientific),
         "execution_config_sha256": execution_hash,
+        "execution_profile_id": execution["execution_profile"]["profile_id"],
+        "formal_gpu_model": execution["execution_profile"]["formal_gpu_model"],
         "split_sha256": split["split_sha256"],
         **initialization,
     }
@@ -1672,7 +1695,7 @@ def _verify_fold_locked(
         fold_index,
     )
     _model, initialization = build_initialized_model(scientific, split, encoder_path)
-    provenance = _provenance(scientific, execution_hash, split, initialization)
+    provenance = _provenance(scientific, execution_hash, split, initialization, execution)
     output = run_directory(fold_index, output_root)
     completion = json.loads((output / "training_complete.json").read_text(encoding="utf-8"))
     if any(completion.get(key) != value for key, value in provenance.items()):

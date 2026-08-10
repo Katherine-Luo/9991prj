@@ -3,11 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from lidc_baseline.config import canonical_yaml, compute_config_sha256, load_config
+from lidc_baseline.p5_blackbox import validate_execution_config
 
 
-SOURCE = Path("configs/experiments/baseline_v2_reference_training.yaml")
-RESOLVED = Path("configs/experiments/baseline_v2_reference_training.resolved.yaml")
-DIGEST = Path("configs/experiments/baseline_v2_reference_training.sha256")
+SOURCE = Path("configs/experiments/baseline_v2_reference_training_h200.yaml")
+RESOLVED = Path("configs/experiments/baseline_v2_reference_training_h200.resolved.yaml")
+DIGEST = Path("configs/experiments/baseline_v2_reference_training_h200.sha256")
 
 
 def test_common_execution_config_is_canonical_and_frozen() -> None:
@@ -40,6 +41,14 @@ def test_reference_reported_and_project_choices_are_separated() -> None:
         "Baseline-v2 project pre-registered implementation choices, "
         "not exact hyperparameters reported by the reference paper."
     )
+    assert config["execution_profile"] == {
+        "profile_id": "baseline-v2-formal-h200",
+        "amendment_type": "execution_hardware_profile",
+        "formal_gpu_model": "H200",
+        "applies_to_formal_training": ["blackbox", "standard_cbm", "cem", "gam"],
+        "supersedes_execution_profile": "configs/experiments/baseline_v2_reference_training.yaml",
+        "statement": "Baseline-v2 execution/hardware profile amendment. H200 is the unified formal training GPU for P5-P8; this does not change the scientific protocol.",
+    }
 
 
 def test_exact_project_training_choices_are_pre_registered() -> None:
@@ -85,3 +94,10 @@ def test_exact_project_training_choices_are_pre_registered() -> None:
         "cuda_matmul_tf32_enabled": False,
         "cudnn_tf32_enabled": False,
     }
+
+
+def test_legacy_l40s_execution_profile_cannot_drive_formal_p5_runs() -> None:
+    from pytest import raises
+
+    with raises(ValueError, match="H200_PROFILE_MISMATCH"):
+        validate_execution_config("configs/experiments/baseline_v2_reference_training.yaml")

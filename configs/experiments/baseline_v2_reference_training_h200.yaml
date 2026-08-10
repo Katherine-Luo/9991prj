@@ -1,0 +1,105 @@
+schema_version: 2
+protocol_version: Baseline-v2
+scope:
+  applies_to:
+    - blackbox
+    - standard_cbm
+    - cem
+    - gam
+  scientific_config: configs/baseline_v2.yaml
+  source_label: reference_aligned_common_training
+execution_profile:
+  profile_id: baseline-v2-formal-h200
+  amendment_type: execution_hardware_profile
+  formal_gpu_model: H200
+  applies_to_formal_training:
+    - blackbox
+    - standard_cbm
+    - cem
+    - gam
+  supersedes_execution_profile: configs/experiments/baseline_v2_reference_training.yaml
+  statement: Baseline-v2 execution/hardware profile amendment. H200 is the unified formal training GPU for P5-P8; this does not change the scientific protocol.
+reference_reported:
+  citation: Dumaev et al. 2024, arXiv:2405.17483, Implementation details
+  optimizer: Adam
+  learning_rate: 0.0001
+  epochs: 80
+  batch_size: 16
+  scheduler:
+    monitor: validation_loss
+    bad_epochs_before_decay: 4
+    factor: 0.9
+  augmentation_families:
+    - flipping
+    - rotation_up_to_15_degrees
+    - z_order_reversal
+project_preregistered:
+  statement: Baseline-v2 project pre-registered implementation choices, not exact hyperparameters reported by the reference paper.
+  optimizer:
+    betas:
+      - 0.9
+      - 0.999
+    epsilon: 0.0000001
+    weight_decay: 0.0
+  scheduler:
+    metric: validation_mse
+    improvement_mode: current_lt_best_minus_min_delta
+    min_delta: 0.0001
+    bad_epoch_counter_reset_after_decay: true
+    cooldown: 0
+    min_learning_rate: 0.0
+    checkpoint_tolerance: 0.0
+    checkpoint_tie_break: earlier_epoch
+  batching:
+    micro_batch_size: 16
+    gradient_accumulation_steps: 1
+    effective_batch_size: 16
+    drop_last: false
+    final_partial_batch_reduction: sample_mean
+  augmentation:
+    schema_version: 1
+    train_only: true
+    order:
+      - axial_rotation
+      - h_axis_flip
+      - w_axis_flip
+      - z_order_reversal
+    axial_rotation:
+      probability: 0.5
+      angle_degrees:
+        minimum: -15.0
+        maximum: 15.0
+      axis: D
+      torch_grid_sample:
+        mode: bilinear
+        padding_mode: zeros
+        align_corners: false
+        five_dimensional_behavior: trilinear_sampling
+    h_axis_flip_probability: 0.5
+    w_axis_flip_probability: 0.5
+    z_order_reversal_probability: 0.5
+    random_material:
+      - base_seed
+      - fold_index
+      - epoch_index
+      - nodule_uid
+      - augmentation_schema_version
+    excludes_model_name: true
+  precision:
+    floating_point: FP32
+    amp_enabled: false
+    bfloat16_enabled: false
+    cuda_matmul_tf32_enabled: false
+    cudnn_tf32_enabled: false
+  training:
+    early_stopping: false
+    deterministic_head_initialization: fold_specific_domain_separated_sha256
+  preflight:
+    device: NVIDIA_H200
+    true_batch_size: 16
+    operations:
+      - forward
+      - backward
+      - adam_step
+    maximum_peak_reserved_fraction: 0.85
+    oom_policy: block_without_batch_fallback

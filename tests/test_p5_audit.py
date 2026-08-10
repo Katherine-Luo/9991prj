@@ -14,6 +14,8 @@ def _provenance() -> dict[str, object]:
         "protocol_version": "Baseline-v2",
         "scientific_config_sha256": "scientific",
         "execution_config_sha256": "execution",
+        "execution_profile_id": "baseline-v2-formal-h200",
+        "formal_gpu_model": "H200",
         "split_sha256": "split",
         "fold_index": 0,
         "model": "blackbox",
@@ -48,7 +50,7 @@ def _write_private_fold(root: Path) -> None:
     runtime = {
         **provenance,
         "device_type": "cuda",
-        "gpu_name": "NVIDIA L40S",
+        "gpu_name": "NVIDIA H200",
         "epochs_total": 80,
         "peak_reserved_bytes": 100,
         "fp32": True,
@@ -79,7 +81,7 @@ def _write_private_fold(root: Path) -> None:
         "peak_reserved_fraction": 0.1,
         "maximum_allowed_fraction": 0.85,
         "device_type": "cuda",
-        "gpu_name": "NVIDIA L40S",
+        "gpu_name": "NVIDIA H200",
     }
     for name, payload in {
         "training_complete.json": completion,

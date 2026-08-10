@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l select=1:ncpus=8:ngpus=1:mem=46gb:gpu_model=L40S
+#PBS -l select=1:ncpus=8:ngpus=1:mem=46gb:gpu_model=H200
 #PBS -l walltime=48:00:00
 #PBS -j oe
 
@@ -18,6 +18,7 @@ fi
 code_directory="${KATANA_P5_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
 environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
 python_binary="$environment_prefix/bin/python"
+execution_config="configs/experiments/baseline_v2_reference_training_h200.yaml"
 run_directory="$code_directory/runs/baseline_v2/blackbox/fold_$fold_index"
 
 cd "$code_directory"
@@ -29,16 +30,16 @@ nvidia-smi
 if [[ ! -f "$run_directory/training_complete.json" ]]; then
   if [[ -f "$run_directory/last.pt" ]]; then
     "$python_binary" -m lidc_baseline.p5_blackbox train \
-      --fold "$fold_index" --device cuda --num-workers 4 --resume
+      --fold "$fold_index" --device cuda --num-workers 4 --execution-config "$execution_config" --resume
   else
     "$python_binary" -m lidc_baseline.p5_blackbox train \
-      --fold "$fold_index" --device cuda --num-workers 4
+      --fold "$fold_index" --device cuda --num-workers 4 --execution-config "$execution_config"
   fi
 fi
 
 if [[ ! -f "$run_directory/test_evaluation.json" ]]; then
   "$python_binary" -m lidc_baseline.p5_blackbox evaluate-test \
-    --fold "$fold_index" --device cuda --num-workers 4
+    --fold "$fold_index" --device cuda --num-workers 4 --execution-config "$execution_config"
 fi
 
-"$python_binary" -m lidc_baseline.p5_blackbox verify --fold "$fold_index"
+"$python_binary" -m lidc_baseline.p5_blackbox verify --fold "$fold_index" --execution-config "$execution_config"

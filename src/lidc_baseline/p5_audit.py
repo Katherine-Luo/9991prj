@@ -39,6 +39,8 @@ PROVENANCE_KEYS = (
     "protocol_version",
     "scientific_config_sha256",
     "execution_config_sha256",
+    "execution_profile_id",
+    "formal_gpu_model",
     "split_sha256",
     "fold_index",
     "model",
@@ -54,6 +56,8 @@ PROVENANCE_KEYS = (
 STAGE_A_PROVENANCE_KEYS = (
     "scientific_config_sha256",
     "execution_config_sha256",
+    "execution_profile_id",
+    "formal_gpu_model",
     "split_sha256",
     "fold_index",
     "fold_seed",
@@ -163,8 +167,13 @@ def build_fold_audit(
         raise ValueError("P5_AUDIT_METRIC_SCHEMA_MISMATCH")
     if int(metrics["samples"]) != int(verified["test_samples"]):
         raise ValueError("P5_AUDIT_METRIC_SAMPLE_MISMATCH")
-    if runtime.get("device_type") != "cuda" or "L40S" not in str(runtime.get("gpu_name", "")):
-        raise ValueError("P5_AUDIT_FORMAL_RUNTIME_NOT_L40S_CUDA")
+    expected_gpu = str(runtime.get("formal_gpu_model", ""))
+    if (
+        runtime.get("device_type") != "cuda"
+        or not expected_gpu
+        or expected_gpu not in str(runtime.get("gpu_name", ""))
+    ):
+        raise ValueError("P5_AUDIT_FORMAL_RUNTIME_NOT_PROFILE_CUDA")
     expected_precision = {
         "fp32": True,
         "amp_enabled": False,

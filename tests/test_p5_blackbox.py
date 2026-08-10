@@ -42,7 +42,7 @@ from lidc_baseline.p5_blackbox import (
     head_state_sha256,
     predict_records,
     regression_metrics,
-    require_l40s_for_cuda,
+    require_formal_gpu_for_cuda,
     restore_rng_state,
     train_one_epoch,
     train_fold,
@@ -50,7 +50,7 @@ from lidc_baseline.p5_blackbox import (
 )
 
 
-EXECUTION_CONFIG = Path("configs/experiments/baseline_v2_reference_training.yaml")
+EXECUTION_CONFIG = Path("configs/experiments/baseline_v2_reference_training_h200.yaml")
 
 
 def _record(tmp_path: Path, uid: str, value: float = 0.25) -> SampleRecord:
@@ -70,7 +70,7 @@ def _record(tmp_path: Path, uid: str, value: float = 0.25) -> SampleRecord:
 
 def test_execution_config_rejects_hash_or_policy_tampering(tmp_path: Path) -> None:
     config, observed = validate_execution_config(EXECUTION_CONFIG)
-    assert observed == "afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327"
+    assert observed == "08df87e4be5f07985d9dd3619b471ad322ec23a4b98b5032ee05ed58b1918281"
 
     copied = tmp_path / "execution.yaml"
     copied.write_text(EXECUTION_CONFIG.read_text(encoding="utf-8"), encoding="utf-8")
@@ -455,7 +455,7 @@ def test_fold_lifecycle_lock_blocks_actual_second_process(tmp_path: Path) -> Non
     assert process.returncode == 0
 
 
-def test_cuda_execution_requires_l40s(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cuda_execution_requires_h200_profile(monkeypatch: pytest.MonkeyPatch) -> None:
     import lidc_baseline.p5_blackbox as module
 
     class Device:
@@ -470,10 +470,11 @@ def test_cuda_execution_requires_l40s(monkeypatch: pytest.MonkeyPatch) -> None:
         cuda = Cuda()
 
     monkeypatch.setattr(module, "_torch", lambda: Torch())
-    with pytest.raises(RuntimeError, match="REQUIRES_NVIDIA_L40S"):
-        require_l40s_for_cuda(Device())
-    monkeypatch.setattr(Cuda, "get_device_name", staticmethod(lambda device: "NVIDIA L40S"))
-    require_l40s_for_cuda(Device())
+    execution = load_config(EXECUTION_CONFIG)
+    with pytest.raises(RuntimeError, match="REQUIRES_NVIDIA_H200"):
+        require_formal_gpu_for_cuda(Device(), execution)
+    monkeypatch.setattr(Cuda, "get_device_name", staticmethod(lambda device: "NVIDIA H200"))
+    require_formal_gpu_for_cuda(Device(), execution)
 
 
 def test_partial_test_transaction_recovers_without_second_inference(
