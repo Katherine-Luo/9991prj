@@ -1,21 +1,26 @@
 ---
-schema_version: 1
-project: LIDC-IDRI Baseline-v1
+schema_version: 2
+project: LIDC-IDRI Baseline-v2
+active_protocol: Baseline-v2
+active_requirements: docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md
+active_config: configs/baseline_v2.yaml
+supersedes_protocol: Baseline-v1
+protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P2
-development_phase_status: COMPLETED
+development_phase: V2M
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P2
+resume_phase: V2M
 next_phase: P3
-last_updated: 2026-08-09
-last_verified_commit: 11e164e
+last_updated: 2026-08-10
+last_verified_commit: 9b5202c
 ---
 
-# LIDC-IDRI Baseline-v1 项目状态
+# LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。科学协议以[冻结需求文档](./LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md)为准；状态文件只记录实施进度、Bug、困难和阶段门结果，不复制或修改科学协议。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2 需求与配置正在当前 V2M 迁移门内创建和冻结，在该阶段确认前不得进入 P3。
 
 ## 1. 阅读规则
 
@@ -31,58 +36,61 @@ last_verified_commit: 11e164e
 |---|---|
 | 工作模式 | `NORMAL_DEVELOPMENT` |
 | 阅读范围 | `CURRENT_AND_NEXT` |
-| 当前开发阶段 | `P2 Physical nodule cohort` |
-| 阶段状态 | `COMPLETED` |
+| Active protocol | `Baseline-v2` |
+| Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
+| 当前开发阶段 | `V2M Baseline-v2 Protocol Migration` |
+| 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P2 已封存并推送至 GitHub，P3 尚未开始 |
-| 恢复阶段 | `P2` |
+| 当前阻塞项 | 无；V2 requirements/config、linear-regression smoke 和 V2 cohort rematerialization 尚待完成 |
+| 恢复阶段 | `V2M` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
-| 最近更新 | 2026-08-09 |
-| 状态依据 | P2 已 fast-forward 合并到 `main` 并推送：本地 `main` 与 `origin/main` 均为 `11e164e5b9de45554d7f55c4080f864c078479e2`；P3 继续保持 `NOT_STARTED` |
+| 最近更新 | 2026-08-10 |
+| 状态依据 | 用户已批准 Baseline-v2 连续评分协议与 V2M 迁移计划；迁移分支从本地/远程一致的 `9b5202c098767b1de6c7faba3e438619107085e7` 创建；P3 继续保持 `NOT_STARTED` |
 
-## 3. 当前阶段：P2 Physical nodule cohort
+## 3. 当前阶段：V2M Baseline-v2 Protocol Migration
 
 ### 阶段目标
 
-将 canonical XML 的 `nodule >=3 mm` reader annotations 与 pylidc spatial clusters 对齐，建立 stable source-derived `nodule_uid`、reader aggregation 和本地私有 cohort manifest。
+在不修改 Baseline-v1 的前提下，冻结 Baseline-v2 连续 malignancy regression 协议与确定性配置，验证 unconstrained linear task output，并以既有 stable `nodule_uid` 重新物化 V2 cohort 语义。
 
 ### 已完成
 
-- P1 的 canonical XML、CT geometry、series eligibility 和 4 个不同图像内容 series 的排除决定均已确认并推送。
-- P2 实施计划已获用户批准：使用 pylidc 默认 clustering rule 与最小 `np.int` runtime compatibility adapter；完整 manifest 本地私有，Git 仅保存脱敏审计证据。
-- strict computed `>3 mm` flag 固定为 cluster 内 reader axial diameter 的最大值严格大于 `3.0 mm`；不影响 primary inclusion。
-- 已实现 canonical XML source parser、pylidc matching/clustering、annotation-to-cluster mapping、stable source-derived `nodule_uid`、reader aggregation、私有 manifest schema validation 和脱敏审计报告。
-- 完整本地 cohort audit 已在 1,014 个 P1-eligible CT series 上完成：2,634 个 physical clusters；1,073 个 binary primary nodules、578 位 binary-cohort patients；`>=3 readers` sensitivity cohort 为 438 个 nodules。另有 1,560 个 uncertain malignancy clusters 与 1 个 missing-required-target cluster，均保留审计记录且不进入 primary binary cohort。
-- P1 已排除的 4 个 series 继续排除；14 个超过 4 readers 的 clusters 记录为排除；primary inclusion 始终以 XML `nodule >=3 mm` annotation class 决定，而非 computed diameter。与 reference 2,651 nodules / 875 patients 的差异仅在 reconciliation 中报告，`hard_gate=false`。
-- 私有 `artifacts/manifests/nodules.parquet` 与 `annotation_mapping.parquet` 已生成且保持 Git ignore；前者含 2,634 个唯一 `nodule_uid`、source XML/DICOM SOP fingerprints、annotation class、diagnostic-only pylidc SQL IDs、9 个逐 target valid-reader counts、原始/聚合 targets、tie flags 和 strict-diameter flag。
-- 已生成可提交的脱敏审计证据：`artifacts/audit/p2/summary.json`、`reconciliation.csv`、`exclusions.csv`、`clustering_tolerances.csv`。全部仅使用 SHA-256 derived identifiers，不含原始 UID、patient ID 或绝对路径。
-- 每-series clustering tolerance 已保存 1,014 行；`tol=None` 按 scan slice thickness 解析，effective tolerance 范围为 `0.10131387882547446–5.0 mm`。
-- 所有 64 项自动测试通过；P2 阶段级 Phase Compliance Reviewer 已给出 `PASS`。
+- Baseline-v1 的 P0、P1、P2 已完成、确认并推送，历史证据保持不变。
+- 用户已明确批准 Baseline-v2 单头双评估协议，并最终固定 regression task head 为 unconstrained linear output。
+- V2 primary regression cohort 固定为 2,633 个 target-ready physical nodules / 868 patients；secondary extreme subset 固定为 1,073 nodules，其中 782 low、291 high。
+- 已创建本地 `v2-protocol-migration` 分支；尚未推送。
 
 ### 正在进行
 
-- 无 P2 开发工作。P2 已封存并交付；P3 在用户批准实施计划前保持 `NOT_STARTED`。
+- 创建并冻结 Baseline-v2 requirements、config、resolved config 与 SHA-256。
+- 将治理规则切换为从状态文档动态读取 active protocol。
+- 实现并验证 linear-regression CPU/MPS/CUDA smoke。
+- 使用既有 P2 stable provenance 重新物化 versioned V2 manifest 与脱敏 reconciliation。
 
 ### 尚未完成
 
-- P2 无待完成项。
-- P3 保持 `NOT_STARTED`；仅在单独制定并获得用户批准的 P3 实施计划后才能开始。
+- V2 requirements、protocol index 和 deterministic config 尚未创建。
+- CPU/MPS/CUDA linear-regression smoke 尚未完成。
+- V2 cohort rematerialization 与验收测试尚未完成。
+- V2M 双 agent 阶段审查和用户确认尚未完成。
+- P3 保持 `NOT_STARTED`。
 
 ### 验收进度
 
-| P2 验收项 | 状态 | 证据 |
+| V2M 验收项 | 状态 | 证据 |
 |---|---|---|
-| P2-R1 primary cohort 与 reconciliation | `PASS` | XML class-selected canonical source、1,014 P1-eligible series、2,634 physical clusters、1,073 binary primary nodules / 578 patients；2,651/875 仅 reconciliation，`hard_gate=false` |
-| P2-R2 stable provenance 与 `nodule_uid` | `PASS` | `nodule_uid` 由 patient/study/series source identifiers、canonical XML hash 和排序 source fingerprints 导出；SQL ID independence、source/SOP-content sensitivity、mapping determinism 与 duplicate UID checks 通过 |
-| P2-R3 reader aggregation | `PASS` | 9 个逐 target valid-reader counts、raw ratings、normalized continuous targets、categorical soft vote distributions、reader count、reader dispersion、`>=3 readers` 和 strict diameter flag 已写入 private manifest；缺失 target 具体记录 |
-| P2-R4 categorical ties | `PASS` | all target-ready clusters 的 internalStructure/calcification modal ties 分别为 8/55；binary primary subset 为 2/46；ties 保留在 soft-target cohort，未从 primary cohort 删除 |
-| P2 自动测试、双 agent 审查与用户确认 | `PASS` | `64 passed`；Phase Compliance Reviewer `PASS`、Status Synchronization Reviewer `UPDATED`；用户已明确确认 P2 |
+| V2 requirements 与 protocol index | `NOT_STARTED` | 待创建 |
+| Unconstrained linear output 与 losses | `NOT_STARTED` | 待实现和测试 |
+| V2 config、resolved config 与 hash | `NOT_STARTED` | 待生成和验证 |
+| Regression CPU/MPS/CUDA smoke | `NOT_STARTED` | 待执行 |
+| V2 cohort rematerialization | `NOT_STARTED` | 待执行 |
+| V1 immutable artifacts | `PENDING` | 当前基线工作区无 diff；阶段门前再次验证 |
 
 ### 未解决困难
 
-- `DIF-P10-001` 继续为 `OPEN`，不影响 P2 本地 cohort 开发。
-- P2 无开放技术困难或待确认阶段门。
+- `DIF-P10-001` 继续为 `OPEN`，不影响 V2M 使用合成数据完成 CUDA smoke。
+- 当前无 V2M 阻塞性困难。
 
 ## 4. 下一阶段：P3 Consensus mask 与 ROI
 
@@ -92,7 +100,8 @@ last_verified_commit: 11e164e
 
 ### 进入条件
 
-- P2 cohort、stable provenance、reader aggregation 和 reconciliation 通过阶段门并取得用户确认。
+- V2M requirements/config、linear-regression smoke、V2 cohort rematerialization 和双 agent 审查全部通过。
+- V2M 获得用户明确确认并推送。
 
 ### 第一批任务
 
@@ -265,6 +274,7 @@ Bug 修复后：
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
+| V2M | Baseline-v2 Protocol Migration | `IN_PROGRESS` | `ON_TRACK` | 已获用户批准，迁移实现与验收进行中 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -446,3 +456,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_STARTED` | P2 | 用户批准 P2 physical nodule cohort 与 stable provenance 实施计划；采用 pylidc 默认 clustering、最小 runtime compatibility adapter 和本地私有 manifest，P3 保持未开始 | P2 本地分支 |
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P2 | P2-R1–P2-R4、64 项测试、完整 local cohort audit 和阶段级 Phase Compliance Reviewer 已通过；等待用户确认，P3 保持未开始且不得推送 | `c1c1b95`、`28e46b1`（local, unpushed） |
 | 2026-08-09 | `PHASE_COMPLETED` | P2 | 用户确认 P2；永久记录已保存 cohort、provenance、审计与验收证据；已 fast-forward 合并至 main 并推送，P3 保持未开始 | `11e164e` |
+| 2026-08-10 | `PROTOCOL_MIGRATION_STARTED` | V2M | 用户批准 Baseline-v2 连续评分协议与 unconstrained linear regression output；开始 V2 requirements/config、smoke 和 cohort rematerialization，P3 保持未开始 | `v2-protocol-migration` 本地分支 |
