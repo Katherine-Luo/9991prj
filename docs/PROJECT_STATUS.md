@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P5
 next_phase: P6
 last_updated: 2026-08-11
-last_verified_commit: 68cc73e
+last_verified_commit: 64f01c7
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 68cc73e
 | 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P5 common execution config 已冻结并通过测试，Stage A 正在本地实现。Fold 0 正式执行前仍须完成模型代码与测试、小样本 overfit 和 Katana L40S batch-16 preflight。 |
+| 当前阻塞项 | 无；P5 core model/data/augmentation/scheduler/checkpoint/resume/test-transaction/verify/overfit/preflight interface 已实现、通过测试并由 `64f01c7` 本地提交。Fold 0 正式执行前仍须同步 Katana，并实际运行 train-only overfit 与 L40S batch-16 preflight。 |
 | 恢复阶段 | `P5` |
 | 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 startup anchor 为 `b9088e4`，common execution config/test batch 已由 `68cc73e` 本地提交且尚未推送。P4 最终状态交付 anchor 为 `960e366`，历史 evidence/approval/delivery anchors 为 `9d24035`、`e0634e7`、`ec7bd8e`。用户已批准 P5 两阶段计划及 Fold-0 前四项实现澄清；common execution config SHA-256 为 `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327`，直接测试 `3 passed`、完整测试 `138 passed`、Phase Compliance Reviewer `PASS`。冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
+| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 startup、common execution config、最近状态和 core functionality anchors 分别为 `b9088e4`、`68cc73e`、`4c867b6`、`64f01c7`。Core batch 已本地提交但尚未推送或同步 Katana。P4 最终状态交付 anchor 为 `960e366`，历史 evidence/approval/delivery anchors 为 `9d24035`、`e0634e7`、`ec7bd8e`。用户已批准 P5 两阶段计划及 Fold-0 前四项实现澄清；common config hash 为 `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327`。Core direct tests `26 passed`、完整测试 `161 passed`、Phase Compliance Reviewer `PASS`；冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
 
 ## 3. 当前阶段：P5 Reference-aligned Black-box Regression
 
@@ -64,14 +64,16 @@ last_verified_commit: 68cc73e
 - 已创建本地分支 `p5-blackbox-regression`；冻结 V1/V2 requirements/config/resolved/hash 无 diff。
 - 已创建并冻结四模型共用的 `configs/experiments/baseline_v2_reference_training.yaml`、canonical resolved YAML 与 SHA-256；config hash 为 `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327`。Config 明确分隔 reference-reported policy 与 Baseline-v2 project pre-registered exact choices，并固定已批准的 optimizer、scheduler、batching、augmentation、FP32 和 L40S preflight 约束。
 - Common execution config 直接测试为 `3 passed`、完整测试为 `138 passed`；`git diff --check`、冻结 V1/V2 requirements/config 检查和本批次 Phase Compliance Reviewer 均为 `PASS`。该 config/test batch 已由 `68cc73e` 本地提交，尚未推送。
+- 已实现 `src/lidc_baseline/p5_blackbox.py` 及 direct tests，覆盖 frozen execution-config enforcement、P4 shared encoder hash 验证、fold-specific deterministic unconstrained linear head、manifest/split/ROI data loading、train-only deterministic augmentation、Adam 与 validation-MSE scheduler、80-epoch training/checkpoint selection、atomic checkpoint/history artifacts、完整 RNG/optimizer/scheduler resume、single-writer fold lifecycle、one-time test transaction/recovery、prediction provenance、unclipped regression metrics、verify、overfit-check 和 L40S batch-16 preflight interfaces。
+- Core direct tests 为 `26 passed`、完整测试为 `161 passed`；冻结协议检查和本批次 Phase Compliance Reviewer 均为 `PASS`。上一轮 interim `FAIL` 的五项阻断发现已全部修复并由最终合规复核验证；它们属于提交前审查缺口，未造成已交付阶段或正式结果失效，因此不登记为 Bug。Core batch 已由 `64f01c7` 本地提交但尚未推送或同步 Katana，也未实际运行 overfit、preflight 或 Fold 0。
 
 ### 正在进行
 
-- 正在实现 P5 Black-box model、augmentation/scheduler/checkpoint/resume、自动测试和 Katana Stage A execution interface。
+- 正在准备将所需代码与固定 P5 输入同步至 Katana，随后运行 train-only overfit 和 L40S batch-16 preflight。
 
 ### 尚未完成
 
-- 尚未完成 P5 model code/tests、train-only overfit、L40S batch-16 preflight、Fold 0 80-epoch formal run 和一次性 test evaluation。
+- Core batch 尚未推送或同步 Katana；train-only overfit、L40S batch-16 preflight、Fold 0 80-epoch formal run 和一次性 test evaluation 均尚未实际执行。
 - Fold 0 技术门通过后仍须等待用户中间确认；未经确认不得提交 folds 1–4 jobs。
 - Folds 1–4、五折 OOF reconciliation、P5 阶段双审查、最终用户确认、合并与推送均尚未完成。
 
@@ -80,7 +82,7 @@ last_verified_commit: 68cc73e
 | P5 验收项 | 状态 | 证据 |
 |---|---|---|
 | Common execution config 与来源标签 | `PASS` | Source/resolved/hash 已生成；SHA-256 为 `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327`；reference-reported 与 project pre-registered choices 明确分隔；直接 `3 passed`、完整 `138 passed`、Phase Compliance Reviewer `PASS` |
-| P5 model、augmentation、scheduler、checkpoint/resume | `PENDING` | 尚未实现和测试 |
+| P5 core model/data/augmentation/scheduler/checkpoint/resume/test transaction/verify interfaces | `PASS` | `p5_blackbox.py` 与 direct tests 已实现并由 `64f01c7` 本地提交；direct `26 passed`、完整 `161 passed`、冻结检查与最终 Phase Compliance Reviewer `PASS`；尚未推送或远程执行 |
 | Fold 0 local overfit 与 L40S batch-16 preflight | `PENDING` | 尚未执行 |
 | Fold 0 formal 80 epochs、best checkpoint 与一次性 test | `PENDING` | 尚未执行；完成后必须等待用户中间确认 |
 | Folds 1–4 与 2,633 OOF reconciliation | `PENDING` | Fold 0 获用户确认前禁止开始 |
@@ -275,7 +277,7 @@ Bug 修复后：
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
-| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | 用户已批准两阶段计划与 Fold-0 前实现澄清；common execution config 已冻结，hash `afadd6a...b2327`，直接 `3 passed`、完整 `138 passed` 与本批次合规审查均通过；model implementation、preflight 与 Stage A 尚待完成 | 0 | 0 |
+| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | Common config 已冻结；core model/data/training/resume/test-transaction/verify/overfit/preflight interfaces 已通过 direct `26 passed`、完整 `161 passed` 和合规复核，并由 `64f01c7` 本地提交但尚未推送或同步 Katana；overfit/preflight 与 Stage A 尚未实际执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 完成、确认并推送前禁止开始 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
