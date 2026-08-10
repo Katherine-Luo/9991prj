@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P4
-development_phase_status: COMPLETED
+development_phase: P5
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P4
-next_phase: P5
+resume_phase: P5
+next_phase: P6
 last_updated: 2026-08-11
-last_verified_commit: ec7bd8e
+last_verified_commit: 960e366
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3 与 P4 均已完成、获用户确认并推送；P4 交付 anchor 为 `ec7bd8e`，P5 尚未开始。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3 与 P4 均已完成、获用户确认并推送；P4 最终状态交付 anchor 为 `960e366`。用户已批准 P5 Reference-aligned Black-box Regression 两阶段实施计划，P5 现为唯一开发阶段。
 
 ## 1. 阅读规则
 
@@ -38,81 +38,70 @@ last_verified_commit: ec7bd8e
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P4 Patient-level split 与共享初始化` |
-| 阶段状态 | `COMPLETED` |
+| 当前开发阶段 | `P5 Reference-aligned Black-box Regression` |
+| 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P4 已完成 fast-forward 合并和 GitHub 推送，合并后完整测试、本地 verify 与 post-delivery Phase Compliance Reviewer 均为 `PASS`。P5 仍须先制定实施计划并获得用户批准。 |
-| 恢复阶段 | `P4` |
-| 下一阶段 | `P5 Black-box DenseNet regression`（保持 `NOT_STARTED`） |
+| 当前阻塞项 | 无；P5 Stage A 正在本地实现，Fold 0 正式执行前仍须完成 execution config、代码、测试、小样本 overfit 与 Katana L40S batch-16 preflight。 |
+| 恢复阶段 | `P5` |
+| 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P4 tracked evidence anchor 为 `9d24035`，approval-gate verified anchor 为 `e0634e7`，delivery anchor 为 `ec7bd8e`。KDM 已按 2,667-entry whitelist 完成实际同步，remote 验证 2,666 个 hashed entries / `1,233,219,041` bytes。PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 `Exit_status=0`、walltime `00:01:47`；CUDA smoke 对 2,633 ROI / 868 patients、五折 split、每折四个独立 encoder hash 和真实 ROI forward 均为 `PASS`，且 optimizer/backward/parameter update 均为 false。P4 prepare+Katana `17 passed`、合并后完整套件 `135 passed`、合并后 `p4_prepare verify`、阶段级双 agent 审查、completion-sealing 与 post-delivery Phase Compliance Reviewers、冻结协议检查均为 `PASS`；用户已明确确认 P4。交付时 `main`、`HEAD` 与 `origin/main` 均为 `ec7bd8e89528ae4adeea4699217fc481f402e0c7`；P5 为 `NOT_STARTED`。 |
+| 状态依据 | `main`、`origin/main` 与 P5 分支基线均为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；该提交保存 P4 最终交付状态，P4 evidence/approval/delivery anchors 为 `9d24035`、`e0634e7`、`ec7bd8e`。用户已批准 P5 两阶段计划及 Fold-0 前四项实现澄清；P5 已在本地分支 `p5-blackbox-regression` 启动，冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
 
-## 3. 当前阶段：P4 Patient-level split 与共享初始化
+## 3. 当前阶段：P5 Reference-aligned Black-box Regression
 
 ### 阶段目标
 
-为 2,633 个 primary regression nodules 建立 patient-grouped five-fold outer/inner split、严格 train-only statistics 边界，以及每折供四模型共同加载的 DenseNet-121 encoder initialization；随后在 Katana L40S 上完成真实 ROI CUDA 加载和 hash smoke，不进行训练。
+在 P4 固定 split 与共享 encoder initialization 上实现并完成 Black-box 3D DenseNet-121 连续 malignancy score regression。P5 分为 Stage A Fold 0 正式门和用户中间确认后的 Stage B Folds 1–4；本阶段只训练 Black-box，不进入 Standard CBM。
 
 ### 已完成
 
-- P3 已完成、确认并由 `d1f9b39` 推送；2,633 个 private ROI 与 roi index 可作为 P4 固定输入。
-- 用户已批准 P4 实施计划，固定采用结节五级 strata + patient group 约束的 deterministic `StratifiedGroupKFold`。
-- 已确认 P4 包含 Katana 早期同步：仅传输代码、V2 ROI、private manifest、splits 和 encoder initializations，不上传原始 DICOM，不进行训练。
-- Katana 实测 storage 为 128 GiB total / 7.6 GiB used / 121 GiB available，P4 remote workset 为约 1.2 GiB；扩容申请未回复不阻塞本阶段。
-- `6b2342f` 已实现 `p4_prepare build/verify`、patient-key domain-separated hashing、patient-grouped outer/inner split、train-only statistics guard、shared encoder artifact writer/loader 与 provenance/hash 验证；现已随 P4 delivery anchor `ec7bd8e` 合并并推送。
-- 已在真实 private V2 manifest、ROI index 和 2,633 个 ROI 上完成 build/verify：primary cohort 为 2,633 nodules / 868 patients，ROI 文件集合与逐文件 SHA-256 均匹配，`roi_set_sha256=7b3865d3a587ea485457ce5d1cc9e348bf722958469f84e7e016fe79d0981977`，总量为 `1,002,688,586` bytes。
-- 五折 train/validation/test 的 nodule/patient counts 精确匹配预注册表：fold 0 为 `1882/611, 272/86, 479/171`；fold 1 为 `1858/602, 273/86, 502/180`；fold 2 为 `1853/612, 241/87, 539/169`；fold 3 为 `1813/608, 271/86, 549/174`；fold 4 为 `1811/607, 258/87, 564/174`。
-- 每折 split 均保存并验证 train-only statistics、五级 strata、low/high extremes、source fingerprints 与 canonical split SHA-256；patient/nodule partitions 互斥，pooled outer-test 精确覆盖全部 2,633 nodules / 868 patients。
-- 已生成并验证五个 private encoder initialization artifacts。每折 Black-box、Standard CBM、CEM、GAM 四个独立 consumer 加载后的 semantic encoder hash 完全一致；不同 fold hashes 不同，artifact 使用 deterministic legacy serialization，重复生成字节一致。
-- P4 专项测试为 `9 passed`，完整测试套件为 `127 passed`；当前批次 Phase Compliance Reviewer 为 `PASS`，确认本地实现属于 P4 且未进入 P5。
-- `6ecb016` 已提交并验证 P4 Katana transfer/smoke interface，包含 `src/lidc_baseline/p4_katana.py`、`scripts/katana/sync_p4.sh`、`scripts/katana/p4_cuda_smoke.pbs` 与 `tests/test_p4_katana.py`；现已随 P4 delivery anchor `ec7bd8e` 合并并推送。
-- Private `p4_transfer_manifest.json` 已通过逐文件 size/SHA-256 验证：2,666 个 hashed files、`1,233,219,041` bytes，internal hash 为 `c74412efe6061539860cf8605913962967c97064a8887d115596ee5c7c82239b`，manifest file SHA-256 为 `1f789d039974fed0071a7aca2b4b559284926f91c001ab5b7adfa27c5bee1393`。
-- KDM rsync whitelist 为 2,667 个唯一相对路径（2,666 个 hashed workset files 加 manifest anchor），无 `.DS_Store`、Git metadata、原始 DICOM/XML、reports 或 runs；PBS interface 固定 L40S，只执行真实 ROI loading、五折四 consumer hash 验证和 CUDA forward，不创建 optimizer、不 backward、不训练。
-- Katana interface 专项测试为 `7 passed`；P4 prepare+Katana 合并测试为 `16 passed`；完整测试套件为 `134 passed`。当前批次 Phase Compliance Reviewer 为 `PASS`，确认 interface/manifest 属于 P4 且未进入 P5。
-- 已通过 KDM 将 2,667-entry explicit whitelist 同步至 `/srv/scratch/z5448417/lidc-baseline-v2/`；remote manifest 验证 2,666 个 hashed entries、`1,233,219,041` bytes，未上传原始 DICOM/XML、Git metadata、QA 图、reports 或 runs。
-- Katana PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上完成，`Exit_status=0`、walltime `00:01:47`。CUDA smoke 为 `PASS`：2,633 ROI / 868 patients 与五折 source hashes 一致；每折四个独立 encoders 加载相同 initialization hash；train/validation/test 各真实 ROI interface 正确，CUDA forward 输出有限；`optimizer_created=false`、`backward_called=false`、`parameter_update=false`。
-- `9d24035` 已提交脱敏 tracked audit evidence：`summary.json`、`folds.csv`、`initializations.csv`、`katana_cuda.json`、`katana_job.json`，以及对应 `.gitignore` allowlist 和 audit regression test。Audit test 验证 2,633/868、0 patient leakage、2,633 OOF coverage、五折 split/init hashes、remote job 和 no-training 证据，且不含 patient/nodule/UID 或绝对路径。
-- P4 prepare+Katana 测试为 `17 passed`，完整测试套件为 `135 passed`；本地 `p4_prepare verify`、冻结 V1/V2 requirements/config/resolved/hash、`git diff --check` 和阶段级 Phase Compliance Reviewer 均为 `PASS`。
-- 用户已明确确认 P4；completion-sealing Phase Compliance Reviewer 为 `PASS`，P4 生命周期现封存为 `COMPLETED / ON_TRACK`。
-- P4 已 fast-forward 合并至 `main` 并推送 GitHub；交付时 `main`、`HEAD` 与 `origin/main` 均为 `ec7bd8e89528ae4adeea4699217fc481f402e0c7`。合并后完整测试为 `135 passed`，`p4_prepare verify` 与 post-delivery Phase Compliance Reviewer 均为 `PASS`。
+- P4 已完成、确认、合并并推送；2,633 个 private ROI、五折 patient-grouped split、train-only statistics 和每折共享 DenseNet-121 encoder initialization 是 P5 固定输入。
+- P4 最终状态已由 `960e366` 交付，P4 L40S job `8962963.kman.restech.unsw.edu.au` 为 `Exit_status=0`，remote workset 与 CUDA forward smoke 可复用。
+- 用户已批准 P5 两阶段计划：先完成 Fold 0 formal gate 并等待中间确认，再以完全相同 execution config 执行 folds 1–4；P5 最终必须产生 2,633 个 OOF predictions。
+- 用户已固定 reference-aligned common policy：Adam、`lr=1e-4`、80 epochs、batch 16、4 个 validation bad epochs 后 LR 乘 `0.9`，以及仅训练集使用的 rotation/flips/z-order reversal。
+- 用户已固定 Fold-0 前实现澄清：5D rotation 使用 `mode=bilinear`、`padding_mode=zeros`、`align_corners=false`；`drop_last=false`；Black-box head 使用 fold-specific domain-separated deterministic seed/hash；所有参考论文未精确报告的细节均标记为 Baseline-v2 project pre-registered choices。
+- 已创建本地分支 `p5-blackbox-regression`；冻结 V1/V2 requirements/config/resolved/hash 无 diff。
 
 ### 正在进行
 
-- 无 P4 开发、验收或交付工作；P5 实施计划尚未制定或批准。
+- 正在创建独立 common execution config、P5 Black-box implementation、自动测试和 Katana Stage A execution interface。
 
 ### 尚未完成
 
-- P4 无未完成技术、验收或交付事项。
-- P5 实施计划尚未制定或批准，P5 保持 `NOT_STARTED`。
+- 尚未完成 execution config freeze、P5 code/tests、train-only overfit、L40S batch-16 preflight、Fold 0 80-epoch formal run 和一次性 test evaluation。
+- Fold 0 技术门通过后仍须等待用户中间确认；未经确认不得提交 folds 1–4 jobs。
+- Folds 1–4、五折 OOF reconciliation、P5 阶段双审查、最终用户确认、合并与推送均尚未完成。
 
 ### 验收进度
 
-| P4 验收项 | 状态 | 证据 |
+| P5 验收项 | 状态 | 证据 |
 |---|---|---|
-| P4-R1 patient-grouped outer/inner split | `PASS` | 真实 build/verify 为 2,633 nodules / 868 patients；五折 counts 精确匹配预注册表；patient partitions 互斥且 pooled outer-test 完整覆盖 cohort；validation/test 均含 low/high extremes；remote split hashes 一致 |
-| P4-R2 train-only statistics | `PASS` | 每折统计只读取注册的 train UID；validation/unknown UID leakage guard、split/source hash guard 和 patient leakage tests 通过；tracked summary 记录 patient leakage 0 |
-| P4-R3 shared encoder initialization | `PASS` | 五折 artifacts 已生成；本地和 Katana 每折四个独立 consumer semantic hashes 一致，不同 folds 不同；deterministic legacy bytes、provenance/corruption/overwrite guards 通过 |
-| Katana CUDA loading/hash smoke | `PASS` | KDM 2,667-entry whitelist 已同步；job `8962963.kman.restech.unsw.edu.au` 在 L40S 上 Exit 0，2,633 ROI integrity、五折四 consumer hashes、每折真实 ROI CUDA forward 均通过且无训练操作 |
-| 冻结协议保护、自动测试与阶段治理 | `PASS` | P4 prepare+Katana `17 passed`、合并前后完整测试均为 `135 passed`；本地及合并后 verify、tracked audit de-identification、冻结 V1/V2 文档/config 和 `git diff --check` 均通过；阶段级双 agent 审查、completion-sealing 与 post-delivery Phase Compliance Reviewers 均通过，用户已明确确认 P4；delivery anchor 为 `ec7bd8e` |
+| Common execution config 与来源标签 | `PENDING` | 待创建 resolved config/hash，并区分 reference-reported 与 project pre-registered exact choices |
+| P5 model、augmentation、scheduler、checkpoint/resume | `PENDING` | 尚未实现和测试 |
+| Fold 0 local overfit 与 L40S batch-16 preflight | `PENDING` | 尚未执行 |
+| Fold 0 formal 80 epochs、best checkpoint 与一次性 test | `PENDING` | 尚未执行；完成后必须等待用户中间确认 |
+| Folds 1–4 与 2,633 OOF reconciliation | `PENDING` | Fold 0 获用户确认前禁止开始 |
+| 冻结协议保护、双 agent 审查与阶段治理 | `PENDING` | 启动前冻结文件 diff 为零；后续每个开发批次继续执行双审查 |
 
 ### 未解决困难
 
-- `DIF-P10-001` 继续为 `OPEN`，不阻止 P4；P4 已记录 remote workset 约 1.2 GiB 与 121 GiB available，但 P10 前仍须估算正式训练和解释产物总工作集。
+- `DIF-P10-001` 继续为 `OPEN`，当前不阻止 P5 Stage A；P5 必须记录 checkpoints、history、predictions 与 runtime 的实际 storage，供 P10 总工作集估算使用。
 
-## 4. 下一阶段：P5 Black-box DenseNet regression
+## 4. 下一阶段：P6 Standard CBM
 
 ### 阶段目标
 
-实现并训练 Black-box 3D DenseNet-121 continuous-regression sanity baseline。
+在与 P5 相同的 split、共享 encoder 初始化和 common execution policy 下实现 sequential Standard CBM。
 
 ### 进入条件
 
-- P4 split、train-only statistics、shared encoder initialization、Katana CUDA smoke、自动测试、双 agent 审查、用户确认和 GitHub 推送均已完成；P5 仍须单独制定实施计划并获得用户明确批准。
+- P5 必须完成全部五折、技术验收、最终用户确认、合并和 GitHub 推送。
+- P6 必须另行制定实施计划并获得用户明确批准。
 
 ### 第一批任务
 
-- 尚未制定或批准；P5 保持 `NOT_STARTED`。
+- 尚未制定或批准；P6 保持 `NOT_STARTED`。
 
 <!-- NORMAL_READING_END -->
 
@@ -284,8 +273,8 @@ Bug 修复后：
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
-| P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
-| P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | 用户已批准两阶段计划与 Fold-0 前实现澄清；本地分支已启动，execution config、implementation/tests 与 Stage A 尚待完成 | 0 | 0 |
+| P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 完成、确认并推送前禁止开始 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -295,7 +284,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 与 P4 均已完成并推送；P5 保持 `NOT_STARTED`。
+当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 与 P4 均已完成并推送；P5 已按批准计划进入 `IN_PROGRESS`，P6 保持 `NOT_STARTED`。
 
 ### Bug 状态
 
@@ -600,3 +589,4 @@ Bug 修复后：
 | 2026-08-11 | `PHASE_AWAITING_APPROVAL` | P4 | 实际 KDM whitelist sync 与 L40S job `8962963.kman.restech.unsw.edu.au` 均通过；2,633 ROI / 868 patients、五折 split、每折四 consumer initialization hashes、真实 ROI CUDA forwards 和 no-training invariants 均验证。Tracked audit evidence、P4 `17 passed`、完整 `135 passed`、冻结协议检查与阶段级双 agent 审查均为 `PASS`。Evidence 与 approval-gate anchors 分别为 `9d24035`、`e0634e7`；全部 P4 工作保存在本地分支且未推送，当前仅等待用户确认，P5 保持 `NOT_STARTED`。 | `9d24035`、`e0634e7` |
 | 2026-08-11 | `PHASE_COMPLETED` | P4 | 用户明确确认 P4；completion-sealing Phase Compliance Reviewer 为 `PASS`，P4 永久记录已保存 split、train-only statistics、shared initialization、KDM、Katana、测试和双审查证据。P4 本地分支尚待 fast-forward 合并、`main` 测试和推送；P5 保持 `NOT_STARTED`。 | 用户确认与 P4 完成记录 |
 | 2026-08-11 | `DELIVERED` | P4 | P4 已 fast-forward 合并至 `main` 并推送 GitHub；合并后完整测试 `135 passed`、`p4_prepare verify` 与 post-delivery Phase Compliance Reviewer 均为 `PASS`。交付时 `main`、`HEAD` 与 `origin/main` 三方 SHA 一致；P5 保持 `NOT_STARTED`。 | `ec7bd8e` |
+| 2026-08-11 | `PHASE_STARTED` | P5 | 用户批准 Reference-aligned Black-box Regression 两阶段计划及 Fold-0 前四项实现澄清；P5 进入 `IN_PROGRESS`，先执行 common config、实现/测试、overfit、L40S preflight 与 Fold 0 formal gate。Fold 0 中间确认前禁止 folds 1–4；P6 保持 `NOT_STARTED`。 | `p5-blackbox-regression` 本地分支；基线 `960e366` |
