@@ -1,16 +1,17 @@
-# LIDC-IDRI Baseline-v1 仓库开发规则
+# LIDC-IDRI Baseline 仓库开发规则
 
 ## 1. 适用范围与事实来源
 
 本文件位于仓库根目录，递归适用于整个仓库。仓库内不得创建与本文件重复或冲突的 `.AGENT.md`、`.AGENTS.md` 或嵌套 `AGENTS.md`。
 
-项目有三个互补的事实来源：
+项目有四个互补的事实来源：
 
-1. `docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md`：冻结的科学协议、阶段需求和验收标准。
-2. `docs/PROJECT_STATUS.md`：当前阶段、维护模式、完成情况、Bug、困难和阶段门状态。
-3. `AGENTS.md`：开发、审查、确认、提交和推送流程。
+1. `docs/PROJECT_STATUS.md`：唯一实时状态，并通过 `active_requirements` 和 `active_config` 指定当前协议。
+2. `docs/PROTOCOL_INDEX.md`：协议版本、ACTIVE/SUPERSEDED 状态和允许用途。
+3. 状态文档指定的 active requirements/config：当前科学协议、阶段需求和验收标准。
+4. `AGENTS.md`：开发、审查、确认、提交和推送流程。
 
-不得用状态文档或本文件改写科学协议。发现三者不一致时，停止相关实现，向用户报告冲突并等待明确指示。
+不得用状态文档或本文件改写科学协议。发现四者不一致时，停止相关实现，向用户报告冲突并等待明确指示。标记为 `SUPERSEDED` 的协议只允许用于历史 Bug、provenance 或复现审计，不得作为新开发依据。
 
 ## 2. 开发批次定义
 
@@ -29,12 +30,15 @@
 修改任何 tracked file 前必须依次完成：
 
 1. 完整读取本文件。
-2. 完整读取 `docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md`。
-3. 读取 `docs/PROJECT_STATUS.md` 的 YAML front matter。
-4. 当 `operating_mode` 为 `NORMAL_DEVELOPMENT` 时，读取状态文档的“当前状态”“当前阶段”和“下一阶段”，直到 `NORMAL_READING_END`。
-5. 当 `operating_mode` 为 `BUG_MAINTENANCE` 时，通读整份状态文档。
-6. 检查 `git status`、当前分支和已有 diff，识别并保护用户的既有改动。
-7. 从状态文档确定本批次唯一允许处理的阶段和对应验收标准。
+2. 读取 `docs/PROJECT_STATUS.md` 的 YAML front matter，解析 `active_protocol`、`active_requirements` 和 `active_config`。
+3. 完整读取 `active_requirements` 指定的需求文档，并读取 active config。
+4. 核对 `docs/PROTOCOL_INDEX.md`，确认 active protocol 未被标为 `SUPERSEDED`。
+5. 当 `operating_mode` 为 `NORMAL_DEVELOPMENT` 时，读取状态文档的“当前状态”“当前阶段”和“下一阶段”，直到 `NORMAL_READING_END`。
+6. 当 `operating_mode` 为 `BUG_MAINTENANCE` 时，通读整份状态文档。
+7. 检查 `git status`、当前分支和已有 diff，识别并保护用户的既有改动。
+8. 从状态文档确定本批次唯一允许处理的阶段和对应验收标准。
+
+只有在用户明确批准的 protocol migration 阶段，才允许 active requirements/config 处于待创建或待冻结状态；该临时状态必须写入状态文档，且迁移阶段完成前不得进入后续科学阶段。
 
 遗漏任一步骤时，不得开始修改文件。
 
@@ -65,14 +69,18 @@ NOT_STARTED
 
 ## 5. 冻结需求文档保护
 
-未经用户针对具体变更的明确批准，不得对 `docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md` 执行任何编辑、格式化、重命名、移动或覆盖。
+未经用户针对具体变更的明确批准，不得对任何已冻结 requirements/config 执行编辑、格式化、重命名、移动或覆盖。
 
-即使科学协议变更得到批准，也必须遵守冻结文档中的版本规则：创建新的协议版本并保留 Baseline-v1，不得静默覆盖原文件。
+即使科学协议变更得到批准，也必须创建新协议版本并保留旧版本，不得静默覆盖。Baseline-v1 的 requirements/config/resolved config/hash 永久保持历史只读。
 
 每个开发批次结束时必须验证：
 
 ```bash
-git diff --exit-code -- docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md
+git diff --exit-code -- \
+  docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md \
+  configs/baseline_v1.yaml \
+  configs/baseline_v1.resolved.yaml \
+  configs/baseline_v1.sha256
 ```
 
 该命令非零退出时，本批次不得声明完成或提交。
@@ -80,7 +88,7 @@ git diff --exit-code -- docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md
 ## 6. 语言规范
 
 - 所有面向用户的回答使用中文。
-- `AGENTS.md`、冻结需求文档和项目状态文档使用中文。
+- `AGENTS.md`、需求文档、协议索引和项目状态文档使用中文。
 - 源代码、标识符、类型名、函数名、测试名、配置键、注释、docstring 和面向开发者的代码消息使用英语。
 - 不得为了语言统一而翻译或重写冻结需求文档。
 - Git commit subject 使用简洁英语，并延续仓库现有风格。
@@ -106,7 +114,7 @@ git diff --exit-code -- docs/LIDC_IDRI_BASELINE_V1_REQUIREMENTS.md
 
 审查范围：
 
-- 冻结需求文档。
+- Active requirements、active config、协议索引和全部历史冻结协议。
 - 状态文档及当前阶段。
 - 本批次 diff 和相关代码、测试、配置或文档。
 - 已执行的验证命令及结果。
@@ -226,7 +234,7 @@ P0–P10 任一阶段均不得跳过该确认门。
 - `Phase Compliance Reviewer` 给出 `PASS`。
 - `Status Synchronization Reviewer` 给出 `IN_SYNC` 或完成必要更新后无剩余阻塞。
 - 主 agent 已检查最终 diff 和 Git 状态。
-- 冻结需求文档没有未批准改动。
+- Active requirements/config 与全部历史冻结协议没有未批准改动。
 - 状态文档准确反映代码、测试、困难、Bug 和验收状态。
 
 开发批次完成不等于阶段完成。阶段只有经过完整阶段门、进入 `AWAITING_USER_APPROVAL` 并获得用户明确确认后，才能标记为 `COMPLETED`。
