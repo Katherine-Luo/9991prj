@@ -11,7 +11,8 @@ reading_scope: CURRENT_AND_NEXT
 development_phase: P3
 development_phase_status: IN_PROGRESS
 maintenance_phase: null
-active_bug_ids: []
+active_bug_ids:
+  - BUG-P3-001
 resume_phase: P3
 next_phase: P4
 last_updated: 2026-08-10
@@ -41,8 +42,8 @@ last_verified_commit: c81390b
 | 当前开发阶段 | `P3 Consensus mask、确定性 3D ROI 与 QA` |
 | 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
-| 活动 Bug | 无 |
-| 当前阻塞项 | 无；先构建 41 个 pilot QA，待用户确认配准后才允许全量 ROI |
+| 活动 Bug | `BUG-P3-001`（`VERIFYING`；仅影响 pilot QA 图渲染，不影响已写入的 ROI） |
+| 当前阻塞项 | 必须以修复后的 QA writer 重试完整 41 个 pilot，确认每个样本均有可审阅 QA 图；随后才可请求用户确认配准，绝不允许开始 full ROI |
 | 恢复阶段 | `P3` |
 | 下一阶段 | `P4 Patient-level split 与共享初始化`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-10 |
@@ -61,17 +62,18 @@ last_verified_commit: c81390b
 - 已确认的输入为 2,633 primary regression nodules、876 个 CT series 和 6,768 条可回连 pylidc 的 reader annotations；P1 exact-duplicate series 含 1 个 primary nodule，必须沿用已批准的 hashed-SOP selection policy。
 - 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
 - 已完成可断点续跑的 pilot 选择统计保护：私有 `pilot_consensus_statistics.parquet` 记录 consensus physical volume、bbox/cube padding ratio，并以 canonical XML、annotation/SOP provenance 和 scan geometry fingerprint 验证缓存复用；来源或几何变化时必须重新计算，不能复用旧统计。
-- 已完成功能批次验证：P3 专项测试和完整测试均通过（完整套件 `108 passed`）；Phase Compliance Reviewer 已给出 `PASS`。本批次尚未执行真实 pilot build，故没有生成或审阅 QA 图，也没有 full ROI/audit 证据。
+- 已完成首次真实 pilot build：固定选择的 41 个样本均已完成 ROI 写入；其中 33 个样本成功生成 QA 图。其余 8 个 single-slice source crop 在 QA contour rendering 时失败，但该错误发生在 ROI 原子写入之后，8 个 ROI 均已写入，未发生原始数据修改或 sample exclusion。
+- 已定位并修复 `BUG-P3-001`：Matplotlib 不能为 `1×N` 或 `N×1` 的 single-slice plane 绘制 contour。QA writer 现仅在二维平面每个维度均至少为 2 且 mask 非空时叠加 contour；已新增回归测试，修复后 P3 专项测试为 `23 passed`、完整套件为 `109 passed`，Phase Compliance Reviewer 为 `PASS`。仍须以最终代码完成完整 41-sample pilot retry/verify。
 
 ### 正在进行
 
 - P3 已位于本地 `p3-consensus-roi` 分支；cache provenance 修复及其直接测试、随后状态同步正等待形成各自的原子本地提交，尚未推送。
-- 下一项唯一允许的运行工作是执行 41 个 deterministic pilot QA build/verify，并向用户展示私有 QA 图与聚合统计。
+- 下一项唯一允许的运行工作是以修复后的 QA writer 重试完整 41 个 deterministic pilot QA build/verify，并向用户展示全部私有 QA 图与聚合统计。
 - 在用户明确确认 pilot 配准正确前暂停，不生成 full ROI，也不生成/提交 P3 full aggregate audit。
 
 ### 尚未完成
 
-- 真实 pilot build/verify、私有 pilot ROI/index/QA 图及其统计尚未生成。
+- 全部 41 个 pilot QA 图的修复后重试与 verify 尚未完成；首次运行的 33 个图不能替代完整 pilot QA 验收。
 - Pilot QA 的用户确认、full 2,633 ROI、私有 full index、脱敏 aggregate audit、阶段级验收、双 agent 审查、阶段确认与推送均尚未发生。
 
 ### 验收进度
@@ -80,13 +82,13 @@ last_verified_commit: c81390b
 |---|---|---|
 | P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；正式 pipeline 与 synthetic boundary/alignment tests 已通过，真实 pilot/full execution 待完成 |
 | P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ 与 synthetic tests 已完成；真实 pilot/full ROI 证据待生成 |
-| P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection 与 QA writer 已实现；pilot QA 尚未运行，尚未获用户人工确认 |
+| P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection 已运行；首次 pilot 为 33/41 QA 图成功、8/41 因 single-slice contour rendering 失败。修复已完成并有直接回归测试，待完整 41-sample retry/verify 与用户人工确认 |
 | 冻结协议保护 | `IN_PROGRESS` | 启动前 V1/V2 requirements/config 无 diff；每批次继续验证 |
 
 ### 未解决困难
 
 - `DIF-P10-001` 继续为 `OPEN`，不阻止 P3 的本地 ROI 构建；P3 full 后必须测量 ROI/QA 产物并更新 P10 storage estimate。
-- 当前无 P3 技术阻塞；pilot QA 未获确认前是明确的人工阶段内停点，而不是阻塞。
+- `BUG-P3-001` 处于 `VERIFYING`：修复后的 41-sample pilot retry/verify 成功前，P3-R3 不得通过；pilot QA 未获用户确认前也是明确的人工阶段内停点，而不是 P3 最终确认。
 
 ## 4. 下一阶段：P4 Patient-level split 与共享初始化
 
@@ -270,7 +272,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、synthetic tests 和 Phase Compliance Reviewer 已通过（完整 `108 passed`）；pilot QA 未运行，full 验收待完成 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `AT_RISK` | pipeline、cache provenance protection、synthetic tests 和 Phase Compliance Reviewer 已通过（修复后完整 `109 passed`）；首次 pilot 为 33/41 QA 图成功，single-slice QA rendering 修复处于验证中；full 验收待完成 | 1 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -283,7 +285,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前无活动 Bug。
+当前活动 Bug：`BUG-P3-001`（`VERIFYING`）。该 Bug 只影响首次 pilot 的 QA 图渲染，8 个相应 ROI 已在渲染前成功写入；P3 仍为 `IN_PROGRESS`，P4 仍为 `NOT_STARTED`。
 
 ### Bug 状态
 
@@ -305,6 +307,23 @@ Bug 修复后：
 - 验证命令与结果：V2 专项测试 `26 passed`；完整测试 `86 passed`；独立 Phase Compliance Reviewer 复核为 `PASS`。`test_config` 继续验证 `freeze_config` 新生成的 resolved/hash 文件为 `0444`，V2 protocol test 继续验证 canonical bytes 与 committed SHA-256。
 - 未解决事项：无。
 - 修复 commit：`f28484f`。
+
+### BUG-P3-001：single-slice source crop 的 QA contour rendering 失败
+
+- 状态：`VERIFYING`
+- 严重度：`MEDIUM`
+- 发现日期：2026-08-10
+- 影响阶段：P3
+- 影响验收标准：是；影响 P3-R3 pilot QA 的完整 41-sample 可视化审阅，但不影响已写入 ROI 的 image/mask 内容。
+- 恢复阶段：P3
+- 受影响下游阶段：P4（保持 `NOT_STARTED`，未受实现影响）
+- 现象：首次 pilot 的 41 个确定性样本中，33 个 QA 图成功生成；8 个 source crop 在 depth、height 或 width 方向只有一个 voxel，Matplotlib contour 对该 `1×N` 或 `N×1` plane 抛出 `TypeError`。
+- 复现方式：对含单 voxel 轴的 non-empty source mask 调用 `_qa_image`；修复前会在 contour overlay 处失败。
+- 根因：QA writer 未在调用 Matplotlib contour 前检查 plane 的两个空间维度是否均至少为 2。
+- 修复：仅当 plane 两维均至少为 2 且 binary mask 非空时绘制 contour；QA image 和 ROI 构建的其余逻辑不变。新增 single-slice QA writer 回归测试。
+- 验证命令与结果：修复后 `pytest -q tests/test_p3_roi.py` 为 `23 passed`。仍须用最终代码重试完整 41-sample pilot build/verify，确认 41 个 QA 图均可生成后，才可请求用户进行配准确认。
+- 未解决事项：完整 pilot retry/verify 与用户 QA 确认尚未完成；不得据首次 33 个成功图声明 pilot 通过。
+- 修复 commit：待本开发批次的功能原子 commit。
 
 ### Bug 记录模板
 
