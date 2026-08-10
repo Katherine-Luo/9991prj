@@ -9,7 +9,7 @@ protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P4
-development_phase_status: AWAITING_USER_APPROVAL
+development_phase_status: COMPLETED
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P4
@@ -20,7 +20,7 @@ last_verified_commit: e0634e7
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 与 P3 均已完成、确认并推送；P4 技术阶段门与双 agent 审查已通过，正在等待用户明确确认，P5 尚未开始。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3 与 P4 均已完成并获用户确认；P4 本地交付仍须完成状态原子提交、fast-forward 合并、`main` 完整测试和推送，P5 尚未开始。
 
 ## 1. 阅读规则
 
@@ -39,14 +39,14 @@ last_verified_commit: e0634e7
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P4 Patient-level split 与共享初始化` |
-| 阶段状态 | `AWAITING_USER_APPROVAL` |
+| 阶段状态 | `COMPLETED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞；P4 技术阶段门与双 agent 审查均已通过，approval-gate verified anchor 为 `e0634e7`。全部 P4 工作均保存在本地分支且未推送；当前唯一等待项是用户明确确认，P5 仍不得开始。 |
+| 当前阻塞项 | 无；用户已明确确认 P4，技术阶段门、双 agent 审查和 completion-sealing Phase Compliance Reviewer 均为 `PASS`。全部 P4 工作仍保存在本地分支且尚未合并或推送；P5 仍不得开始。 |
 | 恢复阶段 | `P4` |
 | 下一阶段 | `P5 Black-box DenseNet regression`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P4 approval-gate verified anchor 为 `e0634e7`，tracked evidence anchor 为 `9d24035`；后续变更仅用于稳定状态文字，不改变阶段证据或结论。全部 P4 工作均保存在本地分支 `p4-splits-shared-init` 且未推送。KDM 已按 2,667-entry whitelist 完成实际同步，remote 验证 2,666 个 hashed entries / `1,233,219,041` bytes。PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 `Exit_status=0`、walltime `00:01:47`；CUDA smoke 对 2,633 ROI / 868 patients、五折 split、每折四个独立 encoder hash 和真实 ROI forward 均为 `PASS`，且 optimizer/backward/parameter update 均为 false。P4 prepare+Katana `17 passed`、完整套件 `135 passed`、本地 verify、Phase Compliance Reviewer 与冻结协议检查均为 `PASS`。P4 现为 `AWAITING_USER_APPROVAL`，P5 为 `NOT_STARTED`。 |
+| 状态依据 | P4 tracked evidence anchor 为 `9d24035`，approval-gate verified anchor 为 `e0634e7`；后续变更仅用于稳定状态文字，不改变阶段证据或结论。KDM 已按 2,667-entry whitelist 完成实际同步，remote 验证 2,666 个 hashed entries / `1,233,219,041` bytes。PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 `Exit_status=0`、walltime `00:01:47`；CUDA smoke 对 2,633 ROI / 868 patients、五折 split、每折四个独立 encoder hash 和真实 ROI forward 均为 `PASS`，且 optimizer/backward/parameter update 均为 false。P4 prepare+Katana `17 passed`、完整套件 `135 passed`、本地 verify、阶段级双 agent 审查、completion-sealing Phase Compliance Reviewer 与冻结协议检查均为 `PASS`；用户已明确确认 P4。全部 P4 工作仍保存在本地分支 `p4-splits-shared-init` 且尚未合并或推送；P5 为 `NOT_STARTED`。 |
 
 ## 3. 当前阶段：P4 Patient-level split 与共享初始化
 
@@ -74,14 +74,15 @@ last_verified_commit: e0634e7
 - Katana PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上完成，`Exit_status=0`、walltime `00:01:47`。CUDA smoke 为 `PASS`：2,633 ROI / 868 patients 与五折 source hashes 一致；每折四个独立 encoders 加载相同 initialization hash；train/validation/test 各真实 ROI interface 正确，CUDA forward 输出有限；`optimizer_created=false`、`backward_called=false`、`parameter_update=false`。
 - `9d24035` 已提交脱敏 tracked audit evidence：`summary.json`、`folds.csv`、`initializations.csv`、`katana_cuda.json`、`katana_job.json`，以及对应 `.gitignore` allowlist 和 audit regression test。Audit test 验证 2,633/868、0 patient leakage、2,633 OOF coverage、五折 split/init hashes、remote job 和 no-training 证据，且不含 patient/nodule/UID 或绝对路径。
 - P4 prepare+Katana 测试为 `17 passed`，完整测试套件为 `135 passed`；本地 `p4_prepare verify`、冻结 V1/V2 requirements/config/resolved/hash、`git diff --check` 和阶段级 Phase Compliance Reviewer 均为 `PASS`。
+- 用户已明确确认 P4；completion-sealing Phase Compliance Reviewer 为 `PASS`，P4 生命周期现封存为 `COMPLETED / ON_TRACK`。
 
 ### 正在进行
 
-- P4 技术阶段门与双 agent 审查已通过；evidence batch 已提交为 `9d24035`，approval-gate 状态已由 `e0634e7` 保存。当前唯一等待项是用户明确确认 P4；未经确认不得合并或推送。
+- P4 已无开发或验收工作；按治理流程仅执行完成状态原子提交、将本地 P4 分支 fast-forward 合并至 `main`、在 `main` 重跑完整测试并推送。上述交付完成前不得制定或实施 P5。
 
 ### 尚未完成
 
-- 用户尚未明确确认 P4；因此不得将 P4 标记为 `COMPLETED`，不得合并或推送任何 P4 commits。
+- P4 本地 commits 尚未 fast-forward 合并至 `main`，也尚未推送 GitHub；这是确认后的交付步骤，不改变 P4 `COMPLETED` 结论。
 - P5 实施计划尚未制定或批准，P5 保持 `NOT_STARTED`。
 
 ### 验收进度
@@ -92,7 +93,7 @@ last_verified_commit: e0634e7
 | P4-R2 train-only statistics | `PASS` | 每折统计只读取注册的 train UID；validation/unknown UID leakage guard、split/source hash guard 和 patient leakage tests 通过；tracked summary 记录 patient leakage 0 |
 | P4-R3 shared encoder initialization | `PASS` | 五折 artifacts 已生成；本地和 Katana 每折四个独立 consumer semantic hashes 一致，不同 folds 不同；deterministic legacy bytes、provenance/corruption/overwrite guards 通过 |
 | Katana CUDA loading/hash smoke | `PASS` | KDM 2,667-entry whitelist 已同步；job `8962963.kman.restech.unsw.edu.au` 在 L40S 上 Exit 0，2,633 ROI integrity、五折四 consumer hashes、每折真实 ROI CUDA forward 均通过且无训练操作 |
-| 冻结协议保护与自动测试 | `PASS` | P4 prepare+Katana `17 passed`、完整 `135 passed`；本地 verify、tracked audit de-identification、冻结 V1/V2 文档/config 和 `git diff --check` 均通过；Phase Compliance Reviewer `PASS`、Status Synchronization Reviewer `UPDATED` |
+| 冻结协议保护、自动测试与阶段治理 | `PASS` | P4 prepare+Katana `17 passed`、完整 `135 passed`；本地 verify、tracked audit de-identification、冻结 V1/V2 文档/config 和 `git diff --check` 均通过；阶段级双 agent 审查与 completion-sealing Phase Compliance Reviewer 均通过，用户已明确确认 P4 |
 
 ### 未解决困难
 
@@ -281,7 +282,7 @@ Bug 修复后：
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
-| P4 | Patient-level split 与共享初始化 | `AWAITING_USER_APPROVAL` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、完整 `135 passed` 与阶段级双 agent 审查均为 `PASS`；evidence 与 approval-gate anchors 分别为 `9d24035`、`e0634e7`，全部 P4 工作保存在本地分支且未推送；当前仅等待用户确认，P5 未开始 | 0 | 0 |
+| P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、完整 `135 passed`、阶段级双 agent 审查、completion-sealing Phase Compliance Reviewer 和用户确认均为 `PASS`；evidence 与 approval-gate anchors 分别为 `9d24035`、`e0634e7`，本地交付尚待合并和推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -293,7 +294,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 已完成并推送；P4 当前为 `AWAITING_USER_APPROVAL`，P5 保持 `NOT_STARTED`。
+当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 已完成并推送；P4 已完成并获用户确认，本地交付尚待合并和推送；P5 保持 `NOT_STARTED`。
 
 ### Bug 状态
 
@@ -527,6 +528,25 @@ Bug 修复后：
 - P3 commits：`0575bcf` 至 `dc8c356` 的 P3 implementation/status commits。
 - 交付状态：已 fast-forward 合并至 `main` 并推送 GitHub；本地 `main`、`origin/main` 与 `HEAD` 已核对为同一 `dc8c356`，合并后完整测试为 `118 passed`。
 
+### P4 完成记录
+
+- 完成日期：2026-08-11
+- 生命周期：`COMPLETED`
+- 健康状态：`ON_TRACK`
+- 已完成内容：为 Baseline-v2 primary regression cohort 建立 deterministic patient-grouped five-fold outer/inner splits、严格 train-only statistics boundary、每折唯一且由四个模型共享的 DenseNet-121 encoder initialization，以及 P4 Katana KDM transfer 和 L40S CUDA integrity/forward smoke；未执行 optimizer、backward、parameter update 或模型训练。
+- Cohort 与 split 证据：2,633 nodules / 868 patients，patient leakage 为 0，pooled outer-test 精确覆盖 2,633 nodules / 868 patients。Fold 0 train/validation/test 为 `1882/611, 272/86, 479/171` nodules/patients；fold 1 为 `1858/602, 273/86, 502/180`；fold 2 为 `1853/612, 241/87, 539/169`；fold 3 为 `1813/608, 271/86, 549/174`；fold 4 为 `1811/607, 258/87, 564/174`。所有 validation/test folds 均含 low/high extremes，四模型共用相同 split artifacts。
+- Train-only statistics 证据：每折 normalized malignancy、六个 continuous concepts、两个 categorical vote distributions、valid-reader counts 和 train nodule-set fingerprint 只由 train membership 计算；validation、test、unknown UID、source hash 和 patient leakage guards 均通过。
+- Shared initialization 证据：五折各生成一个 deterministic legacy-serialized private encoder artifact；每折 Black-box、Standard CBM、CEM 和 GAM 四个独立 consumers 加载后的 semantic encoder hash 完全一致，不同 folds 的 initialization hashes 不同，artifact provenance/corruption/overwrite guards 均通过。
+- Katana 证据：通过 KDM explicit whitelist 同步 2,667 个路径，其中 2,666 个 hashed entries 共 `1,233,219,041` bytes；不含原始 DICOM/XML、Git metadata、QA 图、reports 或 runs。PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 `Exit_status=0`、walltime `00:01:47`；2,633 ROI integrity、五折 split/source hashes、每折四 consumer hashes及真实 ROI CUDA forwards 均为 `PASS`，且 `optimizer_created=false`、`backward_called=false`、`parameter_update=false`。
+- 验收标准与证据：P4-R1–P4-R3 为 `PASS`；P4 prepare+Katana `17 passed`、完整测试 `135 passed`、本地 `p4_prepare verify` 和 frozen V1/V2 requirements/config/resolved/hash 检查均通过；阶段级 Phase Compliance Reviewer、Status Synchronization Reviewer 和 completion-sealing Phase Compliance Reviewer 均通过；用户已于 2026-08-11 明确确认 P4。
+- 产物路径：`src/lidc_baseline/p4_prepare.py`、`src/lidc_baseline/p4_katana.py`、`scripts/katana/sync_p4.sh`、`scripts/katana/p4_cuda_smoke.pbs`、`tests/test_p4_prepare.py`、`tests/test_p4_katana.py`、`artifacts/baseline_v2/audit/p4/`；private manifest、ROI index、splits、encoder initializations 与 transfer manifest 保持 Git ignored。
+- 证据 anchors：tracked audit evidence 为 `9d24035`；approval-gate verified anchor 为 `e0634e7`。
+- 已解决 Bug：无。
+- 遗留困难：`DIF-P10-001` 继续为 `OPEN`，不阻止 P4 完成；P10 前仍须估算正式训练、checkpoint、prediction、contribution、Grad-CAM 和临时文件总工作集。
+- 明确未纳入内容：Black-box model、optimizer、训练、checkpoint selection 或任何 P5–P10 实现；P5 保持 `NOT_STARTED`。
+- 阶段门结论：`PASS`
+- 交付状态：全部 P4 工作仍保存在本地分支 `p4-splits-shared-init`，尚未 fast-forward 合并至 `main` 或推送 GitHub。确认后的交付顺序仅为独立完成状态原子提交、fast-forward 合并、在 `main` 重跑完整测试和推送；推送成功前不得制定 P5 实施计划。
+
 ### 阶段完成记录模板
 
 每个阶段门通过时，在本节追加一条永久记录：
@@ -577,3 +597,4 @@ Bug 修复后：
 | 2026-08-11 | `PHASE_STARTED` | P4 | 用户批准 patient-grouped five-fold split、train-only statistics、每折 shared DenseNet initialization 与 Katana L40S loading/hash smoke 计划；P4 进入 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `p4-splits-shared-init` 本地分支 |
 | 2026-08-11 | `LOCAL_IMPLEMENTATION_VERIFIED` | P4 | 本地 P4 implementation/tests 已完成真实 private build/verify：2,633 nodules / 868 patients、五折固定 counts、exact ROI file hashes、train-only statistics 与每折四 consumer shared encoder hashes 均通过；P4 `9 passed`、完整 `127 passed`，当前批次 Phase Compliance Reviewer `PASS`。Katana 同步/L40S smoke 与 tracked aggregate audit 尚未完成，因此 P4 保持 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `6b2342f`（本地，未推送） |
 | 2026-08-11 | `PHASE_AWAITING_APPROVAL` | P4 | 实际 KDM whitelist sync 与 L40S job `8962963.kman.restech.unsw.edu.au` 均通过；2,633 ROI / 868 patients、五折 split、每折四 consumer initialization hashes、真实 ROI CUDA forwards 和 no-training invariants 均验证。Tracked audit evidence、P4 `17 passed`、完整 `135 passed`、冻结协议检查与阶段级双 agent 审查均为 `PASS`。Evidence 与 approval-gate anchors 分别为 `9d24035`、`e0634e7`；全部 P4 工作保存在本地分支且未推送，当前仅等待用户确认，P5 保持 `NOT_STARTED`。 | `9d24035`、`e0634e7` |
+| 2026-08-11 | `PHASE_COMPLETED` | P4 | 用户明确确认 P4；completion-sealing Phase Compliance Reviewer 为 `PASS`，P4 永久记录已保存 split、train-only statistics、shared initialization、KDM、Katana、测试和双审查证据。P4 本地分支尚待 fast-forward 合并、`main` 测试和推送；P5 保持 `NOT_STARTED`。 | 用户确认与 P4 完成记录 |
