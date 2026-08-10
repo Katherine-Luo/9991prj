@@ -6,16 +6,17 @@ active_requirements: docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md
 active_config: configs/baseline_v2.yaml
 supersedes_protocol: Baseline-v1
 protocol_transition: V2M
-operating_mode: NORMAL_DEVELOPMENT
-reading_scope: CURRENT_AND_NEXT
+operating_mode: BUG_MAINTENANCE
+reading_scope: FULL_DOCUMENT
 development_phase: P5
-development_phase_status: IN_PROGRESS
-maintenance_phase: null
-active_bug_ids: []
+development_phase_status: BLOCKED
+maintenance_phase: P5
+active_bug_ids:
+  - BUG-P5-001
 resume_phase: P5
 next_phase: P6
 last_updated: 2026-08-11
-last_verified_commit: 256eaf8
+last_verified_commit: cbe6dd7
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -34,19 +35,19 @@ last_verified_commit: 256eaf8
 
 | 字段 | 当前值 |
 |---|---|
-| 工作模式 | `NORMAL_DEVELOPMENT` |
-| 阅读范围 | `CURRENT_AND_NEXT` |
+| 工作模式 | `BUG_MAINTENANCE` |
+| 阅读范围 | `FULL_DOCUMENT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P5 Reference-aligned Black-box Regression` |
-| 阶段状态 | `IN_PROGRESS` |
-| 维护目标阶段 | 无 |
-| 活动 Bug | 无 |
-| 当前阻塞项 | 无；H200 KDM sync 与 remote integrity verify 均为 `PASS`。旧 L40S job `8964315.kman.restech.unsw.edu.au` 已在 `Q` 状态取消，未运行，`qstat` 现仅保留历史完成记录。新的 H200 Stage A job `8964634.kman.restech.unsw.edu.au` 已明确请求 `gpu_model=H200` 并提交，当前因 `csegpu12` H200 资源不足处于 `Q`，estimated start 为 09:39:43 AEST；尚未产生 overfit/preflight 通过证据，也未启动 formal Fold 0。 |
+| 阶段状态 | `BLOCKED / AT_RISK` |
+| 维护目标阶段 | `P5` |
+| 活动 Bug | `BUG-P5-001` |
+| 当前阻塞项 | `BUG-P5-001`：H200 Stage A job `8964634.kman.restech.unsw.edu.au` 于 09:15 在 `k205` 的 NVIDIA H200 上启动，remote integrity 为 `PASS`，但 overfit backward 因 PyTorch strict deterministic algorithms 报错 `avg_pool3d_backward_cuda does not have a deterministic implementation`，最终 `Exit_status=1`。这不是 GPU availability、queue allocation 或显存不足失败；在修复并重新验证前禁止重提交 Stage A、启动 formal Fold 0 或进入 P6。 |
 | 恢复阶段 | `P5` |
-| 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED`） |
+| 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED / AT_RISK`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 startup/common-config/core/interface/status/audit/H200 amendment anchors 截至 `256eaf8` 均仅位于本地分支、尚未推送。H200 execution config/resolved/hash 已由 `c5ee485` 本地提交，config hash 为 `08df87e4be5f07985d9dd3619b471ad322ec23a4b98b5032ee05ed58b1918281`；H200 transfer manifest 为 7 files / `92,118` bytes，hash `d15f5f95f67983f4e51e7a1a0275611b7d786f8eee62e3c171644a78510e83a0`，实际 KDM sync 与 remote verify 均为 `PASS`。旧 L40S execution profile 仅保留为历史；旧 job `8964315` 已在运行前取消。H200 job `8964634` 已提交并仍处于 `Q`，尚未执行 Stage A、formal Fold 0 或生成 tracked audit artifact。冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
+| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 已提交 anchors 截至 `cbe6dd7` 均仅位于本地分支、尚未推送。H200 job `8964634` 的 queue wait `eligible_time=00:04:16`，09:15 在 `k205`/NVIDIA H200 开始，remote integrity `PASS`，随后在 train-only overfit backward 触发不支持 deterministic CUDA implementation 的 `avg_pool3d_backward_cuda` 并以 Exit 1 结束；preflight、formal Fold 0 和 tracked audit 均未产生。冻结 V1/V2 requirements/config 无 diff，P6 未开始。 |
 
 ## 3. 当前阶段：P5 Reference-aligned Black-box Regression
 
@@ -63,20 +64,21 @@ last_verified_commit: 256eaf8
 - 用户已固定 Fold-0 前实现澄清：5D rotation 使用 `mode=bilinear`、`padding_mode=zeros`、`align_corners=false`；`drop_last=false`；Black-box head 使用 fold-specific domain-separated deterministic seed/hash；所有参考论文未精确报告的细节均标记为 Baseline-v2 project pre-registered choices。
 - 已创建本地分支 `p5-blackbox-regression`；冻结 V1/V2 requirements/config/resolved/hash 无 diff。
 - 原始 `configs/experiments/baseline_v2_reference_training.yaml`、resolved config 与 hash `afadd6a6944bb7e7886a9dcb68781a9389e4b3afbea402dd23418494c30b2327` 已由 `68cc73e` 本地提交；其 reference-aligned optimizer/scheduler/batching/augmentation choices 继续有效，但 L40S execution profile 现仅保留为历史，不能驱动正式 P5–P8 runs。
-- 已实现用户批准的 H200 execution/hardware profile amendment：H200 是 P5–P8 统一正式训练 GPU，不改变 `configs/baseline_v2.yaml` 或科学协议。新的 `baseline_v2_reference_training_h200.yaml`、resolved config 和 SHA-256 固定原有训练策略与 FP32/no-AMP/no-BF16/no-TF32 约束，config hash 为 `08df87e4be5f07985d9dd3619b471ad322ec23a4b98b5032ee05ed58b1918281`；相应 config、代码、PBS scripts 和 tests 已由 `c5ee485` 本地提交但尚未推送，Phase Compliance Reviewer 为 `PASS`。H200 workset 现已同步并通过远端完整性验证，但 Stage A 计算尚未运行。
+- 已实现用户批准的 H200 execution/hardware profile amendment：H200 是 P5–P8 统一正式训练 GPU，不改变 `configs/baseline_v2.yaml` 或科学协议。新的 `baseline_v2_reference_training_h200.yaml`、resolved config 和 SHA-256 固定原有训练策略与 FP32/no-AMP/no-BF16/no-TF32 约束，config hash 为 `08df87e4be5f07985d9dd3619b471ad322ec23a4b98b5032ee05ed58b1918281`；相应 config、代码、PBS scripts 和 tests 已由 `c5ee485` 本地提交但尚未推送，Phase Compliance Reviewer 为 `PASS`。H200 workset 已同步并通过远端完整性验证；Stage A 已尝试但因 `BUG-P5-001` 失败，不能计为通过。
 - 已实现 `src/lidc_baseline/p5_blackbox.py` 及 direct tests，覆盖 frozen execution-config enforcement、P4 shared encoder hash 验证、fold-specific deterministic unconstrained linear head、manifest/split/ROI data loading、train-only deterministic augmentation、Adam 与 validation-MSE scheduler、80-epoch training/checkpoint selection、atomic checkpoint/history artifacts、完整 RNG/optimizer/scheduler resume、single-writer fold lifecycle、one-time test transaction/recovery、prediction provenance、unclipped regression metrics、verify、overfit-check 和 active-profile H200 batch-16 preflight interfaces。
 - Core direct tests 为 `26 passed`、完整测试为 `161 passed`；冻结协议检查和本批次 Phase Compliance Reviewer 均为 `PASS`。上一轮 interim `FAIL` 的五项阻断发现已全部修复并由最终合规复核验证；它们属于提交前审查缺口，未造成已交付阶段或正式结果失效，因此不登记为 Bug。Core batch 已由 `64f01c7` 本地提交但尚未推送；active H200 delta 已同步 Katana 并通过 remote verify，但 overfit、preflight 和 Fold 0 均未实际运行。
 - 已实现 `src/lidc_baseline/p5_katana.py`、`sync_p5_stage_a.sh`、`p5_stage_a.pbs`、`p5_fold.pbs` 和 direct tests。H200 amendment 将 Stage A/formal PBS GPU request 与 execution config 均切换至 H200；formal-fold PBS 继续支持 resume/one-time test/verify，并在未获 Stage B 批准时阻止 folds 1–4。
-- H200 private transfer manifest 已验证并完成 KDM sync：P4 immutable base 保持不变，H200 P5 delta 为 7 files / `92,118` bytes；transfer manifest SHA-256 为 `d15f5f95f67983f4e51e7a1a0275611b7d786f8eee62e3c171644a78510e83a0`，remote integrity verify 为 `PASS`。旧 L40S job `8964315.kman.restech.unsw.edu.au` 已在 `Q` 状态取消且未运行；新 H200 job `8964634.kman.restech.unsw.edu.au` 已提交但尚未运行。
+- H200 private transfer manifest 已验证并完成 KDM sync：P4 immutable base 保持不变，H200 P5 delta 为 7 files / `92,118` bytes；transfer manifest SHA-256 为 `d15f5f95f67983f4e51e7a1a0275611b7d786f8eee62e3c171644a78510e83a0`，remote integrity verify 为 `PASS`。旧 L40S job `8964315.kman.restech.unsw.edu.au` 已在 `Q` 状态取消且未运行；新 H200 job `8964634.kman.restech.unsw.edu.au` 后续已启动并以 Exit 1 失败，详见 `BUG-P5-001`。
 - 已实现 P5 aggregate audit batch：成功完成 formal fold 后，`p5_audit.py` 将验证 private run、one-time test、profile-bound formal provenance、CUDA H200 runtime 和纯 FP32 invariants（AMP/BF16/CUDA matmul TF32/cuDNN TF32 均关闭），再使用与真实 Stage A outputs 兼容的独立 provenance schema 验证 overfit/preflight 证据，最后生成脱敏 tracked fold JSON。Audit implementation 与 tests 已由 `dff1356` 本地提交，H200 amendment 已由 `c5ee485` 本地提交；因为 Stage A 与 Fold 0 尚未完成，当前没有生成任何 P5 audit artifact。
+- H200 job `8964634` 已实际获得 `k205` NVIDIA H200 并开始执行；queue wait `eligible_time=00:04:16`，remote integrity 再次为 `PASS`。Overfit backward 随后因 `avg_pool3d_backward_cuda` 缺少 deterministic implementation 而失败，job `Exit_status=1`；因此已确认硬件分配、数据完整性和远程工作集不是本次失败原因。
 
 ### 正在进行
 
-- 正在等待 H200 Stage A job `8964634.kman.restech.unsw.edu.au` 获得 H200 资源并执行 train-only overfit 与 batch-16 preflight。
+- 正在维护 `BUG-P5-001`：只记录和审查 deterministic `avg_pool3d_backward_cuda` 阻断条件，尚未修改代码、重新提交作业或选择修复方案。
 
 ### 尚未完成
 
-- H200 amendment batch 已由 `c5ee485` 本地提交但尚未推送。H200 Stage A job `8964634.kman.restech.unsw.edu.au` 仍处于 `Q`、尚未运行；train-only overfit、H200 batch-16 preflight、Fold 0 80-epoch formal run、一次性 test evaluation 和 tracked fold audit artifact 均尚未完成。
+- `BUG-P5-001` 尚未修复或验证；train-only overfit 未通过，H200 batch-16 preflight 未执行。Formal Fold 0 80-epoch run、一次性 test evaluation 和 tracked fold audit 均未启动。
 - Fold 0 技术门通过后仍须等待用户中间确认；未经确认不得提交 folds 1–4 jobs。
 - Folds 1–4、五折 OOF reconciliation、P5 阶段双审查、最终用户确认、合并与推送均尚未完成。
 
@@ -85,13 +87,13 @@ last_verified_commit: 256eaf8
 | P5 验收项 | 状态 | 证据 |
 |---|---|---|
 | H200 execution/hardware profile amendment | `PASS` | H200 为 P5–P8 统一正式训练 GPU且不改变科学协议；新 config hash `08df87e4be5f07985d9dd3619b471ad322ec23a4b98b5032ee05ed58b1918281`。旧 L40S profile 保留为历史并被 formal validation 拒绝；本批次已由 `c5ee485` 本地提交但尚未推送，KDM/remote verify 为 `PASS`，Phase Compliance Reviewer `PASS` |
-| P5 core model/data/augmentation/scheduler/checkpoint/resume/test transaction/verify interfaces | `PASS` | `p5_blackbox.py` 与 direct tests 已实现并由 `64f01c7` 本地提交；direct `26 passed`、完整 `161 passed`、冻结检查与最终 Phase Compliance Reviewer `PASS`；尚未推送，远程计算尚未执行 |
-| H200 Katana Stage A transfer/PBS interfaces | `PASS` | H200 delta 7 files / `92,118` bytes，manifest hash `d15f5f95...e83a0`；KDM sync 与 remote verify 均通过。旧 job `8964315` 已在 `Q` 状态取消且未运行；新 H200 job `8964634` 已提交、明确请求 `gpu_model=H200`，当前仍在排队 |
+| P5 core model/data/augmentation/scheduler/checkpoint/resume/test transaction/verify interfaces | `PASS` | `p5_blackbox.py` 与 direct tests 已实现并由 `64f01c7` 本地提交；direct `26 passed`、完整 `161 passed`、冻结检查与最终 Phase Compliance Reviewer `PASS`；尚未推送。H200 Stage A 已实际执行，但被 `BUG-P5-001` 阻断，不能计为训练验收通过 |
+| H200 Katana Stage A transfer/PBS interfaces | `PASS` | H200 delta 7 files / `92,118` bytes，manifest hash `d15f5f95...e83a0`；KDM sync 与 remote verify 均通过。旧 job `8964315` 已在 `Q` 状态取消且未运行；新 H200 job `8964634` 已获得 `k205` H200、启动后以 Exit 1 结束，execution failure 由 `BUG-P5-001` 单独记录 |
 | P5 aggregate audit implementation | `PASS` | Formal 与 Stage A 使用独立 real-compatible provenance schemas；formal evidence 按 active profile 强制 CUDA H200、FP32 true 且 AMP/BF16/TF32 false。当前没有 formal Fold 0 audit artifact |
-| Fold 0 train-only overfit 与 H200 batch-16 preflight | `PENDING` | H200 job `8964634` 因 `csegpu12` 资源不足处于 `Q`，estimated start 09:39:43 AEST；尚未运行，不能声明 Stage A 通过 |
+| Fold 0 train-only overfit 与 H200 batch-16 preflight | `BLOCKED` | Job `8964634` 在 `k205` H200 上启动且 remote integrity `PASS`，但 overfit backward 因 `avg_pool3d_backward_cuda` 无 deterministic CUDA implementation 而 Exit 1；preflight 未执行，Stage A 未通过 |
 | Fold 0 formal 80 epochs、best checkpoint 与一次性 test | `PENDING` | 尚未执行；完成后必须等待用户中间确认 |
 | Folds 1–4 与 2,633 OOF reconciliation | `PENDING` | Fold 0 获用户确认前禁止开始 |
-| 冻结协议保护、双 agent 审查与阶段治理 | `PENDING` | 启动前冻结文件 diff 为零；后续每个开发批次继续执行双审查 |
+| 冻结协议保护、双 agent 审查与阶段治理 | `BLOCKED` | 已切换 `BUG_MAINTENANCE / FULL_DOCUMENT` 并登记 `BUG-P5-001`；Bug 修复、回归验证、Stage A 重跑和用户确认前不得恢复正常开发 |
 
 ### 未解决困难
 
@@ -105,6 +107,7 @@ last_verified_commit: 256eaf8
 
 ### 进入条件
 
+- `BUG-P5-001` 必须完成修复、回归验证和 Stage A 重跑，并退出 `BUG_MAINTENANCE`。
 - P5 必须完成全部五折、技术验收、最终用户确认、合并和 GitHub 推送。
 - P6 必须另行制定实施计划并获得用户明确批准。
 
@@ -282,10 +285,10 @@ Bug 修复后：
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
-| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | H200 config hash `08df87e4...8281`、transfer manifest 7 files / `92,118` bytes / `d15f5f95...e83a0`、KDM sync 与 remote verify 均通过。旧 L40S job `8964315` 已在运行前取消；H200 job `8964634` 已提交但仍处于 `Q`。Stage A、Fold 0 和 tracked audit 尚未完成，P5 未进入 approval gate | 0 | 0 |
-| P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 完成、确认并推送前禁止开始 | 0 | 0 |
-| P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
-| P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P5 | Black-box DenseNet regression | `BLOCKED` | `AT_RISK` | `BUG-P5-001`：H200 job `8964634` 已获得 H200 且 remote integrity `PASS`，但 overfit backward 在 strict deterministic algorithms 下因 `avg_pool3d_backward_cuda` 无 deterministic implementation 而 Exit 1；Stage A、Fold 0 和 tracked audit 未完成 | 1 | 0 |
+| P6 | Standard CBM | `NOT_STARTED` | `AT_RISK` | 未执行；受共享 DenseNet deterministic backward Bug `BUG-P5-001` 影响，P5 修复、完成、确认并推送前禁止开始 | 0 | 0 |
+| P7 | Mixed-type CEM | `NOT_STARTED` | `AT_RISK` | 未执行；共享 DenseNet formal training path 受 `BUG-P5-001` 影响 | 0 | 0 |
+| P8 | CBM + GAM | `NOT_STARTED` | `AT_RISK` | 未执行；共享 DenseNet formal training path 受 `BUG-P5-001` 影响 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -293,11 +296,28 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 与 P4 均已完成并推送；P5 已按批准计划进入 `IN_PROGRESS`，P6 保持 `NOT_STARTED`。
+当前活动 Bug：`BUG-P5-001`。P5 已切换至 `BUG_MAINTENANCE / FULL_DOCUMENT` 并处于 `BLOCKED / AT_RISK`；P6–P8 保持 `NOT_STARTED` 但标记为 `AT_RISK`。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
 
 ### Bug 状态
 
 `OPEN` → `INVESTIGATING` → `FIXING` → `VERIFYING` → `RESOLVED`
+
+### BUG-P5-001：Strict deterministic CUDA 不支持 DenseNet avg_pool3d backward
+
+- 状态：`INVESTIGATING`
+- 严重度：`HIGH`
+- 发现日期：2026-08-11
+- 影响阶段：P5
+- 影响验收标准：是；P5-R1 要求小数据 overfit 能降低 MSE，Stage A 必须完成 overfit 和 batch-16 preflight。目前 overfit backward 在首次 optimizer step 前失败，P5 阶段门无法继续。
+- 恢复阶段：P5
+- 受影响下游阶段：P6、P7、P8（共享 DenseNet formal training path，均保持 `NOT_STARTED / AT_RISK`）
+- 现象：H200 job `8964634.kman.restech.unsw.edu.au` 等待 `eligible_time=00:04:16` 后于 09:15 在 `k205` 的 NVIDIA H200 上启动；remote integrity verify 为 `PASS`。Train-only overfit backward 随后抛出 `avg_pool3d_backward_cuda does not have a deterministic implementation`，job `Exit_status=1`，preflight 未执行。
+- 复现方式：使用 active H200 execution profile 在 CUDA 上运行 P5 Stage A overfit-check，并保持 `torch.use_deterministic_algorithms(True)`；DenseNet 的 3D average-pooling backward 触发该 RuntimeError。
+- 根因：当前 PyTorch/CUDA build 对 `avg_pool3d_backward_cuda` 没有 strict deterministic implementation；全局 deterministic-algorithms enforcement 将该缺失实现作为错误阻断 backward。
+- 修复：尚未实施。当前仅记录失败证据；未修改代码、配置或科学协议，未重新提交 Stage A，也未启动 formal Fold 0。
+- 验证命令与结果：Katana job `8964634` 确认运行于 `k205`/NVIDIA H200，remote integrity 为 `PASS`，最终 `Exit_status=1`；错误发生在 overfit backward。该失败不是 GPU availability、queue allocation、CUDA OOM 或显存容量不足。
+- 未解决事项：选择并批准不破坏 reproducibility contract 的修复策略；添加直接与回归测试；重新执行完整测试和双 agent 审查；重新同步并重跑 H200 Stage A，要求 overfit 与 preflight 均通过后才能恢复 P5 正常开发。
+- 修复 commit：无。
 
 ### BUG-V2M-001：Git checkout 不保留 tracked config 的 read-only mode bits
 
@@ -599,3 +619,4 @@ Bug 修复后：
 | 2026-08-11 | `PHASE_COMPLETED` | P4 | 用户明确确认 P4；completion-sealing Phase Compliance Reviewer 为 `PASS`，P4 永久记录已保存 split、train-only statistics、shared initialization、KDM、Katana、测试和双审查证据。P4 本地分支尚待 fast-forward 合并、`main` 测试和推送；P5 保持 `NOT_STARTED`。 | 用户确认与 P4 完成记录 |
 | 2026-08-11 | `DELIVERED` | P4 | P4 已 fast-forward 合并至 `main` 并推送 GitHub；合并后完整测试 `135 passed`、`p4_prepare verify` 与 post-delivery Phase Compliance Reviewer 均为 `PASS`。交付时 `main`、`HEAD` 与 `origin/main` 三方 SHA 一致；P5 保持 `NOT_STARTED`。 | `ec7bd8e` |
 | 2026-08-11 | `PHASE_STARTED` | P5 | 用户批准 Reference-aligned Black-box Regression 两阶段计划及 Fold-0 前四项实现澄清；P5 进入 `IN_PROGRESS`，先执行 common config、实现/测试、overfit、L40S preflight 与 Fold 0 formal gate。Fold 0 中间确认前禁止 folds 1–4；P6 保持 `NOT_STARTED`。 | `p5-blackbox-regression` 本地分支；基线 `960e366` |
+| 2026-08-11 | `BUG_DISCOVERED` / `PHASE_BLOCKED` | P5 | H200 job `8964634` 在 `k205`/NVIDIA H200 上启动且 remote integrity `PASS`，但 overfit backward 因 strict deterministic algorithms 下 `avg_pool3d_backward_cuda` 无 deterministic implementation 而 Exit 1。登记 `BUG-P5-001`，切换 `BUG_MAINTENANCE / FULL_DOCUMENT`；P5 为 `BLOCKED / AT_RISK`，P6–P8 保持 `NOT_STARTED / AT_RISK`，未启动 formal Fold 0。 | Katana job `8964634` |
