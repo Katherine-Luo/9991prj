@@ -60,11 +60,12 @@ last_verified_commit: c81390b
 - 用户已批准 P3 plan：只实现 consensus mask、ROI、pilot/full QA 与审计；不进入 P4 split、模型或训练。
 - 已确认的输入为 2,633 primary regression nodules、876 个 CT series 和 6,768 条可回连 pylidc 的 reader annotations；P1 exact-duplicate series 含 1 个 primary nodule，必须沿用已批准的 hashed-SOP selection policy。
 - 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
-- 已完成功能批次验证：P3 专项测试和完整测试均通过（完整套件 `107 passed`）；Phase Compliance Reviewer 已给出 `PASS`。本批次尚未执行真实 pilot build，故没有生成或审阅 QA 图，也没有 full ROI/audit 证据。
+- 已完成可断点续跑的 pilot 选择统计保护：私有 `pilot_consensus_statistics.parquet` 记录 consensus physical volume、bbox/cube padding ratio，并以 canonical XML、annotation/SOP provenance 和 scan geometry fingerprint 验证缓存复用；来源或几何变化时必须重新计算，不能复用旧统计。
+- 已完成功能批次验证：P3 专项测试和完整测试均通过（完整套件 `108 passed`）；Phase Compliance Reviewer 已给出 `PASS`。本批次尚未执行真实 pilot build，故没有生成或审阅 QA 图，也没有 full ROI/audit 证据。
 
 ### 正在进行
 
-- P3 已位于本地 `p3-consensus-roi` 分支；pipeline、测试及 Git ignore 规则正等待状态同步后形成原子本地提交，尚未推送。
+- P3 已位于本地 `p3-consensus-roi` 分支；cache provenance 修复及其直接测试、随后状态同步正等待形成各自的原子本地提交，尚未推送。
 - 下一项唯一允许的运行工作是执行 41 个 deterministic pilot QA build/verify，并向用户展示私有 QA 图与聚合统计。
 - 在用户明确确认 pilot 配准正确前暂停，不生成 full ROI，也不生成/提交 P3 full aggregate audit。
 
@@ -269,7 +270,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、synthetic tests 和 Phase Compliance Reviewer 已通过（完整 `107 passed`）；pilot QA 未运行，full 验收待完成 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、synthetic tests 和 Phase Compliance Reviewer 已通过（完整 `108 passed`）；pilot QA 未运行，full 验收待完成 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
