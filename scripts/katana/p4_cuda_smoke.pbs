@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:ngpus=1:mem=46gb:gpu_model=L40S
+#PBS -l walltime=02:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+code_directory="${KATANA_P4_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+nvidia-smi
+"$environment_prefix/bin/python" -m lidc_baseline.p4_katana cuda-smoke \
+  --repository-root "$code_directory" \
+  --config configs/baseline_v2.yaml \
+  --manifest artifacts/baseline_v2/manifests/nodules.parquet \
+  --roi-index artifacts/baseline_v2/manifests/roi_index.parquet \
+  --transfer-manifest artifacts/baseline_v2/manifests/p4_transfer_manifest.json \
+  --output artifacts/baseline_v2/audit/p4/katana_cuda.json
