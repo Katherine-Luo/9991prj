@@ -15,12 +15,12 @@ active_bug_ids: []
 resume_phase: P3
 next_phase: P4
 last_updated: 2026-08-11
-last_verified_commit: 876d62c
+last_verified_commit: dc8c356
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 已完成、确认并推送；P3 已获用户确认并等待本地封存、合并与推送，P4 尚未开始。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 与 P3 均已完成、确认并推送；P4 尚未开始。
 
 ## 1. 阅读规则
 
@@ -42,11 +42,11 @@ last_verified_commit: 876d62c
 | 阶段状态 | `COMPLETED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P3-001` 与 `BUG-P3-002` 均已解决 |
-| 当前阻塞项 | 无技术或确认阻塞；用户已于 2026-08-11 确认 P3。正在进行 P3 的本地状态封存、fast-forward 合并与 GitHub 推送；P4 仍不得开始。 |
+| 当前阻塞项 | 无；P3 已完成、fast-forward 合并并推送。P4 仍不得开始，直至其实施计划获批准。 |
 | 恢复阶段 | `P3` |
 | 下一阶段 | `P4 Patient-level split 与共享初始化`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；P3 的技术交付位于本地 `p3-consensus-roi`，截至 `876d62c` 共 19 个未推送 commits。用户已于 2026-08-11 明确确认 P3。full build/verify 为 2,633/2,633，0 private failures；P3 专项测试 `32 passed`、完整测试 `118 passed`；P3-R1–P3-R3、冻结协议保护与阶段级双 agent 审查均为 `PASS`。本次状态封存、合并和推送尚待执行；P4 不得开始。 |
+| 状态依据 | 用户已于 2026-08-11 明确确认 P3。P3 已由 `dc8c356` fast-forward 合并并推送；本地 `main`、`origin/main` 与 `HEAD` 均为 `dc8c356`。full build/verify 为 2,633/2,633，0 private failures；P3 专项测试 `32 passed`、合并后完整测试 `118 passed`；P3-R1–P3-R3、冻结协议保护与阶段级双 agent 审查均为 `PASS`。P4 仍为 `NOT_STARTED`。 |
 
 ## 3. 当前阶段：P3 Consensus mask、确定性 3D ROI 与 QA
 
@@ -72,12 +72,12 @@ last_verified_commit: 876d62c
 
 ### 正在进行
 
-- P3 的技术实施、full verify、aggregate audit、P3/full tests 与阶段级审查均已完成；用户已于 2026-08-11 明确确认 P3。
-- 当前仅处理 P3 状态封存、fast-forward 合并和 GitHub 推送；未制定或开始 P4。
+- P3 的技术实施、full verify、aggregate audit、P3/full tests、阶段级审查、用户确认、状态封存、fast-forward 合并与 GitHub 推送均已完成。
+- 未制定或开始 P4。
 
 ### 尚未完成
 
-- 尚未完成：P3 状态封存 commit、fast-forward 合并和 GitHub 推送。P4 仍不得开始。
+- P3 无未完成交付项。P4 仍不得开始。
 
 ### 验收进度
 
@@ -274,7 +274,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；交付合并与推送进行中，P4 保持未开始 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P4 保持未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -287,7 +287,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 为 `COMPLETED`，正在封存、合并与推送；P4 仍为 `NOT_STARTED`。
+当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 已完成并推送；P4 仍为 `NOT_STARTED`。
 
 ### Bug 状态
 
@@ -517,8 +517,8 @@ Bug 修复后：
 - 遗留困难：`DIF-P10-001` 继续为 `OPEN`；已测量 ROI 为约 0.93 GiB，但 P10 前仍须估算 checkpoints、predictions、contributions、Grad-CAM 与临时文件，且可用 Katana storage 必须达到预计工作集的 120%。
 - 明确未纳入内容：P4 patient-level split、shared initialization、任何模型/训练或 P4–P10 开发；P4 保持 `NOT_STARTED`。
 - 阶段门结论：`PASS`
-- P3 commits：`0575bcf` 至 `876d62c` 的 P3 implementation/status commits，及本次完成状态 commit。
-- 交付状态：本记录创建后才执行 fast-forward merge 与 GitHub push；推送完成后需核对本地 `main`、`origin/main` 和远程 SHA 一致。
+- P3 commits：`0575bcf` 至 `dc8c356` 的 P3 implementation/status commits。
+- 交付状态：已 fast-forward 合并至 `main` 并推送 GitHub；本地 `main`、`origin/main` 与 `HEAD` 已核对为同一 `dc8c356`，合并后完整测试为 `118 passed`。
 
 ### 阶段完成记录模板
 
@@ -566,4 +566,4 @@ Bug 修复后：
 | 2026-08-10 | `PILOT_QA_APPROVED` | P3 | 用户明确确认 41 个 deterministic pilot QA 图配准正确；仅授权构建 P3 full 私有 ROI/index 和脱敏 aggregate audit，不授权进入 P4、P3 阶段完成或推送 | 用户确认 |
 | 2026-08-11 | `FULL_BUILD_OUTPUTS_WRITTEN` / `BUG_VERIFYING` | P3 | private full ROI/index 的当前 outputs 与 local aggregate audit 均报告 2,633/2,633、0 private failures；尚未完成 full verify、完整测试或阶段门。`72c4979` 已创建唯一 temporary 的 atomic Parquet 修复与回归测试，仍待最终验证；P3 保持 `IN_PROGRESS`，P4 保持 `NOT_STARTED` | `72c4979`（本地，未推送） |
 | 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `BUG_RESOLVED` | P3 | full verify 为 2,633/2,633，aggregate audit 为 2,633 个成功/非空 ROI、0 failures、876 个 CT series、1 次 exact-duplicate policy；P3 tests `32 passed`、完整 tests `118 passed`。`a790e54` 的 exclusive `flock` 已以实际第二进程回归测试验证，`BUG-P3-002` 关闭。P3 技术阶段门和双 agent 审查均通过，等待用户最终确认；P4 保持 `NOT_STARTED`。 | `a790e54`、`ac5c9ec`（本地，未推送）；本次状态同步提交 |
-| 2026-08-11 | `PHASE_COMPLETED` | P3 | 用户明确确认 P3；P3 永久记录写入 full ROI/QA/audit、测试、Bug 与 storage 证据。仅余完成状态提交、fast-forward 合并和 GitHub push；P4 保持 `NOT_STARTED`。 | 本次 P3 完成状态提交 |
+| 2026-08-11 | `PHASE_COMPLETED` / `DELIVERED` | P3 | 用户明确确认 P3；P3 永久记录已写入 full ROI/QA/audit、测试、Bug 与 storage 证据，并已 fast-forward 合并、推送至 GitHub。`main`、`origin/main` 与 `HEAD` 均为 `dc8c356`；P4 保持 `NOT_STARTED`。 | `dc8c356` |
