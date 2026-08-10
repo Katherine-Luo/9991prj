@@ -542,7 +542,12 @@ def _qa_image(path: Path, source_hu: np.ndarray, source_mask: np.ndarray, image:
     fig, axes = pyplot.subplots(2, 3, figsize=(11, 7))
     def overlay(axis: Any, binary: np.ndarray) -> None:
         if binary.shape[0] >= 2 and binary.shape[1] >= 2 and bool(binary.any()):
-            axis.contour(binary, levels=[0.5], colors="lime", linewidths=0.8)
+            try:
+                axis.contour(binary, levels=[0.5], colors="lime", linewidths=0.8)
+            except TypeError:
+                # Preserve visible spatial evidence when contour topology is degenerate.
+                overlay_mask = np.ma.masked_where(binary == 0, binary)
+                axis.imshow(overlay_mask, cmap="summer", alpha=0.65, vmin=0, vmax=1, interpolation="nearest")
 
     for column, axis in enumerate(range(3)):
         source_index = largest_slice(source_mask, axis)

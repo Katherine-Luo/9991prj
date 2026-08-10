@@ -258,3 +258,15 @@ def test_qa_writer_handles_single_slice_source_crop(tmp_path: Path) -> None:
     target = tmp_path / "qa.png"
     _qa_image(target, source, source_mask, image, mask, "deidentified")
     assert target.exists() and target.stat().st_size > 0
+
+
+def test_qa_writer_keeps_visible_mask_fallback_when_contour_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from matplotlib.axes import Axes
+    monkeypatch.setattr(Axes, "contour", lambda *args, **kwargs: (_ for _ in ()).throw(TypeError("degenerate contour")))
+    source = np.zeros((2, 4, 4), dtype=np.float32)
+    source_mask = np.zeros((2, 4, 4), dtype=np.uint8); source_mask[0, 1, 1] = 1
+    image = np.zeros((1, *ROI_SHAPE), dtype=np.float32)
+    mask = np.zeros((1, *ROI_SHAPE), dtype=np.uint8); mask[0, 2, 2, 2] = 1
+    target = tmp_path / "qa_fallback.png"
+    _qa_image(target, source, source_mask, image, mask, "deidentified")
+    assert target.exists() and target.stat().st_size > 0
