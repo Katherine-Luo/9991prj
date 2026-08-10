@@ -294,3 +294,44 @@ def test_aggregate_audit_is_deidentified(monkeypatch: pytest.MonkeyPatch, tmp_pa
     combined = "".join(path.read_text(encoding="utf-8") for path in sorted((tmp_path / output).iterdir()))
     for forbidden in ("private-nodule", "private-patient", "1.2.3", str(tmp_path)):
         assert forbidden not in combined
+
+
+@pytest.mark.local_audit
+def test_tracked_p4_audit_is_complete_and_deidentified() -> None:
+    root = Path("artifacts/baseline_v2/audit/p4")
+    expected = {
+        "summary.json",
+        "folds.csv",
+        "initializations.csv",
+        "katana_cuda.json",
+        "katana_job.json",
+    }
+    assert {path.name for path in root.iterdir() if path.is_file()} == expected
+    summary = json.loads((root / "summary.json").read_text(encoding="utf-8"))
+    job = json.loads((root / "katana_job.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "PASS"
+    assert summary["primary_nodules"] == 2633
+    assert summary["primary_patients"] == 868
+    assert summary["patient_leakage"] == 0
+    assert summary["oof_nodule_coverage"] == 2633
+    assert summary["katana_cuda_status"] == "PASS"
+    assert summary["training_operations"] == {
+        "backward_called": False,
+        "optimizer_created": False,
+        "parameter_update": False,
+    }
+    assert job["exit_status"] == 0
+    assert job["requested_resources"]["gpu_model"] == "L40S"
+    assert job["training_performed"] is False
+    combined = "\n".join((root / name).read_text(encoding="utf-8") for name in sorted(expected))
+    for forbidden in (
+        "/Users/",
+        "/private/",
+        "/srv/scratch/",
+        "LIDC-IDRI-",
+        "nodule_uid",
+        "patient_id",
+        "study_instance_uid",
+        "series_instance_uid",
+    ):
+        assert forbidden not in combined

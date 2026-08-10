@@ -1,0 +1,409 @@
+{
+  "config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "folds": [
+    {
+      "consumer_count": 4,
+      "consumer_hashes_equal": true,
+      "cuda_forward_finite": true,
+      "cuda_forward_input_shape": [
+        1,
+        1,
+        64,
+        64,
+        64
+      ],
+      "cuda_forward_output_shape": [
+        1,
+        1024,
+        2,
+        2,
+        2
+      ],
+      "encoder_file_sha256": "ad1258270010942f752c3f718fe912b5421bb22dcfed0b399d9d999754edbd56",
+      "encoder_state_sha256": "d7fa4604dfaa1ebee6d8653f70b9d3e97266dbbdbb0eed573a7b43cd8a12948e",
+      "fold_index": 0,
+      "partition_samples": {
+        "test": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "train": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "validation": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        }
+      },
+      "split_sha256": "543ec76c07f9113ba84130f2cf4caace4f217e114052066dc2eb25859be61833"
+    },
+    {
+      "consumer_count": 4,
+      "consumer_hashes_equal": true,
+      "cuda_forward_finite": true,
+      "cuda_forward_input_shape": [
+        1,
+        1,
+        64,
+        64,
+        64
+      ],
+      "cuda_forward_output_shape": [
+        1,
+        1024,
+        2,
+        2,
+        2
+      ],
+      "encoder_file_sha256": "22e4951581c3bb7126eb33837eec2d845efcb8056373a98fcd4b7e2eb0d745b6",
+      "encoder_state_sha256": "c7a43fc72e50637ce6b918ec540301a4f59b69636f8b6f9d0810baaa89d4dd8e",
+      "fold_index": 1,
+      "partition_samples": {
+        "test": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "train": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "validation": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        }
+      },
+      "split_sha256": "d4f204e1411cecfad11b94adf6f4eb328aaad12c18f37e5fe74a38d8aedeacb7"
+    },
+    {
+      "consumer_count": 4,
+      "consumer_hashes_equal": true,
+      "cuda_forward_finite": true,
+      "cuda_forward_input_shape": [
+        1,
+        1,
+        64,
+        64,
+        64
+      ],
+      "cuda_forward_output_shape": [
+        1,
+        1024,
+        2,
+        2,
+        2
+      ],
+      "encoder_file_sha256": "cbf463f8e7ccc771e2b78c949e8155744f96496a280a6c8a44d72fa93bc11abe",
+      "encoder_state_sha256": "ce78050e766b9d84333979f33833037407061529c449d41ecabfb672f4e31149",
+      "fold_index": 2,
+      "partition_samples": {
+        "test": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "train": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "validation": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        }
+      },
+      "split_sha256": "722791eb9443b7718f63f70b5f4294e8609e3d8cbc1593cce79cd531f8bbf124"
+    },
+    {
+      "consumer_count": 4,
+      "consumer_hashes_equal": true,
+      "cuda_forward_finite": true,
+      "cuda_forward_input_shape": [
+        1,
+        1,
+        64,
+        64,
+        64
+      ],
+      "cuda_forward_output_shape": [
+        1,
+        1024,
+        2,
+        2,
+        2
+      ],
+      "encoder_file_sha256": "8de848cfd17a353cf5901215f2a4e829062e61b12d160e021bad937f416c9b8b",
+      "encoder_state_sha256": "83d07375d8a470123f105d6d885b025da65024db48dca96aa4303dd92460c481",
+      "fold_index": 3,
+      "partition_samples": {
+        "test": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "train": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "validation": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        }
+      },
+      "split_sha256": "eb27e847838281af43ad6a1683ef3e0e5cacad26e8602291968f68b196e2e44f"
+    },
+    {
+      "consumer_count": 4,
+      "consumer_hashes_equal": true,
+      "cuda_forward_finite": true,
+      "cuda_forward_input_shape": [
+        1,
+        1,
+        64,
+        64,
+        64
+      ],
+      "cuda_forward_output_shape": [
+        1,
+        1024,
+        2,
+        2,
+        2
+      ],
+      "encoder_file_sha256": "f43f1991db29d71d11dcaf68187905ecf2edbdc3519f6ac5b92d8c5c739d9151",
+      "encoder_state_sha256": "5d83267c5e8a3e89368d160f1a2ce46a387ca28cb2f6061c4bc55ffaca4afdf9",
+      "fold_index": 4,
+      "partition_samples": {
+        "test": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "train": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        },
+        "validation": {
+          "image_dtype": "float32",
+          "image_shape": [
+            1,
+            64,
+            64,
+            64
+          ],
+          "mask_dtype": "uint8",
+          "mask_shape": [
+            1,
+            64,
+            64,
+            64
+          ]
+        }
+      },
+      "split_sha256": "f6ac19b39f892e1fedd432aa3d6f2efc943d519fe6d7df27e0d975682725b6bb"
+    }
+  ],
+  "primary_nodules": 2633,
+  "primary_patients": 868,
+  "protocol_version": "Baseline-v2",
+  "roi_integrity": {
+    "roi_files": 2633,
+    "roi_set_sha256": "7b3865d3a587ea485457ce5d1cc9e348bf722958469f84e7e016fe79d0981977",
+    "roi_total_bytes": 1002688586
+  },
+  "runtime": {
+    "cuda_runtime": "12.1",
+    "gpu_driver": "610.43.02",
+    "gpu_name": "NVIDIA L40S",
+    "monai": "1.4.0",
+    "numpy": "1.26.4",
+    "pbs_job_id": "8962963.kman.restech.unsw.edu.au",
+    "python": "3.11.15",
+    "torch": "2.5.1+cu121"
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "training_operations": {
+    "backward_called": false,
+    "optimizer_created": false,
+    "parameter_update": false
+  },
+  "transfer": {
+    "categories": {
+      "encoder_files": 5,
+      "manifest_files": 2,
+      "roi_files": 2633,
+      "source_and_environment_files": 21,
+      "split_files": 5
+    },
+    "status": "PASS",
+    "transfer_manifest_file_sha256": "1f789d039974fed0071a7aca2b4b559284926f91c001ab5b7adfa27c5bee1393",
+    "transfer_manifest_sha256": "c74412efe6061539860cf8605913962967c97064a8887d115596ee5c7c82239b",
+    "verified_bytes": 1233219041,
+    "verified_files": 2666
+  }
+}

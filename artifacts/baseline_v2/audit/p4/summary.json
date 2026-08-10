@@ -1,0 +1,36 @@
+{
+  "config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "fold_count": 5,
+  "katana_cuda_status": "PASS",
+  "katana_runtime": {
+    "cuda_runtime": "12.1",
+    "gpu_driver": "610.43.02",
+    "gpu_name": "NVIDIA L40S",
+    "monai": "1.4.0",
+    "numpy": "1.26.4",
+    "pbs_job_id": "8962963.kman.restech.unsw.edu.au",
+    "python": "3.11.15",
+    "torch": "2.5.1+cu121"
+  },
+  "katana_transfer_manifest_sha256": "c74412efe6061539860cf8605913962967c97064a8887d115596ee5c7c82239b",
+  "katana_verified_bytes": 1233219041,
+  "katana_verified_files": 2666,
+  "oof_nodule_coverage": 2633,
+  "oof_patient_coverage": 868,
+  "patient_leakage": 0,
+  "primary_nodules": 2633,
+  "primary_patients": 868,
+  "protocol_version": "Baseline-v2",
+  "roi_integrity": {
+    "roi_files": 2633,
+    "roi_set_sha256": "7b3865d3a587ea485457ce5d1cc9e348bf722958469f84e7e016fe79d0981977",
+    "roi_total_bytes": 1002688586
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "training_operations": {
+    "backward_called": false,
+    "optimizer_created": false,
+    "parameter_update": false
+  }
+}

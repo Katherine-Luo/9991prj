@@ -1,0 +1,23 @@
+{
+  "evidence_source": "qstat -xf",
+  "exit_status": 0,
+  "job_id": "8962963.kman.restech.unsw.edu.au",
+  "job_state": "F",
+  "queue": "csegpu2",
+  "requested_resources": {
+    "gpu_model": "L40S",
+    "memory_gib": 46,
+    "ncpus": 8,
+    "ngpus": 1,
+    "walltime": "02:00:00"
+  },
+  "resources_used": {
+    "gpu_duration_minutes": 1.83,
+    "gpu_max_memory_mb": 590.0,
+    "memory_kb": 1313040,
+    "walltime": "00:01:47"
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "training_performed": false
+}
