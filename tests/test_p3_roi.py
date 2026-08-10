@@ -14,6 +14,7 @@ from lidc_baseline.p3_roi import (
     DicomSlice,
     HU_MIN,
     ROI_SHAPE,
+    _qa_image,
     assert_deidentified_audit,
     apply_duplicate_policy,
     convert_pixels_to_hu,
@@ -247,3 +248,13 @@ def test_roi_verifier_rejects_bad_status_uid_and_metadata_hash(tmp_path: Path) -
         validate_roi_entry("uid", {**row, "status": "FAILED"}, "config", tmp_path)
     with pytest.raises(ValueError, match="CONTENT_INVALID"):
         validate_roi_entry("other", row, "config", tmp_path)
+
+
+def test_qa_writer_handles_single_slice_source_crop(tmp_path: Path) -> None:
+    source = np.zeros((1, 4, 4), dtype=np.float32)
+    source_mask = np.zeros((1, 4, 4), dtype=np.uint8); source_mask[0, 1, 1] = 1
+    image = np.zeros((1, *ROI_SHAPE), dtype=np.float32)
+    mask = np.zeros((1, *ROI_SHAPE), dtype=np.uint8); mask[0, 0, 1, 1] = 1
+    target = tmp_path / "qa.png"
+    _qa_image(target, source, source_mask, image, mask, "deidentified")
+    assert target.exists() and target.stat().st_size > 0

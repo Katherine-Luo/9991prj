@@ -540,6 +540,10 @@ def _qa_image(path: Path, source_hu: np.ndarray, source_mask: np.ndarray, image:
         return int(np.argmax(areas))
 
     fig, axes = pyplot.subplots(2, 3, figsize=(11, 7))
+    def overlay(axis: Any, binary: np.ndarray) -> None:
+        if binary.shape[0] >= 2 and binary.shape[1] >= 2 and bool(binary.any()):
+            axis.contour(binary, levels=[0.5], colors="lime", linewidths=0.8)
+
     for column, axis in enumerate(range(3)):
         source_index = largest_slice(source_mask, axis)
         final_index = largest_slice(mask[0], axis)
@@ -548,9 +552,9 @@ def _qa_image(path: Path, source_hu: np.ndarray, source_mask: np.ndarray, image:
         final_plane = np.take(image[0], final_index, axis=axis)
         final_binary = np.take(mask[0], final_index, axis=axis)
         axes[0, column].imshow(source_plane, cmap="gray", vmin=HU_MIN, vmax=HU_MAX)
-        axes[0, column].contour(source_binary, levels=[0.5], colors="lime", linewidths=0.8)
+        overlay(axes[0, column], source_binary)
         axes[1, column].imshow(final_plane, cmap="gray", vmin=0.0, vmax=1.0)
-        axes[1, column].contour(final_binary, levels=[0.5], colors="lime", linewidths=0.8)
+        overlay(axes[1, column], final_binary)
         axes[0, column].set_title(("D", "H", "W")[axis])
         axes[0, column].axis("off")
         axes[1, column].axis("off")
