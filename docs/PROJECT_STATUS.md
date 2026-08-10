@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P4
 next_phase: P5
 last_updated: 2026-08-11
-last_verified_commit: 6b2342f
+last_verified_commit: 6ecb016
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 6b2342f
 | 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P4 本地 split/statistics/shared-initialization 实现与真实 build/verify 已通过，Katana 同步、L40S CUDA smoke 和 tracked aggregate audit 尚未完成。P5 仍不得开始。 |
+| 当前阻塞项 | 无；P4 本地 split/statistics/shared-initialization、Katana transfer/smoke interface 和 private transfer manifest 均已验证。实际 KDM 同步、L40S CUDA smoke 和 tracked aggregate audit 尚未完成，P5 仍不得开始。 |
 | 恢复阶段 | `P4` |
 | 下一阶段 | `P5 Black-box DenseNet regression`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P3 已由 `d1f9b39` 完成最终状态交付；P4 启动状态 commit 为 `4658038`，split/statistics/shared-encoder 实现与测试 commit 为 `6b2342f`，均位于本地分支 `p4-splits-shared-init` 且未推送。真实 private manifest/ROI build/verify 为 2,633 nodules / 868 patients；五折固定 counts、exact ROI hash、train-only statistics 和四 consumer shared encoder hashes 均通过；P4 专项 `9 passed`、完整套件 `127 passed`，当前批次 Phase Compliance Reviewer 为 `PASS`。Katana 尚未同步或运行 smoke，P4 继续为 `IN_PROGRESS`，P5 为 `NOT_STARTED`。 |
+| 状态依据 | P3 已由 `d1f9b39` 完成最终状态交付；P4 启动、split/shared-encoder、前一状态同步和 Katana interface commits 为 `4658038`、`6b2342f`、`bb4e0d2`、`6ecb016`，均位于本地分支 `p4-splits-shared-init` 且未推送。Private transfer manifest 已验证 2,666 个 hashed files / `1,233,219,041` bytes，实际 whitelist 为 2,667 个唯一路径（含 manifest anchor）且无 `.DS_Store`。Katana interface 专项 `7 passed`、P4 prepare+Katana `16 passed`、完整套件 `134 passed`，当前批次 Phase Compliance Reviewer 为 `PASS`。Katana 尚未实际同步或运行 PBS smoke，tracked audit 尚未生成；P4 继续为 `IN_PROGRESS`，P5 为 `NOT_STARTED`。 |
 
 ## 3. 当前阶段：P4 Patient-level split 与共享初始化
 
@@ -66,15 +66,20 @@ last_verified_commit: 6b2342f
 - 每折 split 均保存并验证 train-only statistics、五级 strata、low/high extremes、source fingerprints 与 canonical split SHA-256；patient/nodule partitions 互斥，pooled outer-test 精确覆盖全部 2,633 nodules / 868 patients。
 - 已生成并验证五个 private encoder initialization artifacts。每折 Black-box、Standard CBM、CEM、GAM 四个独立 consumer 加载后的 semantic encoder hash 完全一致；不同 fold hashes 不同，artifact 使用 deterministic legacy serialization，重复生成字节一致。
 - P4 专项测试为 `9 passed`，完整测试套件为 `127 passed`；当前批次 Phase Compliance Reviewer 为 `PASS`，确认本地实现属于 P4 且未进入 P5。
+- `6ecb016` 已提交并本地验证 P4 Katana transfer/smoke interface，包含 `src/lidc_baseline/p4_katana.py`、`scripts/katana/sync_p4.sh`、`scripts/katana/p4_cuda_smoke.pbs` 与 `tests/test_p4_katana.py`；该 commit 尚未推送。
+- Private `p4_transfer_manifest.json` 已通过逐文件 size/SHA-256 验证：2,666 个 hashed files、`1,233,219,041` bytes，internal hash 为 `c74412efe6061539860cf8605913962967c97064a8887d115596ee5c7c82239b`，manifest file SHA-256 为 `1f789d039974fed0071a7aca2b4b559284926f91c001ab5b7adfa27c5bee1393`。
+- KDM rsync whitelist 为 2,667 个唯一相对路径（2,666 个 hashed workset files 加 manifest anchor），无 `.DS_Store`、Git metadata、原始 DICOM/XML、reports 或 runs；PBS interface 固定 L40S，只执行真实 ROI loading、五折四 consumer hash 验证和 CUDA forward，不创建 optimizer、不 backward、不训练。
+- Katana interface 专项测试为 `7 passed`；P4 prepare+Katana 合并测试为 `16 passed`；完整测试套件为 `134 passed`。当前批次 Phase Compliance Reviewer 为 `PASS`，确认 interface/manifest 属于 P4 且未进入 P5。
 
 ### 正在进行
 
-- P4 本地实现与测试已提交为 `6b2342f`；正在继续实现 P4 aggregate audit、KDM transfer manifest 和 Katana L40S loading/hash smoke。
+- P4 split/shared-encoder 实现与测试已提交为 `6b2342f`，Katana interface 已提交为 `6ecb016`；正在执行实际 KDM 同步与 Katana L40S PBS smoke。
 
 ### 尚未完成
 
-- Tracked P4 aggregate audit、Katana transfer manifest/PBS smoke interface 尚未生成。
-- P4 private inputs/outputs 尚未同步至 Katana，L40S CUDA loading/hash smoke 尚未执行。
+- Private transfer manifest 保持 Git ignored，不得提交；P4 commits 未经阶段最终确认不得推送。
+- P4 private inputs/outputs 尚未通过 KDM 同步至 Katana，L40S CUDA loading/hash smoke 尚未执行。
+- 依赖 remote PASS 的 tracked P4 aggregate audit 尚未生成。
 - P4 实现与测试已保存为本地原子 commit `6b2342f`，未经 P4 最终确认不得推送。
 - P4 阶段级最终双 agent 审查和用户确认尚未完成；P5 不得开始。
 
@@ -85,8 +90,8 @@ last_verified_commit: 6b2342f
 | P4-R1 patient-grouped outer/inner split | `LOCAL_PASS` | 真实 build/verify 为 2,633 nodules / 868 patients；五折 counts 精确匹配预注册表；patient partitions 互斥且 pooled outer-test 完整覆盖 cohort；validation/test 均含 low/high extremes |
 | P4-R2 train-only statistics | `LOCAL_PASS` | 每折统计只读取注册的 train UID；validation/unknown UID leakage guard、split/source hash guard 和 patient leakage tests 通过 |
 | P4-R3 shared encoder initialization | `LOCAL_PASS` | 五折 private artifacts 已生成；每折四 consumer semantic hashes 一致，不同 folds 不同；deterministic legacy bytes、provenance/corruption/overwrite guards 通过 |
-| Katana CUDA loading/hash smoke | `PENDING` | 待通过 KDM 同步并提交 L40S PBS job |
-| 冻结协议保护与自动测试 | `LOCAL_PASS` | P4 专项 `9 passed`、完整 `127 passed`；当前批次 Phase Compliance Reviewer `PASS`。阶段级最终复验仍须在 Katana smoke 与 aggregate audit 后执行 |
+| Katana CUDA loading/hash smoke | `INTERFACE_PASS_REMOTE_PENDING` | Private manifest 已验证 2,666 files / `1,233,219,041` bytes；2,667-entry whitelist、KDM-only sync、L40S/no-training PBS interface 与真实 ROI loader tests 通过。实际同步和 PBS job 尚未执行 |
+| 冻结协议保护与自动测试 | `LOCAL_PASS` | Katana interface `7 passed`、P4 prepare+Katana `16 passed`、完整 `134 passed`；当前批次 Phase Compliance Reviewer `PASS`。阶段级最终复验仍须在 remote smoke 与 aggregate audit 后执行 |
 
 ### 未解决困难
 
@@ -275,7 +280,7 @@ Bug 修复后：
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
-| P4 | Patient-level split 与共享初始化 | `IN_PROGRESS` | `ON_TRACK` | 本地 split/statistics/shared initialization、真实 2,633/868 build/verify、P4 `9 passed` 与完整 `127 passed` 均为 `LOCAL_PASS`；Katana 同步/smoke、tracked audit、最终阶段审查与用户确认待完成 | 0 | 0 |
+| P4 | Patient-level split 与共享初始化 | `IN_PROGRESS` | `ON_TRACK` | 本地 split/statistics/shared initialization、真实 2,633/868 build/verify、Katana interface/private transfer manifest、P4 合并测试 `16 passed` 与完整 `134 passed` 均已本地验证；实际 KDM sync/PBS smoke、tracked audit、最终阶段审查与用户确认待完成 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
