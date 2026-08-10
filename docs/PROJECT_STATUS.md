@@ -9,18 +9,18 @@ protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: V2M
-development_phase_status: IN_PROGRESS
+development_phase_status: AWAITING_USER_APPROVAL
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: V2M
 next_phase: P3
 last_updated: 2026-08-10
-last_verified_commit: 9b5202c
+last_verified_commit: 8d9dc7b
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2 需求与配置正在当前 V2M 迁移门内创建和冻结，在该阶段确认前不得进入 P3。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M 技术验收与阶段合规审查已通过，正在等待用户确认；确认前不得进入 P3。
 
 ## 1. 阅读规则
 
@@ -39,14 +39,14 @@ last_verified_commit: 9b5202c
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `V2M Baseline-v2 Protocol Migration` |
-| 阶段状态 | `IN_PROGRESS` |
+| 阶段状态 | `AWAITING_USER_APPROVAL` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；V2 requirements/config、linear-regression smoke 和 V2 cohort rematerialization 尚待完成 |
+| 当前阻塞项 | 无；V2M 技术阶段门已通过，正在等待用户明确确认 |
 | 恢复阶段 | `V2M` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-10 |
-| 状态依据 | 用户已批准 Baseline-v2 连续评分协议与 V2M 迁移计划；迁移分支从本地/远程一致的 `9b5202c098767b1de6c7faba3e438619107085e7` 创建；P3 继续保持 `NOT_STARTED` |
+| 状态依据 | 当前分支 `v2-protocol-migration`，HEAD `8d9dc7bb6af46e1b74a2737431ed0bd7406c3e83`；V2M 协议、配置、实现和脱敏审计已保存为 5 个本地 commits，86 项测试已验收，Phase Compliance Reviewer 为 `PASS`；分支尚未推送，`origin/main` 保持 `9b5202c098767b1de6c7faba3e438619107085e7`；P3 继续为 `NOT_STARTED` |
 
 ## 3. 当前阶段：V2M Baseline-v2 Protocol Migration
 
@@ -57,40 +57,47 @@ last_verified_commit: 9b5202c
 ### 已完成
 
 - Baseline-v1 的 P0、P1、P2 已完成、确认并推送，历史证据保持不变。
-- 用户已明确批准 Baseline-v2 单头双评估协议，并最终固定 regression task head 为 unconstrained linear output。
-- V2 primary regression cohort 固定为 2,633 个 target-ready physical nodules / 868 patients；secondary extreme subset 固定为 1,073 nodules，其中 782 low、291 high。
-- 已创建本地 `v2-protocol-migration` 分支；尚未推送。
+- 用户已明确批准并冻结 Baseline-v2 requirements；协议索引将 Baseline-v2 标为唯一 `ACTIVE`、Baseline-v1 标为 `SUPERSEDED/audit-only`。
+- Regression task head 已固定并验证为 unconstrained linear output：`output_activation=none`、`output_constraint=unbounded`、无 clipping，使用 normalized target 的 MSE；不存在独立 binary head。
+- V2 source/resolved config 与只读 SHA-256 已确定性冻结；config hash 为 `07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce`。
+- CPU、MPS、CUDA linear-regression smoke 均为 `PASS`，三者输出 shape 均为 `[1,1]`、loss/gradients 有限且 gradients 非零，并记录同一 V2 config hash。
+- Katana 首次作业 `8960330` 分配到 NVIDIA RTX PRO 6000 Blackwell，因冻结的 PyTorch 2.5.1+cu121 不含 `sm_120` kernels 而失败；已通过固定请求兼容的 L40S 解决。最终作业 `8960395.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 Exit 0。
+- 已从本地私有 P2 manifest 确定性重新物化 V2 cohort，不读取原始 DICOM/XML、不重新 clustering、不改变 stable `nodule_uid`：2,634 physical clusters 中 2,633 primary regression nodules / 868 patients；1,073 secondary extreme nodules / 578 patients，其中 782 low、291 high；1,560 middle-spectrum nodules 保留在 primary；1 个 missing-required-target cluster 排除。
+- V2 完整 manifest 位于本地 ignored 的 `artifacts/baseline_v2/manifests/nodules.parquet`；tracked 候选审计仅含 aggregate counts 和 cryptographic fingerprints，不含 patient ID、原始 UID 或绝对路径。
+- V1 requirements/config/resolved/hash immutable check 为 `PASS`，无 diff。
+- 完整测试为 `86 passed`；阶段级 Phase Compliance Reviewer 为 `PASS`，确认 V2M-R1–V2M-R5 证据充分且无 P3 或后续阶段实现。
+- `DIF-V2M-001` 已解决；`DIF-P10-001` 继续为 `OPEN`，不影响 V2M 阶段门。
+- 已创建本地 `v2-protocol-migration` 分支；V2M 已保存为 5 个原子 commits：`b4155c3`（迁移启动状态）、`5d8dffd`（V2 requirements 与协议治理）、`f07067e`（V2 config/resolved/hash）、`51528ea`（implementation/tests/Katana tooling）、`8d9dc7b`（脱敏 audit evidence）。这些 commits 均尚未推送。
 
 ### 正在进行
 
-- 创建并冻结 Baseline-v2 requirements、config、resolved config 与 SHA-256。
-- 将治理规则切换为从状态文档动态读取 active protocol。
-- 实现并验证 linear-regression CPU/MPS/CUDA smoke。
-- 使用既有 P2 stable provenance 重新物化 versioned V2 manifest 与脱敏 reconciliation。
+- 等待用户明确确认 V2M 阶段结果。
+- 在用户确认前保留当前本地 commits、审计和状态证据，不进入 P3、不合并、不推送。
 
 ### 尚未完成
 
-- V2 requirements、protocol index 和 deterministic config 尚未创建。
-- CPU/MPS/CUDA linear-regression smoke 尚未完成。
-- V2 cohort rematerialization 与验收测试尚未完成。
-- V2M 双 agent 阶段审查和用户确认尚未完成。
+- 用户尚未确认 V2M 阶段。
+- 用户确认后的完成状态封存、合并与 GitHub 推送尚未执行。
 - P3 保持 `NOT_STARTED`。
 
 ### 验收进度
 
 | V2M 验收项 | 状态 | 证据 |
 |---|---|---|
-| V2 requirements 与 protocol index | `NOT_STARTED` | 待创建 |
-| Unconstrained linear output 与 losses | `NOT_STARTED` | 待实现和测试 |
-| V2 config、resolved config 与 hash | `NOT_STARTED` | 待生成和验证 |
-| Regression CPU/MPS/CUDA smoke | `NOT_STARTED` | 待执行 |
-| V2 cohort rematerialization | `NOT_STARTED` | 待执行 |
-| V1 immutable artifacts | `PENDING` | 当前基线工作区无 diff；阶段门前再次验证 |
+| V2 requirements 与 protocol index | `PASS` | V2 requirements 已获用户批准并冻结；protocol index 只有 Baseline-v2 为 `ACTIVE` |
+| Unconstrained linear output 与 losses | `PASS` | Linear head、MSE、无 activation/clipping、无独立 binary head均由配置、代码和测试验证 |
+| V2 config、resolved config 与 hash | `PASS` | SHA-256 `07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce`；resolved/hash mode 为只读；重复 freeze 一致 |
+| Regression CPU/MPS/CUDA smoke | `PASS` | `cpu.json`、`mps.json`、`cuda.json`；Katana L40S job `8960395` Exit 0 |
+| V2 cohort rematerialization | `PASS` | 2,633/868 primary；1,073/578 extreme；782/291 low/high；1,560 middle retained；1 missing target；stable UID unchanged |
+| V1 immutable artifacts | `PASS` | V1 requirements/config/resolved/hash 无 diff |
+| 完整自动测试 | `PASS` | `/Users/katherine/.conda/envs/lidc-baseline-v1-p0/bin/python -m pytest -q`：`86 passed` |
+| Phase Compliance Reviewer | `PASS` | 阶段级审查确认 V2M-R1–V2M-R5 全部满足、无越阶段实现，P3 保持未开始 |
+| Status Synchronization Reviewer | `UPDATED` | 状态已同步最终代码、配置、审计、测试、困难和阶段门结果；等待用户确认 |
 
 ### 未解决困难
 
 - `DIF-P10-001` 继续为 `OPEN`，不影响 V2M 使用合成数据完成 CUDA smoke。
-- 当前无 V2M 阻塞性困难。
+- `DIF-V2M-001` 已为 `RESOLVED`；当前无 V2M 阻塞性困难。
 
 ## 4. 下一阶段：P3 Consensus mask 与 ROI
 
@@ -274,7 +281,7 @@ Bug 修复后：
 | P0 | 工程环境与配置冻结 | `COMPLETED` | `ON_TRACK` | `PASS` | 0 | 0 |
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
-| V2M | Baseline-v2 Protocol Migration | `IN_PROGRESS` | `ON_TRACK` | 已获用户批准，迁移实现与验收进行中 | 0 | 0 |
+| V2M | Baseline-v2 Protocol Migration | `AWAITING_USER_APPROVAL` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试和阶段级 Phase Compliance Reviewer 均为 `PASS`；等待用户确认，P3 未开始 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -318,6 +325,18 @@ Bug 修复后：
 ```
 
 ## 8. 未解决困难登记表
+
+### DIF-V2M-001：冻结 CUDA 环境与 Blackwell GPU architecture 不兼容
+
+- 状态：`RESOLVED`
+- 所属阶段：V2M
+- 首次记录：2026-08-10
+- 解决日期：2026-08-10
+- 原影响：Katana 首次 V2 CUDA smoke job `8960330.kman.restech.unsw.edu.au` 分配到 NVIDIA RTX PRO 6000 Blackwell Server Edition；冻结的 PyTorch 2.5.1+cu121 build 不含 `sm_120` kernels，作业 Exit 1，无法形成 CUDA smoke 通过证据。
+- 当前结论：不改变冻结依赖环境，改为在 V2M PBS request 中固定兼容的 `gpu_model=L40S`。最终 job `8960395.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 Exit 0，CUDA smoke 为 `PASS`。
+- 解决证据：`artifacts/baseline_v2/audit/v2m/katana_cuda_jobs.json` 保存两次尝试和最终 policy；`cuda.json` 记录 L40S、PyTorch 2.5.1+cu121、MSE、unconstrained linear output、同一 V2 config hash与有限非零 gradients。
+- 解除条件：已满足；兼容 GPU request 已固定并由自动测试覆盖。
+- 关联 Bug：无；这是冻结软件与调度所得新 GPU architecture 的兼容性困难。
 
 ### DIF-P2-001：pylidc 与锁定 NumPy 的 `np.int` compatibility defect
 
@@ -457,3 +476,4 @@ Bug 修复后：
 | 2026-08-09 | `PHASE_AWAITING_APPROVAL` | P2 | P2-R1–P2-R4、64 项测试、完整 local cohort audit 和阶段级 Phase Compliance Reviewer 已通过；等待用户确认，P3 保持未开始且不得推送 | `c1c1b95`、`28e46b1`（local, unpushed） |
 | 2026-08-09 | `PHASE_COMPLETED` | P2 | 用户确认 P2；永久记录已保存 cohort、provenance、审计与验收证据；已 fast-forward 合并至 main 并推送，P3 保持未开始 | `11e164e` |
 | 2026-08-10 | `PROTOCOL_MIGRATION_STARTED` | V2M | 用户批准 Baseline-v2 连续评分协议与 unconstrained linear regression output；开始 V2 requirements/config、smoke 和 cohort rematerialization，P3 保持未开始 | `v2-protocol-migration` 本地分支 |
+| 2026-08-10 | `PHASE_AWAITING_APPROVAL` | V2M | V2 requirements/config、CPU/MPS/CUDA smoke、cohort rematerialization、86 项测试与阶段级 Phase Compliance Reviewer 均为 `PASS`；5 个 V2M commits 已保存于本地但未推送，等待用户确认，P3 保持 `NOT_STARTED` | `b4155c3`、`5d8dffd`、`f07067e`、`51528ea`、`8d9dc7b`（local, unpushed） |
