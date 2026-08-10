@@ -42,11 +42,11 @@ last_verified_commit: e0634e7
 | 阶段状态 | `AWAITING_USER_APPROVAL` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞；P4 技术阶段门与双 agent 审查均已通过，approval-gate 状态已由 `e0634e7` 保存。全部当前 P4 commits 均已本地保存且尚未推送；当前唯一等待项是用户明确确认，P5 仍不得开始。 |
+| 当前阻塞项 | 无技术阻塞；P4 技术阶段门与双 agent 审查均已通过，approval-gate verified anchor 为 `e0634e7`。全部 P4 工作均保存在本地分支且未推送；当前唯一等待项是用户明确确认，P5 仍不得开始。 |
 | 恢复阶段 | `P4` |
 | 下一阶段 | `P5 Black-box DenseNet regression`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | 当前分支为 `p4-splits-shared-init`，HEAD `e0634e7`；P4 已有 commits `4658038`、`6b2342f`、`bb4e0d2`、`6ecb016`、`1932dd2`、`9d24035`、`e0634e7` 均已本地保存且未推送。`9d24035` 原子提交 `.gitignore`、五个脱敏 tracked audit evidence files 和 audit regression test；`e0634e7` 保存 P4 approval-gate 状态。KDM 已按 2,667-entry whitelist 完成实际同步，remote 验证 2,666 个 hashed entries / `1,233,219,041` bytes。PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 `Exit_status=0`、walltime `00:01:47`；CUDA smoke 对 2,633 ROI / 868 patients、五折 split、每折四个独立 encoder hash 和真实 ROI forward 均为 `PASS`，且 optimizer/backward/parameter update 均为 false。P4 prepare+Katana `17 passed`、完整套件 `135 passed`、本地 verify、Phase Compliance Reviewer 与冻结协议检查均为 `PASS`。P4 现为 `AWAITING_USER_APPROVAL`，P5 为 `NOT_STARTED`。 |
+| 状态依据 | P4 approval-gate verified anchor 为 `e0634e7`，tracked evidence anchor 为 `9d24035`；后续变更仅用于稳定状态文字，不改变阶段证据或结论。全部 P4 工作均保存在本地分支 `p4-splits-shared-init` 且未推送。KDM 已按 2,667-entry whitelist 完成实际同步，remote 验证 2,666 个 hashed entries / `1,233,219,041` bytes。PBS job `8962963.kman.restech.unsw.edu.au` 在 NVIDIA L40S 上 `Exit_status=0`、walltime `00:01:47`；CUDA smoke 对 2,633 ROI / 868 patients、五折 split、每折四个独立 encoder hash 和真实 ROI forward 均为 `PASS`，且 optimizer/backward/parameter update 均为 false。P4 prepare+Katana `17 passed`、完整套件 `135 passed`、本地 verify、Phase Compliance Reviewer 与冻结协议检查均为 `PASS`。P4 现为 `AWAITING_USER_APPROVAL`，P5 为 `NOT_STARTED`。 |
 
 ## 3. 当前阶段：P4 Patient-level split 与共享初始化
 
@@ -281,7 +281,7 @@ Bug 修复后：
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
-| P4 | Patient-level split 与共享初始化 | `AWAITING_USER_APPROVAL` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、完整 `135 passed` 与阶段级双 agent 审查均为 `PASS`；evidence 与 approval-gate 状态分别由 `9d24035`、`e0634e7` 保存，全部 commits 未推送；当前仅等待用户确认，P5 未开始 | 0 | 0 |
+| P4 | Patient-level split 与共享初始化 | `AWAITING_USER_APPROVAL` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、完整 `135 passed` 与阶段级双 agent 审查均为 `PASS`；evidence 与 approval-gate anchors 分别为 `9d24035`、`e0634e7`，全部 P4 工作保存在本地分支且未推送；当前仅等待用户确认，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -576,4 +576,4 @@ Bug 修复后：
 | 2026-08-11 | `PHASE_COMPLETED` / `DELIVERED` | P3 | 用户明确确认 P3；P3 永久记录已写入 full ROI/QA/audit、测试、Bug 与 storage 证据，并已 fast-forward 合并、推送至 GitHub。`main`、`origin/main` 与 `HEAD` 当时均为 `dc8c356`；P4 在该交付记录形成时保持 `NOT_STARTED`。 | `dc8c356` |
 | 2026-08-11 | `PHASE_STARTED` | P4 | 用户批准 patient-grouped five-fold split、train-only statistics、每折 shared DenseNet initialization 与 Katana L40S loading/hash smoke 计划；P4 进入 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `p4-splits-shared-init` 本地分支 |
 | 2026-08-11 | `LOCAL_IMPLEMENTATION_VERIFIED` | P4 | 本地 P4 implementation/tests 已完成真实 private build/verify：2,633 nodules / 868 patients、五折固定 counts、exact ROI file hashes、train-only statistics 与每折四 consumer shared encoder hashes 均通过；P4 `9 passed`、完整 `127 passed`，当前批次 Phase Compliance Reviewer `PASS`。Katana 同步/L40S smoke 与 tracked aggregate audit 尚未完成，因此 P4 保持 `IN_PROGRESS`，P5 保持 `NOT_STARTED`。 | `6b2342f`（本地，未推送） |
-| 2026-08-11 | `PHASE_AWAITING_APPROVAL` | P4 | 实际 KDM whitelist sync 与 L40S job `8962963.kman.restech.unsw.edu.au` 均通过；2,633 ROI / 868 patients、五折 split、每折四 consumer initialization hashes、真实 ROI CUDA forwards 和 no-training invariants 均验证。Tracked audit evidence、P4 `17 passed`、完整 `135 passed`、冻结协议检查与阶段级双 agent 审查均为 `PASS`。Evidence 与 approval-gate 状态分别由 `9d24035`、`e0634e7` 保存，全部 P4 commits 未推送；当前仅等待用户确认，P5 保持 `NOT_STARTED`。 | `9d24035`、`e0634e7` |
+| 2026-08-11 | `PHASE_AWAITING_APPROVAL` | P4 | 实际 KDM whitelist sync 与 L40S job `8962963.kman.restech.unsw.edu.au` 均通过；2,633 ROI / 868 patients、五折 split、每折四 consumer initialization hashes、真实 ROI CUDA forwards 和 no-training invariants 均验证。Tracked audit evidence、P4 `17 passed`、完整 `135 passed`、冻结协议检查与阶段级双 agent 审查均为 `PASS`。Evidence 与 approval-gate anchors 分别为 `9d24035`、`e0634e7`；全部 P4 工作保存在本地分支且未推送，当前仅等待用户确认，P5 保持 `NOT_STARTED`。 | `9d24035`、`e0634e7` |
