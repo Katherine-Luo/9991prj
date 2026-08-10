@@ -42,11 +42,11 @@ last_verified_commit: c81390b
 | 阶段状态 | `IN_PROGRESS` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无（`BUG-P3-001` 已解决） |
-| 当前阻塞项 | 等待用户审阅并明确确认 41 个 pilot QA 图配准正确；确认前绝不允许开始 full ROI |
+| 当前阻塞项 | 无外部阻塞；用户已明确确认 41 个 pilot QA 图配准正确，已授权但尚未启动 full 2,633 ROI 构建。P3 最终阶段验收与用户最终确认仍未完成。 |
 | 恢复阶段 | `P3` |
 | 下一阶段 | `P4 Patient-level split 与共享初始化`（保持 `NOT_STARTED`） |
 | 最近更新 | 2026-08-10 |
-| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；本地 `main` 与 `origin/main` 已验证一致。用户已批准 P3 consensus mask、确定性 ROI 与 pilot-first QA 实施计划；冻结 V1/V2 requirements/config 必须保持无 diff。 |
+| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；本地 `main` 与 `origin/main` 已验证一致。用户已批准 P3 consensus mask、确定性 ROI 与 pilot-first QA 实施计划，并于 2026-08-10 明确确认 41 个 pilot QA 图配准正确，仅授权继续 P3 full ROI 构建；冻结 V1/V2 requirements/config 必须保持无 diff。 |
 
 ## 3. 当前阶段：P3 Consensus mask、确定性 3D ROI 与 QA
 
@@ -69,27 +69,26 @@ last_verified_commit: c81390b
 ### 正在进行
 
 - P3 已位于本地 `p3-consensus-roi` 分支；pilot pipeline、cache provenance 保护和 QA retry 修复的本地原子提交尚未推送。
-- 下一项唯一允许的工作是向用户展示全部 41 个私有 QA 图与聚合统计，并等待用户明确确认配准正确。
-- 在用户明确确认 pilot 配准正确前暂停，不生成 full ROI，也不生成/提交 P3 full aggregate audit。
+- 用户已于 2026-08-10 明确确认 deterministic 41-sample pilot QA 配准正确；当前唯一允许的下一项实施工作为 full 2,633 ROI、私有 full index 和脱敏 aggregate audit，尚未启动。
+- Pilot confirmation 只授权 P3 full ROI 构建，不等于 P3 最终阶段确认，不授权 P4、P3 推送或协议修改。
 
 ### 尚未完成
 
-- Pilot QA 的用户人工配准确认尚未获得；此确认是进入 full 的硬性停点，不等于 P3 最终阶段确认。
-- full 2,633 ROI、私有 full index、脱敏 aggregate audit、阶段级验收、双 agent 审查、阶段最终确认与推送均尚未发生。
+- full 2,633 ROI、私有 full index、脱敏 aggregate audit、阶段级验收、双 agent 审查、阶段最终确认与推送均尚未完成。
 
 ### 验收进度
 
 | P3 验收项 | 状态 | 证据 |
 |---|---|---|
-| P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；最终 pilot 41/41 consensus/ROI/verify 成功，full execution 待用户 pilot alignment 确认 |
-| P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ 与 synthetic tests 已完成；最终 pilot 41/41 ROI/verify 成功，full ROI 证据待生成 |
-| P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection、41/41 QA 图和 41/41 verify 均已完成；等待用户明确人工确认配准正确，确认前不得 full |
+| P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；最终 pilot 41/41 consensus/ROI/verify 成功；用户已确认 pilot alignment，full execution 已获授权、尚未启动 |
+| P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ 与 synthetic tests 已完成；最终 pilot 41/41 ROI/verify 成功；full ROI 证据待生成 |
+| P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection、41/41 QA 图和 41/41 verify 均已完成；用户已明确确认 pilot 配准正确；full aggregate QA 审计待完成 |
 | 冻结协议保护 | `IN_PROGRESS` | 启动前 V1/V2 requirements/config 无 diff；每批次继续验证 |
 
 ### 未解决困难
 
 - `DIF-P10-001` 继续为 `OPEN`，不阻止 P3 的本地 ROI 构建；P3 full 后必须测量 ROI/QA 产物并更新 P10 storage estimate。
-- Pilot QA 尚未获用户明确确认；这是 P3 的人工阶段内停点，不是 P3 最终确认，且确认前不得开始 full。
+- Pilot QA 已获用户明确确认；这只解除进入 full 的阶段内停点，不是 P3 最终确认。
 
 ## 4. 下一阶段：P4 Patient-level split 与共享初始化
 
@@ -273,7 +272,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、synthetic tests、最终 pilot 41/41 ROI QA/verify 和 Phase Compliance Reviewer 均为 `PASS`；必须等待用户确认 pilot alignment 后才可 full，full 阶段验收待完成 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、synthetic tests、最终 pilot 41/41 ROI QA/verify 和 Phase Compliance Reviewer 均为 `PASS`；用户已确认 pilot alignment，full 构建与阶段验收待完成 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -528,3 +527,4 @@ Bug 修复后：
 | 2026-08-10 | `BUG_RESOLVED` | V2M | 交付前发现 Git checkout 不持久化 tracked `0444` mode；仅移除不可移植测试断言，保留生成时 `0444`、canonical bytes 和 SHA-256 保护。V2M 保持 `COMPLETED`，P3 保持 `NOT_STARTED` | `f28484f` |
 | 2026-08-10 | `PHASE_STARTED` | P3 | 用户批准 P3 consensus mask、确定性 `64³` ROI 与 pilot-first QA 实施计划；P3 进入 `IN_PROGRESS`，P4 保持 `NOT_STARTED` | `p3-consensus-roi` 本地分支 |
 | 2026-08-10 | `BUG_RESOLVED` / `PILOT_QA_COMPLETE` | P3 | `BUG-P3-001` 修复后，deterministic pilot 41/41 ROI、QA 图和 verify 均通过，failure registry 为 0；P3 仍为 `IN_PROGRESS`，必须等待用户确认 pilot alignment，P4 保持 `NOT_STARTED` | 本次状态同步提交 |
+| 2026-08-10 | `PILOT_QA_APPROVED` | P3 | 用户明确确认 41 个 deterministic pilot QA 图配准正确；仅授权构建 P3 full 私有 ROI/index 和脱敏 aggregate audit，不授权进入 P4、P3 阶段完成或推送 | 用户确认 |
