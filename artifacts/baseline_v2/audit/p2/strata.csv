@@ -1,0 +1,6 @@
+stratum,nodules,patients
+mean_le_2,782,442
+mean_gt_2_lt_3,579,356
+mean_eq_3,640,384
+mean_gt_3_lt_4,341,253
+mean_ge_4,291,228

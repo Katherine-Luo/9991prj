@@ -1,0 +1,25 @@
+{
+  "attempts": [
+    {
+      "compute_node": "k207",
+      "exit_status": 1,
+      "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "job_id": "8960330.kman.restech.unsw.edu.au",
+      "outcome": "INCOMPATIBLE_GPU_ARCHITECTURE",
+      "reason": "The frozen torch 2.5.1+cu121 build does not contain sm_120 kernels."
+    },
+    {
+      "compute_node": "k094",
+      "exit_status": 0,
+      "gpu_name": "NVIDIA L40S",
+      "job_id": "8960395.kman.restech.unsw.edu.au",
+      "outcome": "PASS",
+      "walltime": "00:00:37"
+    }
+  ],
+  "config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "final_policy": "Pin gpu_model=L40S for the frozen Baseline-v2 torch 2.5.1+cu121 environment.",
+  "raw_data_used": false,
+  "schema_version": 1,
+  "status": "PASS"
+}

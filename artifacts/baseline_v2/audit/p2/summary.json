@@ -1,0 +1,35 @@
+{
+  "audit": "Baseline-v2 cohort rematerialization",
+  "config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "counts": {
+    "excluded_missing_required_target": 1,
+    "middle_spectrum_primary_nodules": 1560,
+    "physical_clusters": 2634,
+    "primary_regression_nodules": 2633,
+    "primary_regression_patients": 868,
+    "secondary_extreme_nodules": 1073,
+    "secondary_extreme_patients": 578,
+    "secondary_high_nodules": 291,
+    "secondary_low_nodules": 782
+  },
+  "nodule_uid_changed": false,
+  "physical_identity_reused": true,
+  "privacy": "Tracked reports contain aggregate counts and cryptographic fingerprints only; the full manifest is local-only.",
+  "program_version": "0.1.0",
+  "protocol_version": "Baseline-v2",
+  "raw_source_data_accessed": false,
+  "reference_reconciliation": {
+    "hard_gate": false,
+    "nodules": 2651,
+    "patients": 875
+  },
+  "schema_version": 1,
+  "source_manifest_sha256": "36c31b421bb42e8a4e267c52d58aff88ef4221b616c1bdc0d3a4c2168ff55169",
+  "task": {
+    "independent_binary_head": false,
+    "primary": "continuous_regression",
+    "secondary": "extreme_binary_evaluation_only",
+    "target_normalization": "(mean_malignancy - 1) / 4"
+  },
+  "v2_records_sha256": "792d2abb96ec31b64b96936696f4a9f6fdb948b0a5ef7500488f5ed0060a92bf"
+}

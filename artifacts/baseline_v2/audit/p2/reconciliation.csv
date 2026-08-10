@@ -1,0 +1,9 @@
+stage,count
+physical_clusters,2634
+primary_regression,2633
+middle_spectrum_retained,1560
+secondary_extreme,1073
+secondary_low,782
+secondary_high,291
+excluded_missing_required_target,1
+reference_nodules,2651
