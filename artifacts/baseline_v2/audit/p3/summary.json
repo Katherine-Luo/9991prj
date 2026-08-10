@@ -1,0 +1,33 @@
+{
+  "config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "ct_series_count": 876,
+  "exact_duplicate_policy_applied": 1,
+  "failures": 0,
+  "fingerprints": {
+    "config": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+    "manifest": "6ece4d33aae07f71061e5e1e86a12e251b25dba00b657ffe05da55928e52bbdd",
+    "roi_index": "4770261c87714fe17f36b9c9e51180f98407b767c3455af1cbbde5f65bc004d4"
+  },
+  "input_primary_nodules": 2633,
+  "nonempty_masks": 2633,
+  "private_outputs": {
+    "roi_directory": "artifacts/baseline_v2/rois",
+    "roi_index": "artifacts/baseline_v2/manifests/roi_index.parquet"
+  },
+  "processed_nodules": 2633,
+  "qa": {
+    "human_confirmation": "CONFIRMED",
+    "pilot_sample_count": 41
+  },
+  "raw_dicom_files_modified": 0,
+  "reader_count_distribution": {
+    "1": 769,
+    "2": 488,
+    "3": 481,
+    "4": 895
+  },
+  "roi_file_count": 2633,
+  "roi_total_bytes": 1002688586,
+  "scope": "full",
+  "successful_nodules": 2633
+}
