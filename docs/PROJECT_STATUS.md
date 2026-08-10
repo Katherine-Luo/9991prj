@@ -46,7 +46,7 @@ last_verified_commit: f28484f
 | 恢复阶段 | `V2M` |
 | 下一阶段 | `P3 Consensus mask 与 ROI` |
 | 最近更新 | 2026-08-10 |
-| 状态依据 | V2M 与交付前 portability fix 已在本地 `main` 保存至 `f28484f7e5b50bac48eab15025b2a38db294fd47`，相对 `origin/main` ahead 8 且可 fast-forward；尚未推送。`BUG-V2M-001` 的 Phase Compliance Reviewer 为 `PASS`，V2 专项 26 项与完整 86 项测试通过；Baseline-v1 冻结文件无 diff，P3 继续为 `NOT_STARTED` |
+| 状态依据 | V2M 完成状态与交付前 portability fix 已保存至本地 `main`；`BUG-V2M-001` 修复 commit 为 `f28484f7e5b50bac48eab15025b2a38db294fd47`，Phase Compliance Reviewer 为 `PASS`，V2 专项 26 项与完整 86 项测试通过。Baseline-v1 冻结文件无 diff；GitHub 交付以本地 `main` 与 `origin/main` SHA 一致为验收，P3 继续为 `NOT_STARTED` |
 
 ## 3. 当前阶段：V2M Baseline-v2 Protocol Migration
 
@@ -69,17 +69,16 @@ last_verified_commit: f28484f
 - `DIF-V2M-001` 已解决；`DIF-P10-001` 继续为 `OPEN`，不影响 V2M 阶段门。
 - V2M 实现与证据已保存为原子 commits：`b4155c3`（迁移启动状态）、`5d8dffd`（V2 requirements 与协议治理）、`f07067e`（V2 config/resolved/hash）、`51528ea`（implementation/tests/Katana tooling）、`8d9dc7b`（脱敏 audit evidence）、`8007319`（approval gate 状态）。
 - 用户已于 2026-08-10 明确确认 V2M，阶段生命周期已封存为 `COMPLETED`。
-- 完成状态已由 `75b89bd` 封存并 fast-forward 合并至本地 `main`；`BUG-V2M-001` 修复已由 `f28484f` 原子提交。`main` 当前相对 `origin/main` ahead 8，GitHub push 尚未执行。
+- 完成状态已由 `75b89bd` 封存并 fast-forward 合并至本地 `main`；`BUG-V2M-001` 修复已由 `f28484f` 原子提交，对应状态记录已独立保存。
 - 交付前发现并解决 `BUG-V2M-001`：Git checkout 不持久化普通文件的 `0444` read-only bits。修复只移除 tracked snapshot 的不可移植 mode 断言；`freeze_config` 生成临时产物时设置 `0444` 的测试、canonical resolved bytes 与 SHA-256 验证均保留。
 
 ### 正在进行
 
-- 无 V2M 科学开发工作；本批次只封存已通过审查的 portability test fix 与状态同步，然后完成 GitHub 交付。
+- 无 V2M 科学开发工作；本批次只执行已获授权的 GitHub 交付与 SHA 一致性验证。
 
 ### 尚未完成
 
 - V2M 无尚未完成的验收项。
-- `BUG-V2M-001` 修复已本地提交为 `f28484f`；仅对应状态同步仍为本地未提交改动，GitHub push 尚未执行。
 - P3 保持 `NOT_STARTED`；其实施计划必须另行制定并获得用户批准。
 
 ### 验收进度
@@ -320,7 +319,7 @@ Bug 修复后：
 - 修复：只移除 `tests/test_v2_protocol.py` 中对两个 tracked snapshot 的 `0444` mode 断言；不修改 `freeze_config`、V2 config、resolved bytes、digest 或科学协议。
 - 验证命令与结果：V2 专项测试 `26 passed`；完整测试 `86 passed`；独立 Phase Compliance Reviewer 复核为 `PASS`。`test_config` 继续验证 `freeze_config` 新生成的 resolved/hash 文件为 `0444`，V2 protocol test 继续验证 canonical bytes 与 committed SHA-256。
 - 未解决事项：无。
-- 修复 commit：`f28484f`（local, unpushed）。
+- 修复 commit：`f28484f`。
 
 ### Bug 记录模板
 
@@ -478,8 +477,8 @@ Bug 修复后：
 - 明确未纳入内容：P3 consensus mask/ROI、split、模型训练或 P4–P10 实现；P3 保持 `NOT_STARTED`，实施计划尚未制定。
 - 阶段门结论：`PASS`
 - V2M commits：`b4155c3`、`5d8dffd`、`f07067e`、`51528ea`、`8d9dc7b`、`8007319`；完成状态 commit：本记录所在 commit。
-- 交付前修复 commit：`f28484f`（`BUG-V2M-001`，local, unpushed）。
-- 交付状态：完成记录已由 `75b89bd` 提交并 fast-forward 合并至本地 `main`；`BUG-V2M-001` 修复已由 `f28484f` 提交，仅本次状态同步仍待提交。所有 V2M commits 尚未推送；本地 `main` 与 `origin/main` SHA 一致后才关闭本次交付。
+- 交付前修复 commit：`f28484f`（`BUG-V2M-001`）。
+- 交付验收：完成记录、portability fix 与状态记录均位于 `main`；本地 `main` 与 `origin/main` SHA 一致后才关闭本次交付。
 
 ### 阶段完成记录模板
 
@@ -521,4 +520,4 @@ Bug 修复后：
 | 2026-08-10 | `PROTOCOL_MIGRATION_STARTED` | V2M | 用户批准 Baseline-v2 连续评分协议与 unconstrained linear regression output；开始 V2 requirements/config、smoke 和 cohort rematerialization，P3 保持未开始 | `v2-protocol-migration` 本地分支 |
 | 2026-08-10 | `PHASE_AWAITING_APPROVAL` | V2M | V2 requirements/config、CPU/MPS/CUDA smoke、cohort rematerialization、86 项测试与阶段级 Phase Compliance Reviewer 均为 `PASS`；5 个 V2M commits 已保存于本地但未推送，等待用户确认，P3 保持 `NOT_STARTED` | `b4155c3`、`5d8dffd`、`f07067e`、`51528ea`、`8d9dc7b`（local, unpushed） |
 | 2026-08-10 | `PHASE_COMPLETED` | V2M | 用户确认 V2M；Baseline-v2 active protocol、配置、linear-regression smoke、cohort rematerialization 和验收证据已永久封存，GitHub 交付按确认后流程执行；P3 保持 `NOT_STARTED` | 本次 V2M 完成状态提交 |
-| 2026-08-10 | `BUG_RESOLVED` | V2M | 交付前发现 Git checkout 不持久化 tracked `0444` mode；仅移除不可移植测试断言，保留生成时 `0444`、canonical bytes 和 SHA-256 保护。V2M 保持 `COMPLETED`，P3 保持 `NOT_STARTED` | `f28484f`（local, unpushed） |
+| 2026-08-10 | `BUG_RESOLVED` | V2M | 交付前发现 Git checkout 不持久化 tracked `0444` mode；仅移除不可移植测试断言，保留生成时 `0444`、canonical bytes 和 SHA-256 保护。V2M 保持 `COMPLETED`，P3 保持 `NOT_STARTED` | `f28484f` |
