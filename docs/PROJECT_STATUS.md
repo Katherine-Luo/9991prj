@@ -9,13 +9,13 @@ protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P3
-development_phase_status: IN_PROGRESS
+development_phase_status: AWAITING_USER_APPROVAL
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P3
 next_phase: P4
-last_updated: 2026-08-10
-last_verified_commit: 58ba4e1
+last_updated: 2026-08-11
+last_verified_commit: a790e54
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -39,14 +39,14 @@ last_verified_commit: 58ba4e1
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P3 Consensus mask、确定性 3D ROI 与 QA` |
-| 阶段状态 | `IN_PROGRESS` |
+| 阶段状态 | `AWAITING_USER_APPROVAL` |
 | 维护目标阶段 | 无 |
-| 活动 Bug | 无（`BUG-P3-001` 已解决） |
-| 当前阻塞项 | 无外部阻塞；用户已明确确认 41 个 pilot QA 图配准正确，已授权但尚未启动 full 2,633 ROI 构建。P3 最终阶段验收与用户最终确认仍未完成。 |
+| 活动 Bug | 无；`BUG-P3-001` 与 `BUG-P3-002` 均已解决 |
+| 当前阻塞项 | 技术阶段门已通过；仅等待用户对 P3 的最终明确确认。确认前不得进入 P4、合并或推送 P3 commits。 |
 | 恢复阶段 | `P3` |
 | 下一阶段 | `P4 Patient-level split 与共享初始化`（保持 `NOT_STARTED`） |
-| 最近更新 | 2026-08-10 |
-| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；本地 `main` 与 `origin/main` 已验证一致。当前本地 `p3-consensus-roi` 分支累计 14 个未推送 P3 commits，最新为 `58ba4e1`（full-build 可恢复性）；用户已批准 P3 consensus mask、确定性 ROI 与 pilot-first QA 实施计划，并于 2026-08-10 明确确认 41 个 pilot QA 图配准正确，仅授权继续 P3 full ROI 构建；冻结 V1/V2 requirements/config 必须保持无 diff。 |
+| 最近更新 | 2026-08-11 |
+| 状态依据 | V2M 已由 `c81390b68521814f1e4d4127cf0eb98c27fe28bf` 推送至 GitHub；本地 `main` 与 `origin/main` 已验证一致。当前本地 `p3-consensus-roi` 分支已有 18 个未推送 P3 commits，最新技术修复为 `a790e54`（`fix: serialize P3 full build writers`），脱敏 aggregate audit 为 `ac5c9ec`（`data: add P3 aggregate ROI audit`）。用户已批准 P3 实施计划并确认 41 个 pilot QA 图配准正确。full build/verify 为 2,633/2,633，0 private failures；P3 专项测试 `32 passed`、完整测试 `118 passed`；P3-R1–P3-R3、冻结协议保护与阶段级双 agent 审查均为 `PASS`。P3 现只等待用户最终确认，尚未完成、合并或推送。 |
 
 ## 3. 当前阶段：P3 Consensus mask、确定性 3D ROI 与 QA
 
@@ -62,29 +62,32 @@ last_verified_commit: 58ba4e1
 - 已完成 P3 pipeline 与 synthetic tests：提供 `p3_roi build`、`verify` 及仅用于记录明确人工确认的 `confirm-pilot` 接口；实现空间投影排序、P1 exact-duplicate SOP policy、HU conversion、50% consensus 到 `D,H,W` 映射、tight bbox/cube padding、固定 resize、deterministic NPZ、私有 ROI index、QA 图和脱敏 audit writer。
 - 已完成可断点续跑的 pilot 选择统计保护：私有 `pilot_consensus_statistics.parquet` 记录 consensus physical volume、bbox/cube padding ratio，并以 canonical XML、annotation/SOP provenance 和 scan geometry fingerprint 验证缓存复用；来源或几何变化时必须重新计算，不能复用旧统计。
 - 已完成最终真实 pilot build/verify：固定的 41 个选中样本均已写入可复用 ROI，41/41 个 QA 图均已生成，`verify --scope pilot` 验证 41/41 个 ROI。私有 `roi_failures.parquet` 当前为 0 条记录；原始 DICOM 修改数为 0。
-- 已完成 full-build 可恢复性实现与回归测试：已有 ROI 只有在 `nodule_uid`、config hash、source provenance、ROI content hash、interface 和非空 binary mask 全部复核通过时才可复用；不匹配或损坏的已有 ROI 默认阻断，只有显式 `--overwrite` 才允许重建。full build 按 CT series 加载一次 volume，并在每个 series 完成后原子持久化私有 ROI index 与 failure registry，因此中断后不会信任未验证 index 或重复读取已验证 ROI。该批次 P3 专项测试 `29 passed`、完整套件 `115 passed`，Phase Compliance Reviewer 为 `PASS`。该实现尚未启动 full 2,633 ROI 执行。
+- 已完成 full-build 可恢复性实现与回归测试：已有 ROI 只有在 `nodule_uid`、config hash、source provenance、ROI content hash、interface 和非空 binary mask 全部复核通过时才可复用；不匹配或损坏的已有 ROI 默认阻断，只有显式 `--overwrite` 才允许重建。full build 按 CT series 加载一次 volume，并在每个 series 完成后持久化私有 ROI index 与 failure registry，因此中断后不会信任未验证 index 或重复读取已验证 ROI。该批次 P3 专项测试 `29 passed`、完整套件 `115 passed`，Phase Compliance Reviewer 为 `PASS`。
+- 已完成真实 private full build 与 verify。`roi_index.parquet` 记录 2,633/2,633 个 primary ROI（`1,967 WRITTEN`、`666 REUSED`），`roi_failures.parquet` 为 0 行；`p3_roi verify --scope full` 复核 2,633/2,633 个 ROI。脱敏 aggregate audit 报告 `roi_success=2,633`、`nonempty_masks=2,633`、876 个 CT series、1 次 exact-duplicate policy 应用、0 failures 与 0 个原始 DICOM 修改。
+- 已复核 P3 输出存储量：2,633 个私有 ROI 合计 `1,002,688,586` bytes（约 `0.93 GiB`）；这一已测量值已作为 P10 storage 风险后续估算的输入，未上传原始 DICOM。
 - Pilot 覆盖 reader count `1–4`（分别为 16、9、9、7 个样本），并包含 8 个最小与 8 个最大 consensus physical-volume 候选和 exact-duplicate series 的 1 个 primary nodule（其 hashed-SOP selection 已应用）。41 个样本的 consensus physical volume 覆盖全 cohort 范围 `4.39453125–29067.248916625977 mm³`。
 - 已定位并修复 `BUG-P3-001`：Matplotlib 不能为 `1×N` 或 `N×1` 的 single-slice plane 绘制 contour。QA writer 对尺寸不足的 plane 不调用 contour；若原本可绘制的 contour 仍因退化 topology 抛出 `TypeError`，则回退为半透明 binary-mask overlay，以保留可见空间证据。补充修复 failure registry，使重试成功的结节会从私有 failure registry 清除、未尝试的失败仍保留；已新增回归测试。修复后 P3 专项测试为 `25 passed`、完整套件为 `111 passed`，最终 pilot 41/41 build/QA/verify 完成，Phase Compliance Reviewer 为 `PASS`。该 Bug 已为 `RESOLVED`。
-- 私有 `roi_index.parquet` 仍有 6 条不属于当前 41-sample selection 的早期 retry 残留失败记录；它们不属于当前 pilot 的状态、不会影响 41/41 verify 或 failure registry（0 条），不得将其解释为当前 pilot 失败。full build 将对这些 primary nodule 重新执行 provenance-checked reuse 或构建，并将相应状态持久化。
+- 早期 pilot retry 留下的 6 条非当前 selection index 状态已由 full build 的 provenance-checked reuse/重建覆盖；最终 full index 只含 2,633 条 primary ROI 记录，private failure registry 为 0。
+- 已关闭 `BUG-P3-002`：`a790e54` 为 full build 的私有 progress read–merge–replace 生命周期增加排他 `flock`，同时保留 invocation-unique Parquet temporary files；mock 和实际第二进程锁回归测试均通过。该修复与 full verify、P3/full test 共同证明 resumable single-writer persistence 可用。
 
 ### 正在进行
 
-- P3 已位于本地 `p3-consensus-roi` 分支；截至 `58ba4e1`，pilot pipeline、cache provenance 保护、QA retry 修复与 full-build 可恢复性实现共 14 个本地原子提交均尚未推送。
-- 用户已于 2026-08-10 明确确认 deterministic 41-sample pilot QA 配准正确；当前唯一允许的下一项实施工作为 full 2,633 ROI、私有 full index 和脱敏 aggregate audit，尚未启动。
-- Pilot confirmation 只授权 P3 full ROI 构建，不等于 P3 最终阶段确认，不授权 P4、P3 推送或协议修改。
+- P3 已位于本地 `p3-consensus-roi` 分支；截至 `a790e54` 与 `ac5c9ec`，P3 实现、private-progress lock 修复和脱敏 aggregate audit 已形成 18 个本地原子 commits，均尚未推送。
+- 用户已于 2026-08-10 确认 deterministic 41-sample pilot QA 配准正确；full ROI、verify、aggregate audit、P3/full tests 和阶段级审查现均已完成。当前不再开发，只等待 P3 最终确认。
+- Pilot 确认只授权 full build；本 `AWAITING_USER_APPROVAL` 状态同样不授权 P4、P3 推送或协议修改。
 
 ### 尚未完成
 
-- full 2,633 ROI、私有 full index、脱敏 aggregate audit、阶段级验收、双 agent 审查、阶段最终确认与推送均尚未完成。
+- 尚未完成：用户对 P3 阶段结果的最终明确确认；确认后才可将 P3 标为 `COMPLETED`、创建单独状态封存 commit、合并并推送。P4 仍不得开始。
 
 ### 验收进度
 
 | P3 验收项 | 状态 | 证据 |
 |---|---|---|
-| P3-R1 50% consensus mask | `IN_PROGRESS` | 预检 2,633/2,633 非空；最终 pilot 41/41 consensus/ROI/verify 成功；用户已确认 pilot alignment，full execution 已获授权、尚未启动 |
-| P3-R2 fixed crop/resize | `IN_PROGRESS` | D,H,W spatial mapping、tight bbox、cube padding、fixed interpolation、deterministic NPZ、provenance-checked resumable full build 与 synthetic tests 已完成；最终 pilot 41/41 ROI/verify 成功；full ROI 证据待生成 |
-| P3-R3 QA | `IN_PROGRESS` | deterministic 41-sample selection、41/41 QA 图和 41/41 verify 均已完成；用户已明确确认 pilot 配准正确；full aggregate QA 审计待完成 |
-| 冻结协议保护 | `IN_PROGRESS` | 启动前 V1/V2 requirements/config 无 diff；每批次继续验证 |
+| P3-R1 50% consensus mask | `PASS` | full audit：2,633/2,633 nonempty masks、0 failures；`verify --scope full` 为 2,633/2,633；source annotation provenance 和 0 raw-DICOM modification 均已审计 |
+| P3-R2 fixed crop/resize | `PASS` | 2,633 个 `[1,64,64,64]` deterministic ROI 经 full verify；D,H,W mapping、tight bbox/cube padding、fixed interpolation 和 binary mask 由 32 项 P3 测试及 full audit 复核；`BUG-P3-002` 的 unique temporary + single-writer lock 修复已验证 |
+| P3-R3 QA | `PASS` | 41-sample pilot 覆盖 reader count、最小/最大和 exact-duplicate sample，41/41 QA/verify 完成且用户明确确认；full aggregate QA audit 报告 volume、bbox、padding、reader-count 分布与 0 failure |
+| 冻结协议保护 | `PASS` | V1/V2 requirements/config/resolved/hash 无 diff；P3 专项 `32 passed`、完整 `118 passed`，Phase Compliance Reviewer `PASS`，Status Synchronization Reviewer 已同步 |
 
 ### 未解决困难
 
@@ -273,7 +276,7 @@ Bug 修复后：
 | P1 | DICOM/XML 审计 | `COMPLETED` | `ON_TRACK` | 技术验收、阶段级双 agent 审查和用户确认均为 `PASS` | 0 | 0 |
 | P2 | Physical nodule cohort | `COMPLETED` | `ON_TRACK` | P2-R1–P2-R4、自动测试、双 agent 审查和用户确认均为 `PASS`；P3 保持未开始 | 0 | 0 |
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
-| P3 | Consensus mask 与 ROI | `IN_PROGRESS` | `ON_TRACK` | pipeline、cache provenance protection、provenance-checked resumable full build、synthetic tests、最终 pilot 41/41 ROI QA/verify 和 Phase Compliance Reviewer 均为 `PASS`；用户已确认 pilot alignment，full 构建与阶段验收待完成 | 0 | 0 |
+| P3 | Consensus mask 与 ROI | `AWAITING_USER_APPROVAL` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit 和阶段级双 agent 审查均为 `PASS`；等待用户最终确认，P4 保持未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P5 | Black-box DenseNet | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -286,7 +289,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动 Bug：无。`BUG-P3-001` 已通过最终 pilot 的 41/41 QA 图与 verify 验证后解决；P3 仍为 `IN_PROGRESS`，P4 仍为 `NOT_STARTED`。
+当前活动 Bug：无。`BUG-P3-001` 与 `BUG-P3-002` 均已解决。P3 为 `AWAITING_USER_APPROVAL`，P4 仍为 `NOT_STARTED`。
 
 ### Bug 状态
 
@@ -325,6 +328,23 @@ Bug 修复后：
 - 验证命令与结果：QA fallback 与 failure registry 修复后，`pytest -q tests/test_p3_roi.py` 为 `25 passed`，完整套件为 `111 passed`；冻结 V1/V2 requirements/config 无 diff。最终以修复后的 writer 完成 deterministic pilot 的 41/41 QA 图和 `verify --scope pilot` 的 41/41 ROI 验证，私有 failure registry 为 0 条。
 - 未解决事项：无。用户 pilot alignment 确认仍为 full 前的阶段内人工门，不是该渲染 Bug 的未解决事项。
 - 修复 commit：`8693bb9`、`86c0b8f`、`f72a01f`（均为本地 commit，尚未推送）。
+
+### BUG-P3-002：private Parquet 使用固定临时文件名时存在重入写入冲突
+
+- 状态：`RESOLVED`
+- 严重度：`MEDIUM`
+- 发现日期：2026-08-11
+- 影响阶段：P3
+- 影响验收标准：是；若多个 resumable full-build invocation 在同一 private index/failure-registry 路径使用固定临时名，可能使阶段进度持久化失败或覆盖，影响 P3 full ROI 的可恢复性证据。
+- 恢复阶段：P3
+- 受影响下游阶段：P4（保持 `NOT_STARTED`，未受实现影响）
+- 现象：此前 `_write_index` 与 `update_private_failures` 均使用由目标文件名固定派生的 `.tmp` 路径；重入、并行或残留 temporary 情况下无法保证两个 writer 使用不同临时文件。
+- 复现方式：保留 legacy fixed-name temporary file 后调用新的 private Parquet writer；回归测试确认 writer 不会读取、覆盖或删除该旧路径，并生成唯一 sibling temporary 后原子 replace。
+- 根因：临时 Parquet 文件名不是 invocation-unique，不能满足 resumable full build 的安全持久化要求。
+- 修复：新增共享 `_atomic_parquet`，以同目录 `tempfile.mkstemp` 创建唯一 temporary，并由 ROI index 与 failure registry 使用；`finally` 只清理当前 invocation 自己的 temporary。该修复不修改 ROI、mask、原始 DICOM、科学协议或 tracked audit 内容。
+- 验证命令与结果：保留 `test_atomic_parquet_uses_unique_temporary_not_legacy_fixed_name`，并新增 mock 与实际第二进程的 `test_p3_build_lock_rejects_*` 回归测试。`a790e54` 使用 non-blocking exclusive `flock` 覆盖 private progress 的完整 read–merge–replace 生命周期；第二 writer 确定性得到 `P3_BUILD_ALREADY_RUNNING`，不会发生 last-writer-wins。最终 `verify --scope full` 为 2,633/2,633，P3 测试 `32 passed`、完整 `118 passed`，private failure registry 为 0，aggregate audit 为 2,633 个成功/非空 ROI。
+- 未解决事项：无。
+- 修复 commit：`72c4979`、`a790e54`（均为本地，尚未推送）。
 
 ### Bug 记录模板
 
@@ -407,7 +427,8 @@ Bug 修复后：
 - 影响：正式训练、Grad-CAM 和中间产物可能超过当前 scratch 的安全容量。
 - 当前结论：不阻塞 P0。P0 只使用合成 ROI，远程工作集控制在 20 GB 以内。
 - 缓解措施：不上传原始 DICOM；通过 KDM 传输；正式 job 使用 `$TMPDIR`；重要数据和证据保留本地副本。
-- 下一步：等待扩容回复；P3 完成后测量 ROI 大小并估算正式训练和报告产物的总工作集。
+- P3 测量证据：P3 technical gate 已生成 2,633 个私有 ROI，合计 `1,002,688,586` bytes（约 `0.93 GiB`）；不含 private manifest、future checkpoints、predictions、Grad-CAM 和 `$TMPDIR` 运行时空间。
+- 下一步：等待扩容回复；在 P10 前以已测量 ROI 大小加上 checkpoint、predictions、contributions、Grad-CAM 和临时文件估算正式总工作集。
 - 解除条件：Katana 可用存储不少于预计正式工作集的 120%，或学校批准足够的扩容空间。
 - 关联 Bug：无。
 
@@ -529,3 +550,5 @@ Bug 修复后：
 | 2026-08-10 | `PHASE_STARTED` | P3 | 用户批准 P3 consensus mask、确定性 `64³` ROI 与 pilot-first QA 实施计划；P3 进入 `IN_PROGRESS`，P4 保持 `NOT_STARTED` | `p3-consensus-roi` 本地分支 |
 | 2026-08-10 | `BUG_RESOLVED` / `PILOT_QA_COMPLETE` | P3 | `BUG-P3-001` 修复后，deterministic pilot 41/41 ROI、QA 图和 verify 均通过，failure registry 为 0；P3 仍为 `IN_PROGRESS`，必须等待用户确认 pilot alignment，P4 保持 `NOT_STARTED` | 本次状态同步提交 |
 | 2026-08-10 | `PILOT_QA_APPROVED` | P3 | 用户明确确认 41 个 deterministic pilot QA 图配准正确；仅授权构建 P3 full 私有 ROI/index 和脱敏 aggregate audit，不授权进入 P4、P3 阶段完成或推送 | 用户确认 |
+| 2026-08-11 | `FULL_BUILD_OUTPUTS_WRITTEN` / `BUG_VERIFYING` | P3 | private full ROI/index 的当前 outputs 与 local aggregate audit 均报告 2,633/2,633、0 private failures；尚未完成 full verify、完整测试或阶段门。`72c4979` 已创建唯一 temporary 的 atomic Parquet 修复与回归测试，仍待最终验证；P3 保持 `IN_PROGRESS`，P4 保持 `NOT_STARTED` | `72c4979`（本地，未推送） |
+| 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `BUG_RESOLVED` | P3 | full verify 为 2,633/2,633，aggregate audit 为 2,633 个成功/非空 ROI、0 failures、876 个 CT series、1 次 exact-duplicate policy；P3 tests `32 passed`、完整 tests `118 passed`。`a790e54` 的 exclusive `flock` 已以实际第二进程回归测试验证，`BUG-P3-002` 关闭。P3 技术阶段门和双 agent 审查均通过，等待用户最终确认；P4 保持 `NOT_STARTED`。 | `a790e54`、`ac5c9ec`（本地，未推送）；本次状态同步提交 |
