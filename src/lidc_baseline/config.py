@@ -1,4 +1,4 @@
-"""Baseline-v1 configuration utilities."""
+"""Versioned baseline configuration utilities."""
 
 from __future__ import annotations
 

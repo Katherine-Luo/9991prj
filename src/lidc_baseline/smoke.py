@@ -26,7 +26,7 @@ class DeviceUnavailableError(RuntimeError):
     """Raised when the explicitly requested device is unavailable."""
 
 
-def make_synthetic_batch(seed: int) -> tuple[Tensor, Tensor]:
+def make_synthetic_batch(seed: int, target_value: float = 1.0) -> tuple[Tensor, Tensor]:
     """Load the registered synthetic fixture through a DataLoader."""
     import torch
     from torch.utils.data import DataLoader, TensorDataset
@@ -37,7 +37,7 @@ def make_synthetic_batch(seed: int) -> tuple[Tensor, Tensor]:
         dtype=torch.float32,
         generator=generator,
     )
-    target = torch.tensor([[1.0]], dtype=torch.float32)
+    target = torch.tensor([[target_value]], dtype=torch.float32)
     loader = DataLoader(
         TensorDataset(image, target),
         batch_size=1,
@@ -202,16 +202,31 @@ def run_smoke(
     seed = int(config["reproducibility"]["base_seed"])
     seed_everything(seed)
     device = resolve_device(device_name)
-    image, target = make_synthetic_batch(seed)
+    is_regression = config.get("task", {}).get("type") == "continuous_regression"
+    target_value = 0.5 if is_regression else 1.0
+    image, target = make_synthetic_batch(seed, target_value=target_value)
     image = image.to(device)
     target = target.to(device)
 
     model = build_smoke_model(device_name).to(device)
     model.train()
     output = model(image)
-    loss_function = torch.nn.BCEWithLogitsLoss(
-        pos_weight=torch.ones(1, dtype=torch.float32, device=device)
-    )
+    if is_regression:
+        head = config["task"]["head"]
+        if head != {
+            "type": "linear",
+            "output_activation": "none",
+            "output_constraint": "unbounded",
+            "clipping": False,
+        }:
+            raise ValueError(f"Unsupported Baseline-v2 task head: {head!r}")
+        loss_function = torch.nn.MSELoss()
+        loss_name = "mse"
+    else:
+        loss_function = torch.nn.BCEWithLogitsLoss(
+            pos_weight=torch.ones(1, dtype=torch.float32, device=device)
+        )
+        loss_name = "weighted_bce"
     loss = loss_function(output, target)
     loss.backward()
 
@@ -233,6 +248,19 @@ def run_smoke(
         "input_shape": list(image.shape),
         "target_shape": list(target.shape),
         "output_shape": list(output.shape),
+        "output_values": [float(value) for value in output.detach().cpu().reshape(-1)],
+        "loss_name": loss_name,
+        "task_type": config.get("task", {}).get("type", "binary_classification"),
+        "task_output_activation": config.get("task", {}).get("head", {}).get(
+            "output_activation", "none"
+        ),
+        "task_output_constraint": config.get("task", {}).get("head", {}).get(
+            "output_constraint", "unbounded"
+        ),
+        "task_output_clipping": config.get("task", {}).get("head", {}).get(
+            "clipping", False
+        ),
+        "post_output_transform_applied": False,
         "loss": loss_value,
         "loss_finite": math.isfinite(loss_value),
         "gradients_finite": gradients_finite,
@@ -250,6 +278,11 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "mps", "cuda"), required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("configs/baseline_v1.yaml"),
+    )
     return parser
 
 
@@ -257,7 +290,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the smoke command-line interface."""
     arguments = _parser().parse_args(argv)
     try:
-        run_smoke(arguments.device, arguments.output)
+        run_smoke(arguments.device, arguments.output, arguments.config)
     except DeviceUnavailableError as error:
         print(str(error), file=os.sys.stderr)
         return 2

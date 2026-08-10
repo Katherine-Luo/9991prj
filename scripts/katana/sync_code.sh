@@ -24,6 +24,7 @@ fi
   --exclude=artifacts \
   --exclude=runs \
   --exclude=reports/baseline_v1 \
+  --exclude=reports/baseline_v2 \
   --exclude=lidc_data \
   "$source_directory/" \
   "z5448417@kdm.restech.unsw.edu.au:lidc_baseline/"

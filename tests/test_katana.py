@@ -87,6 +87,7 @@ def test_sync_script_invokes_kdm_rsync_with_required_exclusions(tmp_path: Path) 
     assert "--exclude=artifacts" in arguments
     assert "--exclude=runs" in arguments
     assert "--exclude=reports/baseline_v1" in arguments
+    assert "--exclude=reports/baseline_v2" in arguments
     assert "--exclude=lidc_data" in arguments
     assert arguments[-2] == f"{source}/"
     assert arguments[-1] == "z5448417@kdm.restech.unsw.edu.au:lidc_baseline/"
@@ -98,6 +99,7 @@ def test_katana_shell_scripts_have_valid_bash_syntax() -> None:
         Path("scripts/katana/sync_code.sh"),
         Path("scripts/katana/bootstrap_cuda_env.sh"),
         Path("scripts/katana/cuda_smoke.pbs"),
+        Path("scripts/katana/v2_cuda_smoke.pbs"),
     ):
         result = subprocess.run(
             ["bash", "-n", str(script)],
@@ -111,6 +113,14 @@ def test_katana_shell_scripts_have_valid_bash_syntax() -> None:
 def test_cuda_batch_uses_the_synchronized_source_tree() -> None:
     script = Path("scripts/katana/cuda_smoke.pbs").read_text(encoding="utf-8")
 
+    assert 'export PYTHONPATH="$code_directory/src' in script
+
+
+def test_v2_cuda_batch_pins_compatible_l40s_and_linear_regression_config() -> None:
+    script = Path("scripts/katana/v2_cuda_smoke.pbs").read_text(encoding="utf-8")
+
+    assert "gpu_model=L40S" in script
+    assert "--config configs/baseline_v2.yaml" in script
     assert 'export PYTHONPATH="$code_directory/src' in script
 
 
