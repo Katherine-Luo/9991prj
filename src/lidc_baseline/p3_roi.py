@@ -329,11 +329,7 @@ def _atomic_bytes(path: Path, content: bytes) -> None:
 
 
 def _metadata(row: dict[str, Any], config_hash: str, volume: Volume, bbox: tuple[slice, slice, slice], padding: tuple[tuple[int, int], ...], pre_mask_voxels: int, post_mask_voxels: int) -> dict[str, Any]:
-    source_fingerprint = _sha256(_canonical_json({
-        "canonical_xml_sha256": str(row["canonical_xml_sha256"]),
-        "annotation_source_fingerprints": str(row["annotation_source_fingerprints"]),
-        "source_dicom_sop_fingerprints": str(row["source_dicom_sop_fingerprints"]),
-    }))
+    source_fingerprint = roi_source_fingerprint(row)
     bbox_dimensions = [item.stop - item.start for item in bbox]
     cube_edge = int(max(bbox_dimensions))
     return {
@@ -361,6 +357,15 @@ def _metadata(row: dict[str, Any], config_hash: str, volume: Volume, bbox: tuple
         "post_resize_mask_voxels": post_mask_voxels,
         "exact_duplicate_selection_applied": volume.exact_duplicate_applied,
     }
+
+
+def roi_source_fingerprint(row: dict[str, Any]) -> str:
+    """Bind a reusable ROI to its immutable manifest-level source provenance."""
+    return _sha256(_canonical_json({
+        "canonical_xml_sha256": str(row["canonical_xml_sha256"]),
+        "annotation_source_fingerprints": str(row["annotation_source_fingerprints"]),
+        "source_dicom_sop_fingerprints": str(row["source_dicom_sop_fingerprints"]),
+    }))
 
 
 def write_roi(path: Path, image: np.ndarray, mask: np.ndarray, metadata: dict[str, Any], overwrite: bool = False) -> dict[str, Any]:
@@ -400,6 +405,50 @@ def validate_roi_entry(uid: str, row: dict[str, Any], config_hash: str, root: Pa
     expected = _sha256(_canonical_json(unsigned) + _sha256(image.tobytes()) + _sha256(mask.tobytes()))
     if metadata.get("roi_content_sha256") != expected:
         raise ValueError("ROI_VERIFY_METADATA_CONTENT_HASH_MISMATCH")
+
+
+def _index_from_metadata(uid: str, metadata: dict[str, Any], file_hash: str, status: str, reader_count: int) -> dict[str, Any]:
+    """Create an auditable ROI-index entry from authoritative private metadata."""
+    return {
+        "nodule_uid": uid, "status": status, "relative_roi_path": f"rois/{uid}.npz",
+        "roi_file_sha256": file_hash, "source_fingerprint": metadata["source_fingerprint"],
+        "reader_count": reader_count, "bbox_dhw": _canonical_json(metadata["tight_bbox_dhw"]),
+        "cube_edge_voxels": metadata["cube_edge_voxels"], "padding_dhw": _canonical_json(metadata["padding_dhw"]),
+        "spacing_dhw_mm": _canonical_json(metadata["source_spacing_dhw_mm"]), "pre_resize_mask_voxels": metadata["pre_resize_mask_voxels"],
+        "post_resize_mask_voxels": metadata["post_resize_mask_voxels"], "exact_duplicate_selection_applied": metadata["exact_duplicate_selection_applied"],
+    }
+
+
+def reusable_roi(row: dict[str, Any], config_hash: str, roi_root: Path) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Reuse only a fully verified ROI whose manifest provenance is unchanged."""
+    uid = str(row["nodule_uid"])
+    path = roi_root / f"{uid}.npz"
+    if not path.exists():
+        return None
+    with zipfile.ZipFile(path) as archive:
+        image = np.load(io.BytesIO(archive.read("image.npy")), allow_pickle=False)
+        mask = np.load(io.BytesIO(archive.read("mask.npy")), allow_pickle=False)
+        metadata = json.loads(archive.read("metadata.json").decode("utf-8"))
+    if metadata.get("config_sha256") != config_hash or metadata.get("nodule_uid") != uid or metadata.get("source_fingerprint") != roi_source_fingerprint(row):
+        raise FileExistsError(f"ROI_EXISTS_WITH_DIFFERENT_PROVENANCE:{path.name}")
+    unsigned = {key: value for key, value in metadata.items() if key != "roi_content_sha256"}
+    expected_content = _sha256(_canonical_json(unsigned) + _sha256(image.tobytes()) + _sha256(mask.tobytes()))
+    if image.shape != (1, *ROI_SHAPE) or image.dtype != np.float32 or mask.shape != (1, *ROI_SHAPE) or mask.dtype != np.uint8 or not bool(mask.any()) or set(np.unique(mask).tolist()) - {0, 1} or metadata.get("roi_content_sha256") != expected_content:
+        raise ValueError("ROI_REUSE_VALIDATION_FAILED")
+    return _index_from_metadata(uid, metadata, _sha256(path.read_bytes()), "REUSED", int(row["reader_count"])), metadata
+
+
+ROI_REUSE_VALIDATION_ERRORS = (FileExistsError, ValueError, KeyError, json.JSONDecodeError, zipfile.BadZipFile, OSError, EOFError)
+
+
+def reuse_or_schedule_rebuild(row: dict[str, Any], config_hash: str, roi_root: Path, overwrite: bool) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Default to a hard provenance failure; explicit overwrite schedules a rebuild."""
+    try:
+        return reusable_roi(row, config_hash, roi_root)
+    except ROI_REUSE_VALIDATION_ERRORS:
+        if overwrite:
+            return None
+        raise
 
 
 def _consensus_for_rows(rows: list[dict[str, Any]]) -> tuple[dict[str, list[Any]], dict[str, Any]]:
@@ -651,8 +700,8 @@ def _precompute_pilot_statistics(rows: list[dict[str, Any]], grouped: dict[str, 
     return result
 
 
-def _process_one(row: dict[str, Any], annotations: list[Any], scan: Any, raw_data: Path, p1_audit: Path, config_hash: str, roi_root: Path, qa_root: Path | None, overwrite: bool) -> tuple[dict[str, Any], dict[str, Any]]:
-    volume = load_volume(raw_data, row, p1_audit)
+def _process_one(row: dict[str, Any], annotations: list[Any], scan: Any, raw_data: Path, p1_audit: Path, config_hash: str, roi_root: Path, qa_root: Path | None, overwrite: bool, volume: Volume | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
+    volume = volume if volume is not None else load_volume(raw_data, row, p1_audit)
     consensus = consensus_mask_dhw(annotations, scan, volume)
     bbox = tight_bbox(consensus)
     source_image, source_mask = volume.hu[bbox], consensus[bbox]
@@ -660,14 +709,7 @@ def _process_one(row: dict[str, Any], annotations: list[Any], scan: Any, raw_dat
     image, mask = resize_roi(cube_image, cube_mask)
     metadata = _metadata(row, config_hash, volume, bbox, padding, int(consensus.sum()), int(mask.sum()))
     written = write_roi(roi_root / f"{row['nodule_uid']}.npz", image, mask, metadata, overwrite=overwrite)
-    index = {
-        "nodule_uid": str(row["nodule_uid"]), "status": written["status"], "relative_roi_path": f"rois/{row['nodule_uid']}.npz",
-        "roi_file_sha256": written["content_sha256"], "source_fingerprint": metadata["source_fingerprint"],
-        "reader_count": int(row["reader_count"]), "bbox_dhw": _canonical_json(metadata["tight_bbox_dhw"]),
-        "cube_edge_voxels": metadata["cube_edge_voxels"], "padding_dhw": _canonical_json(metadata["padding_dhw"]),
-        "spacing_dhw_mm": _canonical_json(metadata["source_spacing_dhw_mm"]), "pre_resize_mask_voxels": metadata["pre_resize_mask_voxels"],
-        "post_resize_mask_voxels": metadata["post_resize_mask_voxels"], "exact_duplicate_selection_applied": metadata["exact_duplicate_selection_applied"],
-    }
+    index = _index_from_metadata(str(row["nodule_uid"]), metadata, written["content_sha256"], written["status"], int(row["reader_count"]))
     if qa_root is not None:
         label = f"nodule={str(row['nodule_uid'])[:12]} readers={row['reader_count']} bbox={tuple(item.stop-item.start for item in bbox)} cube={metadata['cube_edge_voxels']} spacing={tuple(round(item, 3) for item in volume.spacing_dhw)}"
         _qa_image(qa_root / f"{row['nodule_uid']}.png", source_image, source_mask, image, mask, label)
@@ -698,27 +740,67 @@ def build(arguments: argparse.Namespace) -> dict[str, Any]:
     existing_rows = pd.read_parquet(index_path).to_dict(orient="records") if index_path.exists() else []
     index_by_uid = {str(row["nodule_uid"]): row for row in existing_rows}
     qa_root = Path("reports/baseline_v2/p3_qa/pilot") if arguments.scope == "pilot" else None
-    metadata_items: list[dict[str, Any]] = []
+    metadata_by_uid: dict[str, dict[str, Any]] = {}
     failure_rows: list[dict[str, Any]] = []
+    reuse_failure_rows: list[dict[str, Any]] = []
+    failures_path = Path("artifacts/baseline_v2/manifests/roi_failures.parquet")
+    pending_by_series: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+
+    def record_failure(row: dict[str, Any], error: Exception) -> dict[str, Any]:
+        uid = str(row["nodule_uid"])
+        failure = {"nodule_uid": uid, "patient_id": str(row["patient_id"]), "series_instance_uid": str(row["series_instance_uid"]), "reason": f"{type(error).__name__}:{error}"}
+        index_by_uid[uid] = {"nodule_uid": uid, "status": "FAILED", "relative_roi_path": None, "roi_file_sha256": None, "source_fingerprint": None, "reader_count": int(row["reader_count"]), "bbox_dhw": None, "cube_edge_voxels": None, "padding_dhw": None, "spacing_dhw_mm": None, "pre_resize_mask_voxels": None, "post_resize_mask_voxels": None, "exact_duplicate_selection_applied": None}
+        return failure
+
     for row in targets:
         uid = str(row["nodule_uid"])
         try:
-            index, metadata = _process_one(row, grouped[uid], scans[uid], raw_data, p1_audit, config_hash, roi_root, qa_root, arguments.overwrite)
-            index_by_uid[index["nodule_uid"]] = index
-            metadata_items.append(metadata)
+            existing = reuse_or_schedule_rebuild(row, config_hash, roi_root, arguments.overwrite)
+            if existing is not None:
+                index_by_uid[uid], metadata_by_uid[uid] = existing
+                continue
         except Exception as error:
-            failure = {"nodule_uid": uid, "patient_id": str(row["patient_id"]), "series_instance_uid": str(row["series_instance_uid"]), "reason": f"{type(error).__name__}:{error}"}
+            failure = record_failure(row, error)
             failure_rows.append(failure)
-            index_by_uid[uid] = {"nodule_uid": uid, "status": "FAILED", "relative_roi_path": None, "roi_file_sha256": None, "source_fingerprint": None, "reader_count": int(row["reader_count"]), "bbox_dhw": None, "cube_edge_voxels": None, "padding_dhw": None, "spacing_dhw_mm": None, "pre_resize_mask_voxels": None, "post_resize_mask_voxels": None, "exact_duplicate_selection_applied": None}
-    _write_index(index_path, list(index_by_uid.values()))
-    update_private_failures(Path("artifacts/baseline_v2/manifests/roi_failures.parquet"), (str(row["nodule_uid"]) for row in targets), failure_rows)
+            reuse_failure_rows.append(failure)
+            continue
+        pending_by_series[(str(row["patient_id"]), str(row["study_instance_uid"]), str(row["series_instance_uid"]))].append(row)
+
+    # Persist every CT-series unit. A stopped full build is therefore resumable
+    # without trusting partial index state or recomputing verified private ROIs.
+    for pending in (pending_by_series[key] for key in sorted(pending_by_series)):
+        attempted = [str(row["nodule_uid"]) for row in pending]
+        series_failures: list[dict[str, Any]] = []
+        try:
+            volume = load_volume(raw_data, pending[0], p1_audit)
+        except Exception as error:
+            series_failures.extend(record_failure(row, error) for row in pending)
+        else:
+            for row in pending:
+                try:
+                    index, metadata = _process_one(row, grouped[str(row["nodule_uid"])], scans[str(row["nodule_uid"])], raw_data, p1_audit, config_hash, roi_root, qa_root, arguments.overwrite, volume=volume)
+                    index_by_uid[index["nodule_uid"]] = index
+                    metadata_by_uid[index["nodule_uid"]] = metadata
+                except Exception as error:
+                    series_failures.append(record_failure(row, error))
+        failure_rows.extend(series_failures)
+        _write_index(index_path, list(index_by_uid.values()))
+        update_private_failures(failures_path, attempted, series_failures)
+
+    if reuse_failure_rows:
+        update_private_failures(failures_path, (row["nodule_uid"] for row in reuse_failure_rows), reuse_failure_rows)
+    # Reused ROIs also clear stale failure records from previous interrupted runs.
+    reused_uids = [uid for uid, item in index_by_uid.items() if item.get("status") == "REUSED"]
+    if reused_uids:
+        update_private_failures(failures_path, reused_uids, [])
+    metadata_items = [metadata_by_uid[str(row["nodule_uid"])] for row in targets if str(row["nodule_uid"]) in metadata_by_uid]
     summary = {
         "scope": arguments.scope, "input_primary_nodules": len(rows), "processed_nodules": len(targets), "successful_nodules": len(metadata_items),
         "nonempty_masks": sum(item["pre_resize_mask_voxels"] > 0 for item in metadata_items), "failures": len(failure_rows), "config_sha256": config_hash,
         "exact_duplicate_policy_applied": sum(bool(item["exact_duplicate_selection_applied"]) for item in metadata_items),
         "raw_dicom_files_modified": 0, "private_outputs": {"roi_directory": "artifacts/baseline_v2/rois", "roi_index": "artifacts/baseline_v2/manifests/roi_index.parquet"},
     }
-    if arguments.scope == "full":
+    if arguments.scope == "full" and not failure_rows:
         audit_root = Path("artifacts/baseline_v2/audit/p3")
         roi_files = list(roi_root.glob("*.npz"))
         summary.update({

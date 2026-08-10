@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import zipfile
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 
@@ -26,7 +28,10 @@ from lidc_baseline.p3_roi import (
     padding_ratio_for_dimensions,
     pilot_statistics_source_fingerprint,
     require_pilot_confirmation,
+    reuse_or_schedule_rebuild,
+    reusable_roi,
     reusable_pilot_statistics,
+    roi_source_fingerprint,
     scan_geometry_fingerprint,
     resize_roi,
     sort_dicom_slices,
@@ -249,6 +254,85 @@ def test_roi_verifier_rejects_bad_status_uid_and_metadata_hash(tmp_path: Path) -
         validate_roi_entry("uid", {**row, "status": "FAILED"}, "config", tmp_path)
     with pytest.raises(ValueError, match="CONTENT_INVALID"):
         validate_roi_entry("other", row, "config", tmp_path)
+
+
+def test_reusable_roi_requires_matching_manifest_provenance(tmp_path: Path) -> None:
+    row = {
+        "nodule_uid": "uid", "reader_count": 2, "canonical_xml_sha256": "xml",
+        "annotation_source_fingerprints": "annotations", "source_dicom_sop_fingerprints": "sops",
+    }
+    image = np.zeros((1, *ROI_SHAPE), dtype=np.float32)
+    mask = np.zeros((1, *ROI_SHAPE), dtype=np.uint8); mask[0, 1, 1, 1] = 1
+    metadata = {
+        "config_sha256": "config", "nodule_uid": "uid", "source_fingerprint": roi_source_fingerprint(row),
+        "tight_bbox_dhw": [[0, 1], [0, 1], [0, 1]], "cube_edge_voxels": 1,
+        "padding_dhw": [[0, 0], [0, 0], [0, 0]], "source_spacing_dhw_mm": [1.0, 1.0, 1.0],
+        "pre_resize_mask_voxels": 1, "post_resize_mask_voxels": 1,
+        "exact_duplicate_selection_applied": False,
+    }
+    write_roi(tmp_path / "rois" / "uid.npz", image, mask, metadata)
+    index, reused_metadata = reusable_roi(row, "config", tmp_path / "rois") or (None, None)
+    assert index is not None and index["status"] == "REUSED"
+    assert reused_metadata is not None and reused_metadata["nodule_uid"] == "uid"
+    changed = {**row, "source_dicom_sop_fingerprints": "different-sops"}
+    with pytest.raises(FileExistsError, match="ROI_EXISTS_WITH_DIFFERENT_PROVENANCE"):
+        reusable_roi(changed, "config", tmp_path / "rois")
+
+
+def test_failed_reuse_is_persisted_in_private_failure_registry(tmp_path: Path) -> None:
+    row = {
+        "nodule_uid": "uid", "reader_count": 1, "canonical_xml_sha256": "xml",
+        "annotation_source_fingerprints": "annotations", "source_dicom_sop_fingerprints": "expected",
+    }
+    image = np.zeros((1, *ROI_SHAPE), dtype=np.float32)
+    mask = np.zeros((1, *ROI_SHAPE), dtype=np.uint8); mask[0, 1, 1, 1] = 1
+    metadata = {
+        "config_sha256": "config", "nodule_uid": "uid", "source_fingerprint": "wrong",
+        "tight_bbox_dhw": [[0, 1], [0, 1], [0, 1]], "cube_edge_voxels": 1,
+        "padding_dhw": [[0, 0], [0, 0], [0, 0]], "source_spacing_dhw_mm": [1.0, 1.0, 1.0],
+        "pre_resize_mask_voxels": 1, "post_resize_mask_voxels": 1,
+        "exact_duplicate_selection_applied": False,
+    }
+    write_roi(tmp_path / "rois" / "uid.npz", image, mask, metadata)
+    with pytest.raises(FileExistsError, match="ROI_EXISTS_WITH_DIFFERENT_PROVENANCE"):
+        reusable_roi(row, "config", tmp_path / "rois")
+    failures = tmp_path / "roi_failures.parquet"
+    failure = {"nodule_uid": "uid", "patient_id": "private", "series_instance_uid": "private", "reason": "FileExistsError:ROI_EXISTS_WITH_DIFFERENT_PROVENANCE"}
+    update_private_failures(failures, ["uid"], [failure])
+    assert pd.read_parquet(failures).to_dict(orient="records") == [failure]
+
+
+def test_existing_roi_provenance_mismatch_requires_explicit_overwrite(tmp_path: Path) -> None:
+    row = {
+        "nodule_uid": "uid", "reader_count": 1, "canonical_xml_sha256": "xml",
+        "annotation_source_fingerprints": "annotations", "source_dicom_sop_fingerprints": "expected",
+    }
+    image = np.zeros((1, *ROI_SHAPE), dtype=np.float32)
+    mask = np.zeros((1, *ROI_SHAPE), dtype=np.uint8); mask[0, 1, 1, 1] = 1
+    metadata = {
+        "config_sha256": "config", "nodule_uid": "uid", "source_fingerprint": "wrong",
+        "tight_bbox_dhw": [[0, 1], [0, 1], [0, 1]], "cube_edge_voxels": 1,
+        "padding_dhw": [[0, 0], [0, 0], [0, 0]], "source_spacing_dhw_mm": [1.0, 1.0, 1.0],
+        "pre_resize_mask_voxels": 1, "post_resize_mask_voxels": 1,
+        "exact_duplicate_selection_applied": False,
+    }
+    write_roi(tmp_path / "rois" / "uid.npz", image, mask, metadata)
+    with pytest.raises(FileExistsError, match="ROI_EXISTS_WITH_DIFFERENT_PROVENANCE"):
+        reuse_or_schedule_rebuild(row, "config", tmp_path / "rois", overwrite=False)
+    assert reuse_or_schedule_rebuild(row, "config", tmp_path / "rois", overwrite=True) is None
+
+
+def test_corrupt_existing_roi_requires_explicit_overwrite(tmp_path: Path) -> None:
+    row = {
+        "nodule_uid": "uid", "reader_count": 1, "canonical_xml_sha256": "xml",
+        "annotation_source_fingerprints": "annotations", "source_dicom_sop_fingerprints": "sops",
+    }
+    path = tmp_path / "rois" / "uid.npz"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"not-a-zip")
+    with pytest.raises(zipfile.BadZipFile):
+        reuse_or_schedule_rebuild(row, "config", tmp_path / "rois", overwrite=False)
+    assert reuse_or_schedule_rebuild(row, "config", tmp_path / "rois", overwrite=True) is None
 
 
 def test_qa_writer_handles_single_slice_source_crop(tmp_path: Path) -> None:
