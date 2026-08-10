@@ -90,8 +90,11 @@ def test_v2_resolved_config_and_digest_match_source() -> None:
     assert resolved.read_bytes() == canonical_yaml(config)
     assert digest.read_text(encoding="ascii").strip() == expected
     assert hashlib.sha256(resolved.read_bytes()).hexdigest() == expected
-    assert resolved.stat().st_mode & 0o777 == 0o444
-    assert digest.stat().st_mode & 0o777 == 0o444
+
+    # Git preserves only the executable bit, so a checkout may restore tracked
+    # snapshots as 0644. Read-only creation is verified against temporary output
+    # in test_config; tracked snapshots are frozen portably by canonical bytes
+    # and their committed SHA-256 digest.
 
 
 def test_protocol_index_has_one_active_protocol() -> None:
