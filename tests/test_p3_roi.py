@@ -31,6 +31,7 @@ from lidc_baseline.p3_roi import (
     resize_roi,
     sort_dicom_slices,
     tight_bbox,
+    update_private_failures,
     validate_roi_entry,
     validate_annotation_mapping,
     write_roi,
@@ -270,3 +271,14 @@ def test_qa_writer_keeps_visible_mask_fallback_when_contour_raises(tmp_path: Pat
     target = tmp_path / "qa_fallback.png"
     _qa_image(target, source, source_mask, image, mask, "deidentified")
     assert target.exists() and target.stat().st_size > 0
+
+
+def test_failure_registry_clears_successful_retry_but_keeps_unrelated_failures(tmp_path: Path) -> None:
+    path = tmp_path / "failures.parquet"
+    import pandas as pd
+    pd.DataFrame([
+        {"nodule_uid": "retry", "patient_id": "p", "series_instance_uid": "s", "reason": "old"},
+        {"nodule_uid": "other", "patient_id": "p", "series_instance_uid": "s", "reason": "still"},
+    ]).to_parquet(path, index=False)
+    update_private_failures(path, ["retry"], [])
+    assert pd.read_parquet(path)["nodule_uid"].tolist() == ["other"]

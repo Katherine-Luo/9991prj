@@ -510,13 +510,14 @@ def _write_index(path: Path, rows: list[dict[str, Any]]) -> None:
     os.replace(temporary, path)
 
 
-def _write_private_failures(path: Path, rows: list[dict[str, Any]]) -> None:
-    """Persist local-only per-nodule failures so no sample is silently dropped."""
-    if not rows:
-        return
+def update_private_failures(path: Path, attempted_uids: Iterable[str], rows: list[dict[str, Any]]) -> None:
+    """Replace failure state for attempted nodules while retaining unrelated failures."""
+    attempted = set(attempted_uids)
+    existing = pd.read_parquet(path).to_dict(orient="records") if path.exists() else []
+    combined = [row for row in existing if str(row["nodule_uid"]) not in attempted] + rows
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.tmp")
-    pd.DataFrame(rows).sort_values("nodule_uid").to_parquet(temporary, index=False)
+    pd.DataFrame(combined, columns=["nodule_uid", "patient_id", "series_instance_uid", "reason"]).sort_values("nodule_uid").to_parquet(temporary, index=False)
     os.replace(temporary, path)
 
 
@@ -710,7 +711,7 @@ def build(arguments: argparse.Namespace) -> dict[str, Any]:
             failure_rows.append(failure)
             index_by_uid[uid] = {"nodule_uid": uid, "status": "FAILED", "relative_roi_path": None, "roi_file_sha256": None, "source_fingerprint": None, "reader_count": int(row["reader_count"]), "bbox_dhw": None, "cube_edge_voxels": None, "padding_dhw": None, "spacing_dhw_mm": None, "pre_resize_mask_voxels": None, "post_resize_mask_voxels": None, "exact_duplicate_selection_applied": None}
     _write_index(index_path, list(index_by_uid.values()))
-    _write_private_failures(Path("artifacts/baseline_v2/manifests/roi_failures.parquet"), failure_rows)
+    update_private_failures(Path("artifacts/baseline_v2/manifests/roi_failures.parquet"), (str(row["nodule_uid"]) for row in targets), failure_rows)
     summary = {
         "scope": arguments.scope, "input_primary_nodules": len(rows), "processed_nodules": len(targets), "successful_nodules": len(metadata_items),
         "nonempty_masks": sum(item["pre_resize_mask_voxels"] > 0 for item in metadata_items), "failures": len(failure_rows), "config_sha256": config_hash,
