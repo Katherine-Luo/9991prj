@@ -9,13 +9,13 @@ protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P6
-development_phase_status: IN_PROGRESS
+development_phase_status: AWAITING_USER_APPROVAL
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P6
 next_phase: P7
 last_updated: 2026-08-12
-last_verified_commit: f1d29e9
+last_verified_commit: bed615f
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -39,14 +39,14 @@ last_verified_commit: f1d29e9
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P6 Sequential Standard CBM Regression` |
-| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
+| 阶段状态 | `AWAITING_USER_APPROVAL / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞。P6五折formal jobs已全部`Exit 0`并通过final verify；OOF/audit功能已由本地原子commit `f1d29e9`封存，当前仅待状态同步commit、KDM同步及Katana CPU OOF执行。 |
+| 当前阻塞项 | 无技术阻塞。P6实际OOF、阶段技术验收与6个脱敏tracked audit JSON均已封存；当前仅待本次`AWAITING_USER_APPROVAL`状态commit及用户最终确认。 |
 | 恢复阶段 | `P6` |
 | 下一阶段 | `P7 Mixed-type CEM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | 当前已提交基线为`f1d29e9`（local, unpushed）。Formal jobs fold 0=`8969575`、fold 1=`8969576`、fold 2=`8969577`、fold 3=`8969578`、fold 4=`8969579`均为`Exit 0`；每折concept/task各完成80 epochs、test exactly once、final verify `PASS`，test counts依次为`479/502/539/549/564`且必需private artifacts齐全。只读heartbeat automation已在五折完成后删除。OOF/audit功能commit `f1d29e9`已封存private raw OOF、P6 task/integrity tracked audit、manifest独立patient mapping、CPU PBS与Katana 9-file whitelist；专项`9 passed`、完整`215 passed`，Phase Compliance Reviewer为`PASS`。Private transfer manifest verify为`PASS`：9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`，file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。当前状态同步commit尚待创建，且尚未KDM同步或执行remote OOF，因此尚无OOF或concept scientific results；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
+| 状态依据 | 当前已提交基线为`bed615f`（local, unpushed）。Formal jobs `8969575`–`8969579`均`Exit 0`，每折concept/task各80 epochs、test exactly once、predictor/BatchNorm状态不变且final verify `PASS`。9-file remote integrity为`PASS`；CPU OOF job `8971400`在`k185`以`Exit 0`完成，walltime 50秒。Private OOF SHA-256为`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`，精确覆盖2,633 unique nodules / 868 patients、0 patient leakage，fold counts为`479/502/539/549/564`。Pooled task original-scale MAE/RMSE=`0.5020675441161305/0.6496108062620162`，normalized MAE=`0.12551688602903263`，Pearson/Spearman=`0.7075778765808272/0.6090980976923562`。Normalized/rating reconstruction最大误差为`1.4132820069789886e-07/5.653128027915955e-07`，均≤`1e-6`；private storage为`1,375,098,359` bytes / 92 files。OOF/audit专项`9 passed`、完整测试`215 passed`，privacy/frozen-protocol/diff checks与Phase Compliance Reviewer均为`PASS`。6个tracked audit JSON已由commit `bed615f`本地封存且尚未推送；仅本次状态commit待创建。这些结果仅是P6 task/integrity evidence，不包含P9 concept metrics或Black-box comparison。P6为`AWAITING_USER_APPROVAL / ON_TRACK`，P7保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P6 Sequential Standard CBM Regression
 
@@ -86,27 +86,31 @@ last_verified_commit: f1d29e9
 - 五折完成后已删除只读heartbeat automation `monitor-p6-standard-cbm-folds`；没有取消、修改或重复提交任何formal job，也没有启动P7。
 - OOF/audit功能commit `f1d29e9`已封存private raw OOF materialization、P6 task/integrity tracked audit、manifest独立patient mapping与leakage guard、CPU-only PBS以及Katana 9-file exact whitelist；该commit为local、unpushed。
 - OOF/audit专项测试`9 passed`、完整测试`215 passed`，Phase Compliance Reviewer为`PASS`。更新后的private transfer manifest本地verify为`PASS`：9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`，manifest file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。
+- 9-file KDM同步与remote integrity verification均为`PASS`。CPU OOF job `8971400`在`k185`以`Exit 0`完成，walltime 50秒；private OOF SHA-256为`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`。
+- OOF精确覆盖2,633 unique nodules / 868 patients，patient leakage为0，fold test counts为`479/502/539/549/564`。五折concept/task均为80 epochs、test exactly once，concept predictor semantic hash与BatchNorm state hash在所有fold保持不变。
+- Pooled OOF task metrics：original-scale MAE/RMSE=`0.5020675441161305/0.6496108062620162`，normalized MAE=`0.12551688602903263`，Pearson/Spearman=`0.7075778765808272/0.6090980976923562`。
+- Pooled contribution reconstruction最大误差：normalized=`1.4132820069789886e-07`、rating=`5.653128027915955e-07`，均小于`1e-6`；private P6 storage为`1,375,098,359` bytes / 92 files。
+- Actual evidence Phase Compliance Reviewer为`PASS`；OOF/audit专项`9 passed`、完整测试`215 passed`，privacy、frozen protocol/config与diff checks均为`PASS`。6个tracked audit JSON（`fold_0.json`–`fold_4.json`与`summary.json`）已由commit `bed615f`本地封存且尚未推送，仅记录P6 task/integrity evidence，不提前执行或报告P9 concept metrics与Black-box comparison。
 
 ### 正在进行
 
-- 创建本次状态同步原子commit；随后通过KDM同步9-file whitelist，在Katana提交CPU OOF job并生成private raw OOF与脱敏tracked audit evidence。
+- 封存本次`AWAITING_USER_APPROVAL`状态commit，向用户汇报P6阶段门结果并等待最终确认；不得进入P7。
 
 ### 尚未完成
 
-- OOF/audit状态同步原子commit。
-- 9-file whitelist的KDM同步、remote integrity verification及Katana CPU OOF execution。
-- Private raw OOF、tracked task/integrity audit evidence、2,633/868覆盖与0 patient leakage验证。
-- P6完整阶段门、阶段级双agent审查与用户最终确认。
+- 本次`AWAITING_USER_APPROVAL`状态同步commit。
+- 用户对P6的最终明确确认；确认后方可标记`COMPLETED`、合并并推送。
+- P7实施计划与开发均未开始，且在P6交付前不得开始。
 
 ### 验收进度
 
 | P6 验收项 | 状态 | 证据 |
 |---|---|---|
 | P6 execution supplement、resolved config与hash | `PASS` | SHA-256 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`；专项 `4 passed`、完整 `177 passed`；Phase Compliance Reviewer `PASS` |
-| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | 本地测试、H200 Stage A及五折formal concept stages各80 epochs均完成；五折jobs均`Exit 0`且final verify `PASS`。OOF aggregate reconciliation尚待执行 |
-| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | H200 Stage A及五折formal task stages各80 epochs均完成；每折test exactly once，test counts为`479/502/539/549/564`。OOF集合与leakage验证尚待执行 |
-| P6-R3 normalized/rating contribution reconstruction | `IN_PROGRESS` | Unit与五折严格test-row verifier均通过≤`1e-6` reconstruction；pooled private OOF reconstruction audit尚待执行 |
-| H200 Stage A、五折OOF与双agent阶段门 | `IN_PROGRESS` | Stage A与五折formal execution均`PASS`；OOF/audit功能已由`f1d29e9`封存，专项`9 passed`、完整`215 passed`、Phase Compliance Reviewer`PASS`。状态同步commit、KDM同步、remote OOF、tracked evidence和阶段级审查待完成 |
+| P6-R1 concept predictor与八组等权loss | `PASS` | H200 Stage A及五折formal concept stages各80 epochs完成；五折jobs均`Exit 0`且final verify `PASS`，OOF精确覆盖2,633/868 |
+| P6-R2 sequential frozen-prediction task training | `PASS` | 五折formal task stages各80 epochs、test exactly once；predictor/BN状态所有fold不变，OOF 0 patient leakage |
+| P6-R3 normalized/rating contribution reconstruction | `PASS` | Pooled OOF normalized/rating最大误差=`1.4132820069789886e-07/5.653128027915955e-07`，均≤`1e-6` |
+| H200 Stage A、五折OOF与双agent阶段门 | `PASS_AWAITING_USER_APPROVAL` | Stage A、五折formal、CPU OOF job `8971400`、专项`9 passed`、完整`215 passed`、privacy/frozen checks与Phase Compliance Reviewer均为`PASS`；tracked evidence已由`bed615f`本地封存，仅状态commit待创建，P7未开始 |
 
 ### 未解决困难
 
@@ -372,7 +376,7 @@ Bug 修复后：
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
-| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | Stage A与五折H200 formal jobs `8969575`–`8969579`均`PASS`/`Exit 0`；每折concept/task各80 epochs、test exactly once、final verify `PASS`。OOF/audit功能已由本地commit `f1d29e9`封存，但状态同步、KDM同步、远程OOF与阶段门尚未完成 | 0 | 0 |
+| P6 | Standard CBM | `AWAITING_USER_APPROVAL` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、完整`215 passed`、双agent阶段审查通过。6个tracked audit JSON已由`bed615f`本地封存，仅状态commit和用户最终确认待完成 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -382,7 +386,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前无活动 Bug。P5 为 `COMPLETED / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试、双 agent 审查、用户确认、Git 交付与 post-delivery 状态同步均为 `PASS`。P6 当前为 `NORMAL_DEVELOPMENT / IN_PROGRESS / ON_TRACK`，P7–P8 保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
+当前无活动 Bug。P5 为 `COMPLETED / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试、双 agent 审查、用户确认、Git 交付与 post-delivery 状态同步均为 `PASS`。P6 当前为 `NORMAL_DEVELOPMENT / AWAITING_USER_APPROVAL / ON_TRACK`，P7–P8 保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
 
 ### Bug 状态
 
@@ -765,3 +769,4 @@ Bug 修复后：
 | 2026-08-11 | `FORMAL_FOLDS_QUEUED` | P6 | Remote integrity再次`PASS`后，使用同一`p6_fold.pbs`和`P6_FORMAL_APPROVED=1`一次性提交fold 0–4：`8969575`、`8969576`、`8969577`、`8969578`、`8969579`。五个jobs均在`csegpu100`为`Q`，每个请求H200×1、8 CPU、64 GB、96小时，除fold index外配置一致；无额外P6或P7 jobs。只读heartbeat `monitor-p6-standard-cbm-folds`每10分钟监控，严禁取消、修改或重提。当前尚无formal completion、OOF或audit结果；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | Katana jobs `8969575`–`8969579`；Stage A状态基线`e9b3284` |
 | 2026-08-12 | `FORMAL_FOLDS_PASS` | P6 | Formal jobs `8969575`–`8969579`全部`Exit 0`；每折concept/task各完成80 epochs、test exactly once、final verify `PASS`，test counts依次为`479/502/539/549/564`且必需private artifacts齐全。五折完成后只读heartbeat automation已删除。尚未运行OOF，不宣称pooled OOF或concept scientific results；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | Katana jobs `8969575`–`8969579`；当前已提交基线`7121df3` |
 | 2026-08-12 | `LOCAL_OOF_AUDIT_IMPLEMENTED` | P6 | 本地功能commit已实现private raw OOF、P6 task/integrity tracked audit、manifest独立patient mapping、CPU PBS与Katana 9-file whitelist。专项`9 passed`、完整`215 passed`，Phase Compliance Reviewer`PASS`；private transfer manifest verify为9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`、file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。状态同步commit尚待创建，且未KDM同步或执行remote OOF，因此无OOF或concept scientific results；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `f1d29e9`（local, unpushed）；状态同步commit待创建 |
+| 2026-08-12 | `PHASE_AWAITING_APPROVAL` / `FIVE_FOLD_OOF_PASS` | P6 | 9-file remote integrity为`PASS`；CPU OOF job `8971400`在`k185`以Exit 0完成，walltime 50秒。OOF精确覆盖2,633 unique nodules / 868 patients、0 leakage，fold counts=`479/502/539/549/564`，private OOF SHA-256=`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`。Pooled task original MAE/RMSE=`0.5020675441161305/0.6496108062620162`，normalized MAE=`0.12551688602903263`，Pearson/Spearman=`0.7075778765808272/0.6090980976923562`；normalized/rating reconstruction最大误差=`1.4132820069789886e-07/5.653128027915955e-07`。专项`9 passed`、完整`215 passed`、privacy/frozen checks与Phase Compliance Reviewer均`PASS`。6个tracked audit JSON已由`bed615f`本地封存且尚未推送，仅本次状态commit与用户最终确认待完成；P6保持`AWAITING_USER_APPROVAL / ON_TRACK`，不得进入P7。 | Katana job `8971400`；`bed615f`（local, unpushed）；状态commit待创建 |
