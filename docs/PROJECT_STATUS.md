@@ -6,12 +6,12 @@ active_requirements: docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md
 active_config: configs/baseline_v2.yaml
 supersedes_protocol: Baseline-v1
 protocol_transition: V2M
-operating_mode: NORMAL_DEVELOPMENT
-reading_scope: CURRENT_AND_NEXT
+operating_mode: BUG_MAINTENANCE
+reading_scope: FULL_DOCUMENT
 development_phase: P8
-development_phase_status: IN_PROGRESS
-maintenance_phase: null
-active_bug_ids: []
+development_phase_status: BLOCKED
+maintenance_phase: P8
+active_bug_ids: [BUG-P8-001]
 resume_phase: P8
 next_phase: P9
 last_updated: 2026-08-12
@@ -34,19 +34,19 @@ last_verified_commit: 486c9c0
 
 | 字段 | 当前值 |
 |---|---|
-| 工作模式 | `NORMAL_DEVELOPMENT` |
-| 阅读范围 | `CURRENT_AND_NEXT` |
+| 工作模式 | `BUG_MAINTENANCE` |
+| 阅读范围 | `FULL_DOCUMENT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P8 End-to-end CBM + Learned-softmax GAM Regression` |
-| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
-| 维护目标阶段 | 无 |
-| 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻断；P8 remote input已就绪，唯一H200 Stage A job `8978152`正在排队等待H200资源，尚未开始执行。 |
+| 阶段状态 | `BLOCKED / AT_RISK` |
+| 维护目标阶段 | `P8 / BUG-P8-001` |
+| 活动 Bug | `BUG-P8-001`（`FIXING`；仅CLI wiring修复获授权，尚未实现） |
+| 当前阻塞项 | Stage A CLI错误在GPU计算前终止job `8978152`；必须完成最小wiring修复、回归测试和完整Stage A重跑后，才能解除P8阻断。 |
 | 恢复阶段 | `P8` |
 | 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`并由`064ec70`封存启动状态；P8 execution supplement、resolved config与SHA-256已由`0b292e7`封存，model core与lifecycle分别由`0d04223`和`1c841a5`封存。Stage A commands、exact-whitelist KDM/H200 PBS、completion-aware formal orchestration、CPU OOF与脱敏aggregate audit接口已由`486c9c0`原子封存并通过本地验证。P8 direct测试`31 passed`，完整测试`277 passed`且仅3条既有dependency warnings；Bash/diff/frozen checks与Phase Compliance Reviewer均为`PASS`。Exact-whitelist KDM同步已完成，Katana login-node `verify-stage-a`为`PASS`；P7 immutable base与P8 delta hashes均匹配，P8 delta为10 files / `143,473` bytes，internal/file SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`/`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。唯一H200 Stage A job `8978152.kman.restech.unsw.edu.au`已于2026-08-12 07:55 Sydney提交，当前为`Q`；未执行formal training/test或actual OOF，P9保持`NOT_STARTED`。 |
+| 状态依据 | P8本地model/lifecycle/Katana/audit接口由`0d04223`、`1c841a5`、`486c9c0`封存，P8 direct`31 passed`、完整`277 passed`及冻结检查均已通过；exact-whitelist KDM和remote integrity也为`PASS`。Stage A job `8978152.kman.restech.unsw.edu.au`随后于`k203` H200 GPU 3运行，但在生成任何Stage A JSON或启动overfit/preflight前，CLI把不受支持的`output_root`传给`overfit_check`并触发`TypeError`，PBS `Exit_status=1`。该事件分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`，不是有效Stage A attempt。用户只授权修复CLI wiring、添加回归测试并重跑完整Stage A；禁止修改模型、loss、config/profile、初始化、验收标准或提交formal jobs。P9保持`NOT_STARTED / AT_RISK`。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -76,20 +76,24 @@ last_verified_commit: 486c9c0
 - Private exact transfer manifest本地verify为`PASS`：10 files / `143,473` bytes，internal SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`，manifest file SHA-256=`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。P8 direct测试`31 passed`、完整测试`277 passed`且仅有3条既有dependency warnings；Bash/diff/frozen checks及Phase Compliance Reviewer均为`PASS`。接口功能commit为`486c9c0`（local, unpushed）。
 - Exact-whitelist KDM同步已实际完成；Katana login node仅执行remote integrity，`verify-stage-a`为`PASS`。P7 immutable base与P8 delta的file counts、bytes及internal/file hashes均匹配；login node未运行GPU计算、训练或test。
 - 唯一P8 H200 Stage A job `8978152.kman.restech.unsw.edu.au`已于2026-08-12 07:55 Sydney提交至`csegpu12`。资源请求固定为H200×1、8 CPU、64 GB RAM、4小时walltime，不包含formal training或test。
+- Job `8978152`实际分配至`k203` H200 GPU 3，于08:05:47–08:06:24运行，PBS walltime=`00:00:29`、`Exit_status=1`。Remote integrity先通过，随后CLI在overfit/preflight前以`TypeError: overfit_check() got an unexpected keyword argument 'output_root'`终止。
+- 失败运行没有生成Stage A overfit/preflight JSON。Scheduler GPU duration仅`31.47s`且利用率/显存为`0% / 0B`；审计分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`，不得计为有效Stage A attempt或Stage A失败的科学结果。
 
 ### 正在进行
 
-- Stage A job `8978152`当前仍为`Q/csegpu12`，H200显示`A:0`。Scheduler的预计启动时间与candidate vnode会随资源状态变化，不作为节点分配或开始执行证据。
+- `BUG-P8-001`进入`FIXING`：仅允许纠正Stage A CLI参数wiring、添加能捕获该错误的回归测试，并在本地测试与Bug合规审查通过后重跑完整Stage A。当前尚未实现修复。
 
 ### 尚未完成
 
-- H200 Stage A尚未开始或完成；不存在actual overfit/preflight、GPU、warning、peak-memory或Exit-status证据，不得声称Stage A `PASS`。
+- `BUG-P8-001`的代码修复、回归测试、完整验证与Bug修复双agent审查。
+- 修复后完整H200 Stage A重跑；当前不存在有效的actual overfit/preflight、warning、peak-memory或Stage A `PASS`证据。
 - 五折80-epoch formal jobs/test exactly once/final verifier均未提交或执行；actual CPU OOF与tracked脱敏audit尚未生成。
 - 完整阶段门与用户最终确认。
 - P9未制定或实施。
 
 ### 验收边界
 
+- Bug维护期间不得修改模型、loss、scientific/execution config、H200 profile、初始化、训练/验收标准或formal lifecycle；failed job `8978152`不得计入有效Stage A attempts。
 - 仅实现P8-R1–P8-R3与P8阶段所需运行/完整性证据；不实现P9完整concept metrics、跨模型比较、centering、intervention curves、Grad-CAM、occlusion或bootstrap。
 - P8进入`AWAITING_USER_APPROVAL`前必须通过H200 Stage A、五折80 epochs、test exactly once、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、完整测试与双agent阶段审查。
 
@@ -440,19 +444,36 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 本地接口与验证均`PASS`；exact-whitelist KDM及remote `verify-stage-a`已通过，唯一H200 Stage A job `8978152`当前为`Q`且尚未开始。未提交五折formal jobs，未生成actual OOF/audit，不得声称Stage A通过 | 0 | 0 |
-| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
+| P8 | CBM + GAM | `BLOCKED` | `AT_RISK` | `BUG-P8-001`：job `8978152`在GPU计算前因Stage A CLI `output_root`参数wiring错误Exit 1；无Stage A JSON且不计为有效attempt。仅最小CLI修复、回归测试与完整Stage A重跑获授权，formal/OOF未开始 | 1 | 0 |
+| P9 | 统一评估 | `NOT_STARTED` | `AT_RISK` | 未执行；受P8 active Bug影响，P8修复、完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P7-001`已通过受控Fold 4 recovery、final verifier与五折OOF验证并标记为`RESOLVED`；P7为`COMPLETED / ON_TRACK`且已交付。用户已批准P8计划，P8现为`IN_PROGRESS / ON_TRACK`；P9保持`NOT_STARTED`且不得启动或规划。P5与P6均为`COMPLETED / ON_TRACK`并已交付；`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+`BUG-P8-001`为唯一活动Bug，当前处于`FIXING`；P8为`BLOCKED / AT_RISK`，P9为`NOT_STARTED / AT_RISK`。既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
 `OPEN` → `INVESTIGATING` → `FIXING` → `VERIFYING` → `RESOLVED`
+
+### BUG-P8-001：Stage A CLI 传递不支持的 output_root 参数
+
+- 状态：`FIXING`（用户已授权最小修复；实现尚未开始）
+- 严重度：`HIGH`
+- 发现日期：2026-08-12
+- 影响阶段：P8
+- 影响验收标准：H200 Stage A必须完成8-sample overfit及true-batch-16 forward/loss/backward/Adam、alpha、reconstruction、precision与peak-memory gates；Stage A通过前禁止五折formal jobs。
+- 恢复阶段：P8
+- 受影响下游阶段：P9保持`NOT_STARTED / AT_RISK`，不得启动或规划。
+- 现象：Job `8978152`在`k203` H200 GPU 3运行，remote integrity为`PASS`，随后在任何overfit/preflight计算或Stage A JSON写入前抛出`TypeError: overfit_check() got an unexpected keyword argument 'output_root'`并Exit 1。
+- 执行审计：start/end=`08:05:47/08:06:24`，PBS walltime=`00:00:29`；scheduler GPU duration=`31.47s`、GPU utilization/memory=`0% / 0B`。分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`，不是有效Stage A attempt，也不是模型或科学协议失败。
+- 根因：Stage A CLI dispatch复用了包含`output_root`的common argument mapping，但`overfit_check`函数签名不接受该参数；错误发生在计算调用绑定阶段。
+- 用户授权边界：只允许修复CLI wiring、添加对应回归测试并重跑完整Stage A。禁止修改model、loss、config/profile、P4 initialization、augmentation、scheduler、batch、precision、80-epoch/formal lifecycle或Stage A验收标准；禁止提交formal jobs或启动P9。
+- 当前修复：尚未实施。
+- 解除条件：最小修复与回归/完整测试通过，Bug Phase Compliance与Status Synchronization审查通过；KDM/remote integrity再次通过后，完整H200 Stage A从头执行并满足全部原定gates。
+- 修复commit：待创建。
 
 ### BUG-P7-001：Fold 4 precommit test state-mixture verifier false failure
 
@@ -914,4 +935,5 @@ Bug 修复后：
 | 2026-08-12 | `LOCAL_MODEL_CORE_VERIFIED` | P8 | P8 model core已实现8个独立linear concept heads、8组×5个独立concept-local `input→32→16→1` ReLU experts、zero-initialized fold-level trainable learned-softmax alpha/global bias、activated predicted concepts-only task path、joint `L_GAM`、fold-specific deterministic initialization hashes及两种量纲贡献重建。直接测试`9 passed`、完整测试`261 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer`PASS`，冻结协议与execution profiles无diff。80-epoch lifecycle、Stage A、formal folds与OOF尚未完成；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `0d04223`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_LIFECYCLE_VERIFIED` | P8 | P8 lifecycle已实现80-epoch joint training、Adam/scheduler、minimum-validation-`L_GAM` checkpoint与earlier tie-break、full coverage/partial batch/train-only augmentation、epoch-boundary resume/completed reuse、initial/best/final alpha hashes、strict private prediction schema、test exactly-once/zero-inference recovery、FP32 numeric reconstruction verifier及五折2,633/868/0-leakage完整性接口。Direct config+lifecycle`22 passed`、完整`268 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer`PASS`，冻结V1/V2 requirements/config与execution profiles无diff。Stage A/Katana接口、formal folds与actual OOF尚未实现或执行；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `1c841a5`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_KATANA_AUDIT_INTERFACES_VERIFIED` | P8 | Stage A overfit/preflight commands、exact-whitelist KDM/H200 PBS、`P8_FORMAL_APPROVED=1`五折formal gate、completion-aware zero-inference recovery、CPU OOF及private/tracked aggregate/deidentified audit接口已实现并由`486c9c0`封存。Private exact manifest本地verify为10 files / `143,473` bytes，internal/file SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`/`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`；P8 direct`31 passed`、完整`277 passed`/3条既有warnings，Bash/diff/frozen checks与Phase Compliance Reviewer均`PASS`。尚未KDM同步、执行Stage A、提交formal jobs或生成actual OOF/audit；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `486c9c0`（local, unpushed）；本次状态同步commit待创建 |
-| 2026-08-12 | `REMOTE_STAGE_A_INPUT_READY` / `STAGE_A_QUEUED` | P8 | Exact-whitelist KDM同步已完成，Katana login-node `verify-stage-a`为`PASS`；P7 base与P8 10-file / `143,473`-byte delta hashes匹配。唯一H200 Stage A job `8978152`于07:55 Sydney提交至`csegpu12`，请求H200×1、8 CPU、64 GB、4h；提交后的初次观测曾估计08:38:59 / candidate `k204`，该值随后已变化，仅为历史调度快照，不代表实际分配或运行。当前稳定事实为job仍`Q`、H200 `A:0`。无formal folds、training/test或actual OOF；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Katana job `8978152`；本次状态同步commit待创建 |
+| 2026-08-12 | `REMOTE_STAGE_A_INPUT_READY` / `STAGE_A_QUEUED` | P8 | Exact-whitelist KDM同步已完成，Katana login-node `verify-stage-a`为`PASS`；P7 base与P8 10-file / `143,473`-byte delta hashes匹配。唯一H200 Stage A job `8978152`于07:55 Sydney提交至`csegpu12`，请求H200×1、8 CPU、64 GB、4h；提交后的初次观测曾估计08:38:59 / candidate `k204`，该值随后已变化，仅为历史调度快照，不代表实际分配或运行。在该次观测时job仍`Q`、H200 `A:0`；后续终态由下一条Bug记录取代。无formal folds、training/test或actual OOF；P8当时为`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Katana job `8978152`；本次状态同步commit待创建 |
+| 2026-08-12 | `BUG_DISCOVERED` / `PHASE_BLOCKED` | P8 | Job `8978152`在`k203` H200 GPU 3启动且remote integrity `PASS`，但CLI在overfit/preflight前向`overfit_check`传递不支持的`output_root`并Exit 1。无Stage A JSON，GPU scheduler evidence为31.47s、0%/0B；分类`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`，不计为有效Stage A attempt。用户仅授权CLI wiring修复、回归测试和完整Stage A重跑。切换`BUG_MAINTENANCE / FULL_DOCUMENT`，P8为`BLOCKED / AT_RISK`，P9为`NOT_STARTED / AT_RISK`；无formal jobs。 | `BUG-P8-001`；Katana job `8978152`；本次状态同步commit待创建 |
