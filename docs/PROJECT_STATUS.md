@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P6
 next_phase: P7
 last_updated: 2026-08-11
-last_verified_commit: 6f856b7
+last_verified_commit: f474a04
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 6f856b7
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无。P6 execution supplement、core primitives和leakage-safe stage/cache boundaries已完成本地验证；checkpoint/resume、完整orchestration、test-once transaction、Stage A、正式训练和远程作业尚未完成。 |
+| 当前阻塞项 | 无。P6本地实现已覆盖execution supplement、core/stage/cache primitives、两阶段checkpoint/resume orchestration及task-best后的test-once transaction；Katana Stage A、五折formal runs、OOF与aggregate audit尚未完成。 |
 | 恢复阶段 | `P6` |
 | 下一阶段 | `P7 Mixed-type CEM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P6启动状态、execution supplement、core primitives与stage/cache boundaries原子commits依次为`881df05`、`c3224f4`、`5aedec3`、`6f856b7`，均仅存在于本地P6分支、尚未推送。`6f856b7`增加concept epoch/evaluation的全样本与sample-weighted aggregation、仅train/validation的frozen predicted concept cache生成/持久化/provenance验证，以及只读取validated predicted cache的task epoch/evaluation primitives。Direct tests `24 passed`、完整测试 `197 passed`，Phase Compliance Reviewer为`PASS`。Checkpoint/resume、完整orchestration、test-once transaction、Stage A和正式训练尚未完成。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
+| 状态依据 | P6 lifecycle/test-once原子commit `f474a04`已在本地创建、尚未推送；它完成两阶段80-epoch checkpoint/resume、stage-aware downstream start、train/validation cache到frozen task lifecycle、task-best后的test exactly once/recovery/final verifier，以及严格test schema、tie/extreme semantics、contribution和provenance验证。P6专项`32 passed`且无warning；完整有效环境`205 passed`，仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config与H200 profile无diff。当前仅本次状态同步commit待创建；Stage A、formal folds、OOF和audit未执行。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P6 Sequential Standard CBM Regression
 
@@ -68,15 +68,17 @@ last_verified_commit: 6f856b7
 - 已实现仅允许frozen concept-best predictor为train/validation生成无增强activated-prediction caches的持久化与provenance验证；test partition在task-best固定前仍被禁止，partial/tampered/UID-set或source-hash不一致均阻断。
 - 已实现task cache records/dataset及cache-only task train/evaluation epoch primitives；Stage 2只读取validated frozen predicted activated concepts，不能访问image、encoder feature或ground-truth concepts。
 - Stage/cache direct tests `24 passed`、完整测试 `197 passed`，Phase Compliance Reviewer为`PASS`；冻结requirements/config无diff。
+- 已实现concept/task两阶段各80-epoch training lifecycle、minimum validation objective checkpoint selection、earlier-epoch tie-break、epoch-boundary checkpoint/resume与stage-aware downstream start；已完成的上游stage可安全复用，pristine downstream stage不会被错误要求resume。
+- 已实现concept-best封存后生成并验证train/validation frozen predicted concept caches，再以cache-only输入训练task head；`train` orchestration不读取test partition，也不在task-best固定前生成test concepts。
+- 已实现task-best后的test exactly once transaction、interrupted transaction recovery、claim/metrics reconstruction与final verifier；test rows严格验证activated concept schema、categorical ties、extreme eligibility/labels、八组contributions、bias及全套provenance。
+- Lifecycle/test-once专项`32 passed`且无warning；完整有效环境`205 passed`，仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config与H200 profile无diff。
 
 ### 正在进行
 
-- 准备下一原子批次的checkpoint/resume、完整两阶段orchestration、task-best封存后的test-once transaction与Katana接口；尚未执行Stage A或任何正式训练。
+- 准备Katana transfer/PBS、Stage A preflight、formal-fold接口与aggregate audit；尚未执行Stage A或任何正式训练。
 
 ### 尚未完成
 
-- Concept/task两阶段的80-epoch orchestration、checkpoint selection、scheduler state与exact resume lifecycle。
-- Task-best封存后的test concept generation、test-once transaction、prediction persistence与final verifier。
 - H200 Stage A、五折formal runs、OOF、脱敏audit及阶段门。
 
 ### 验收进度
@@ -84,9 +86,9 @@ last_verified_commit: 6f856b7
 | P6 验收项 | 状态 | 证据 |
 |---|---|---|
 | P6 execution supplement、resolved config与hash | `PASS` | SHA-256 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`；专项 `4 passed`、完整 `177 passed`；Phase Compliance Reviewer `PASS` |
-| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | Core predictor/loss及concept epoch/evaluation sample-weighted coverage已由direct `24 passed`验证；checkpoint/orchestration和正式fold证据待完成 |
-| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | Train/validation-only frozen cache persistence/provenance与cache-only task epoch/evaluation已验证；task checkpoint/resume、test-once和正式fold证据待完成 |
-| P6-R3 normalized/rating contribution reconstruction | `IN_PROGRESS` | Unit-level exact reconstruction≤`1e-6`已验证；正式fold predictions重建证据待完成 |
+| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | Core predictor/loss、sample-weighted coverage及80-epoch checkpoint/resume orchestration已由专项`32 passed`验证；Stage A和正式fold证据待完成 |
+| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | Leakage-safe cache→frozen task lifecycle、task checkpoint/resume和test-after-task-best exactly-once transaction已验证；Stage A和正式fold证据待完成 |
+| P6-R3 normalized/rating contribution reconstruction | `IN_PROGRESS` | Unit与严格test-row reconstruction≤`1e-6`已验证；正式fold predictions重建证据待完成 |
 | H200 Stage A、五折OOF与双agent阶段门 | `NOT_STARTED` | 待执行 |
 
 ### 未解决困难
@@ -353,7 +355,7 @@ Bug 修复后：
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
-| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | Execution supplement、core primitives及leakage-safe stage/cache boundaries已验证；direct `24 passed`、完整 `197 passed`、Phase Compliance Reviewer `PASS`。Checkpoint/resume、orchestration、test-once、Stage A及正式训练尚未完成 | 0 | 0 |
+| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | 本地实现已覆盖两阶段checkpoint/resume orchestration与test-once；专项`32 passed`、完整`205 passed`、Phase Compliance Reviewer`PASS`。Stage A、formal folds、OOF及audit尚未完成 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -740,3 +742,4 @@ Bug 修复后：
 | 2026-08-11 | `LOCAL_CONFIG_VERIFIED` | P6 | P6 execution supplement、deterministic resolved config与SHA-256已生成并验证；resolved SHA-256为 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`。配置专项测试 `4 passed`、完整测试 `177 passed`，Phase Compliance Reviewer `PASS`。该批次未实现concept model或训练lifecycle，未执行Stage A或提交正式作业；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `c3224f4`（local, unpushed） |
 | 2026-08-11 | `LOCAL_CORE_PRIMITIVES_VERIFIED` | P6 | Standard CBM core primitives已实现八个独立linear heads、activated canonical 16D vector、八组等权loss、sample-weighted aggregation、deterministic head initialization、partition records/dataset、freeze/BatchNorm hashes、predicted-cache guard和两种量纲贡献重建。Direct tests `16 passed`、完整测试 `189 passed`，最终Phase Compliance Reviewer `PASS`。完整sequential lifecycle、cache persistence、test-once、Stage A与正式训练仍未完成；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `5aedec3`（local, unpushed） |
 | 2026-08-11 | `LOCAL_STAGE_CACHE_VERIFIED` | P6 | Concept epoch/evaluation的sample-weighted全样本coverage、仅train/validation的frozen predicted concept cache持久化/provenance，以及cache-only task epoch/evaluation primitives已实现并验证。Direct tests `24 passed`、完整测试 `197 passed`，Phase Compliance Reviewer `PASS`。Checkpoint/resume、完整orchestration、test-once、Stage A与formal runs仍未完成；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `6f856b7`（local, unpushed） |
+| 2026-08-11 | `LOCAL_LIFECYCLE_TEST_ONCE_VERIFIED` | P6 | 两阶段80-epoch checkpoint/resume、stage-aware downstream start、train/validation cache到frozen task lifecycle、task-best后的test exactly once/recovery/final verifier，以及严格test schema/tie/extreme/contribution/provenance语义已实现并验证。P6专项`32 passed`且无warning；完整有效环境`205 passed`，仅有3条既有dependency warnings；Phase Compliance Reviewer`PASS`。Stage A、formal folds、OOF与audit仍未完成；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `f474a04`（local, unpushed）；状态同步commit待创建 |
