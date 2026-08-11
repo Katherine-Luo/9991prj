@@ -23,9 +23,9 @@ P5_TRANSFER_MANIFEST = Path(
     "artifacts/baseline_v2/manifests/p5_stage_a_transfer_manifest.json"
 )
 P5_DELTA_FILES = (
-    "configs/experiments/baseline_v2_reference_training_h200.yaml",
-    "configs/experiments/baseline_v2_reference_training_h200.resolved.yaml",
-    "configs/experiments/baseline_v2_reference_training_h200.sha256",
+    "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml",
+    "configs/experiments/baseline_v2_reference_training_h200_warn_only.resolved.yaml",
+    "configs/experiments/baseline_v2_reference_training_h200_warn_only.sha256",
     "scripts/katana/p5_fold.pbs",
     "scripts/katana/p5_stage_a.pbs",
     "src/lidc_baseline/p5_blackbox.py",
@@ -175,7 +175,7 @@ def _parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--repository-root", type=Path, default=Path("."))
     common.add_argument("--config", type=Path, default=Path("configs/baseline_v2.yaml"))
-    common.add_argument("--execution-config", type=Path, default=Path("configs/experiments/baseline_v2_reference_training_h200.yaml"))
+    common.add_argument("--execution-config", type=Path, default=Path("configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"))
     build = subparsers.add_parser("build-transfer-manifest", parents=[common])
     build.add_argument("--output", type=Path, default=P5_TRANSFER_MANIFEST)
     verify = subparsers.add_parser("verify-transfer", parents=[common])

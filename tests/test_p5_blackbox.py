@@ -43,6 +43,8 @@ from lidc_baseline.p5_blackbox import (
     predict_records,
     regression_metrics,
     require_formal_gpu_for_cuda,
+    configure_fp32_determinism,
+    reproducibility_provenance,
     restore_rng_state,
     train_one_epoch,
     train_fold,
@@ -50,7 +52,7 @@ from lidc_baseline.p5_blackbox import (
 )
 
 
-EXECUTION_CONFIG = Path("configs/experiments/baseline_v2_reference_training_h200.yaml")
+EXECUTION_CONFIG = Path("configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml")
 
 
 def _record(tmp_path: Path, uid: str, value: float = 0.25) -> SampleRecord:
@@ -70,7 +72,7 @@ def _record(tmp_path: Path, uid: str, value: float = 0.25) -> SampleRecord:
 
 def test_execution_config_rejects_hash_or_policy_tampering(tmp_path: Path) -> None:
     config, observed = validate_execution_config(EXECUTION_CONFIG)
-    assert observed == "08df87e4be5f07985d9dd3619b471ad322ec23a4b98b5032ee05ed58b1918281"
+    assert observed == "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb"
 
     copied = tmp_path / "execution.yaml"
     copied.write_text(EXECUTION_CONFIG.read_text(encoding="utf-8"), encoding="utf-8")
@@ -91,6 +93,27 @@ def test_execution_config_rejects_hash_or_policy_tampering(tmp_path: Path) -> No
     digest.write_text(f"{compute_config_sha256(changed)}\n", encoding="ascii")
     with pytest.raises(ValueError, match="REFERENCE_POLICY_MISMATCH"):
         validate_execution_config(copied, digest)
+
+
+def test_warn_only_deterministic_policy_is_explicit_and_applied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+
+    execution, _digest = validate_execution_config(EXECUTION_CONFIG)
+    observed: list[tuple[bool, bool]] = []
+    monkeypatch.setattr(
+        torch,
+        "use_deterministic_algorithms",
+        lambda enabled, *, warn_only=False: observed.append((enabled, warn_only)),
+    )
+    policy = configure_fp32_determinism(torch.device("cpu"), execution)
+    assert policy == {
+        "torch_use_deterministic_algorithms": True,
+        "deterministic_algorithms_warn_only": True,
+    }
+    assert reproducibility_provenance(execution) == policy
+    assert observed == [(True, True)]
 
 
 def test_scheduler_decays_after_exactly_four_consecutive_bad_epochs() -> None:

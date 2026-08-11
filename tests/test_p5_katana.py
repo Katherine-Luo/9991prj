@@ -88,9 +88,9 @@ def test_p5_delta_manifest_rejects_unsafe_or_duplicate_paths(tmp_path: Path) -> 
 
 def test_p5_delta_is_code_only_and_contains_required_stage_a_files() -> None:
     assert set(P5_DELTA_FILES) == {
-        "configs/experiments/baseline_v2_reference_training_h200.yaml",
-        "configs/experiments/baseline_v2_reference_training_h200.resolved.yaml",
-        "configs/experiments/baseline_v2_reference_training_h200.sha256",
+        "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml",
+        "configs/experiments/baseline_v2_reference_training_h200_warn_only.resolved.yaml",
+        "configs/experiments/baseline_v2_reference_training_h200_warn_only.sha256",
         "scripts/katana/p5_fold.pbs",
         "scripts/katana/p5_stage_a.pbs",
         "src/lidc_baseline/p5_blackbox.py",
@@ -155,7 +155,7 @@ def test_sync_p5_uses_kdm_and_manifest_whitelist(tmp_path: Path) -> None:
         "#!/bin/bash\n"
         "printf '%s\\n' "
         "'artifacts/baseline_v2/manifests/p5_stage_a_transfer_manifest.json' "
-        "'configs/experiments/baseline_v2_reference_training_h200.yaml' "
+        "'configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml' "
         "'scripts/katana/p5_stage_a.pbs' "
         "'src/lidc_baseline/p5_blackbox.py'\n",
         encoding="utf-8",

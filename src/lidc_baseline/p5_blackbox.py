@@ -48,7 +48,7 @@ AUGMENTATION_DOMAIN = b"Baseline-v2/common-augmentation\0"
 MODEL_NAME = "blackbox"
 EXPECTED_FOLD_TEST_COUNTS = (479, 502, 539, 549, 564)
 EXECUTION_CONFIG_DEFAULT = Path(
-    "configs/experiments/baseline_v2_reference_training_h200.yaml"
+    "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
 )
 
 
@@ -245,8 +245,8 @@ def validate_execution_config(
         raise ValueError("EXECUTION_CONFIG_BATCH_POLICY_MISMATCH")
     profile = config.get("execution_profile", {})
     if (
-        profile.get("profile_id") != "baseline-v2-formal-h200"
-        or profile.get("amendment_type") != "execution_hardware_profile"
+        profile.get("profile_id") != "baseline-v2-formal-h200-warn-only"
+        or profile.get("amendment_type") != "execution_reproducibility_profile"
         or profile.get("formal_gpu_model") != "H200"
         or profile.get("applies_to_formal_training")
         != ["blackbox", "standard_cbm", "cem", "gam"]
@@ -254,19 +254,42 @@ def validate_execution_config(
         raise ValueError("EXECUTION_CONFIG_H200_PROFILE_MISMATCH")
     if project.get("preflight", {}).get("device") != "NVIDIA_H200":
         raise ValueError("EXECUTION_CONFIG_H200_PREFLIGHT_MISMATCH")
+    reproducibility = project.get("reproducibility", {})
+    if (
+        reproducibility.get("torch_use_deterministic_algorithms") is not True
+        or reproducibility.get("warn_only") is not True
+        or not isinstance(reproducibility.get("statement"), str)
+    ):
+        raise ValueError("EXECUTION_CONFIG_WARN_ONLY_REPRODUCIBILITY_MISMATCH")
     return config, observed
 
 
-def configure_fp32_determinism(device: Any) -> None:
-    """Apply the pre-registered FP32, TF32-off and deterministic policy."""
+def reproducibility_provenance(execution_config: Mapping[str, Any]) -> dict[str, bool]:
+    """Return the explicit deterministic-algorithm enforcement policy."""
+    policy = execution_config["project_preregistered"]["reproducibility"]
+    return {
+        "torch_use_deterministic_algorithms": bool(
+            policy["torch_use_deterministic_algorithms"]
+        ),
+        "deterministic_algorithms_warn_only": bool(policy["warn_only"]),
+    }
+
+
+def configure_fp32_determinism(device: Any, execution_config: Mapping[str, Any]) -> dict[str, bool]:
+    """Apply FP32/TF32-off and the profile-bound deterministic policy."""
     torch = _torch()
     torch.set_float32_matmul_precision("highest")
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
     torch.backends.cudnn.benchmark = False
-    torch.use_deterministic_algorithms(True)
+    policy = reproducibility_provenance(execution_config)
+    torch.use_deterministic_algorithms(
+        policy["torch_use_deterministic_algorithms"],
+        warn_only=policy["deterministic_algorithms_warn_only"],
+    )
     if device.type == "cuda":
         torch.cuda.manual_seed_all(torch.initial_seed())
+    return policy
 
 
 def require_formal_gpu_for_cuda(device: Any, execution_config: Mapping[str, Any]) -> None:
@@ -862,6 +885,7 @@ def _provenance(
     if execution_config is not None:
         provenance["execution_profile_id"] = execution_config["execution_profile"]["profile_id"]
         provenance["formal_gpu_model"] = execution_config["execution_profile"]["formal_gpu_model"]
+        provenance.update(reproducibility_provenance(execution_config))
     return provenance
 
 
@@ -1016,7 +1040,7 @@ def _train_fold_locked(
         fold_index,
     )
     require_formal_gpu_for_cuda(device, execution)
-    configure_fp32_determinism(device)
+    configure_fp32_determinism(device, execution)
     model, initialization = build_initialized_model(scientific, split, encoder_path)
     seed_training(int(initialization["fold_seed"]))
     model.to(device)
@@ -1382,7 +1406,7 @@ def _evaluate_test_once_locked(
     if sha256_file(best_path) != completion["best_checkpoint_sha256"]:
         raise ValueError("P5_BEST_CHECKPOINT_SEAL_MISMATCH")
     require_formal_gpu_for_cuda(device, execution)
-    configure_fp32_determinism(device)
+    configure_fp32_determinism(device, execution)
     model, initialization, checkpoint = _load_best_model(
         scientific,
         split,
@@ -1515,7 +1539,7 @@ def overfit_check(
         fold_index,
     )
     require_formal_gpu_for_cuda(device, execution)
-    configure_fp32_determinism(device)
+    configure_fp32_determinism(device, execution)
     model, initialization = build_initialized_model(scientific, split, encoder_path)
     seed_training(int(initialization["fold_seed"]))
     model.to(device)
@@ -1562,6 +1586,7 @@ def overfit_check(
         "execution_config_sha256": execution_hash,
         "execution_profile_id": execution["execution_profile"]["profile_id"],
         "formal_gpu_model": execution["execution_profile"]["formal_gpu_model"],
+        **reproducibility_provenance(execution),
         "split_sha256": split["split_sha256"],
         **initialization,
         **_runtime_environment(device),
@@ -1591,7 +1616,7 @@ def preflight(
         fold_index,
     )
     require_formal_gpu_for_cuda(device, execution)
-    configure_fp32_determinism(device)
+    configure_fp32_determinism(device, execution)
     model, initialization = build_initialized_model(scientific, split, encoder_path)
     seed_training(int(initialization["fold_seed"]))
     model.to(device)
@@ -1647,6 +1672,7 @@ def preflight(
         "execution_config_sha256": execution_hash,
         "execution_profile_id": execution["execution_profile"]["profile_id"],
         "formal_gpu_model": execution["execution_profile"]["formal_gpu_model"],
+        **reproducibility_provenance(execution),
         "split_sha256": split["split_sha256"],
         **initialization,
     }

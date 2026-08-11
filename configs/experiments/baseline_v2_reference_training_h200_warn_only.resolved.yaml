@@ -1,0 +1,109 @@
+execution_profile:
+  amendment_type: execution_reproducibility_profile
+  applies_to_formal_training:
+  - blackbox
+  - standard_cbm
+  - cem
+  - gam
+  formal_gpu_model: H200
+  profile_id: baseline-v2-formal-h200-warn-only
+  statement: Baseline-v2 execution/reproducibility profile amendment. H200 remains the unified formal training GPU for P5-P8; CUDA operations without deterministic implementations are recorded as warnings rather than blocking backward.
+  supersedes_execution_profile: configs/experiments/baseline_v2_reference_training_h200.yaml
+project_preregistered:
+  augmentation:
+    axial_rotation:
+      angle_degrees:
+        maximum: 15.0
+        minimum: -15.0
+      axis: D
+      probability: 0.5
+      torch_grid_sample:
+        align_corners: false
+        five_dimensional_behavior: trilinear_sampling
+        mode: bilinear
+        padding_mode: zeros
+    excludes_model_name: true
+    h_axis_flip_probability: 0.5
+    order:
+    - axial_rotation
+    - h_axis_flip
+    - w_axis_flip
+    - z_order_reversal
+    random_material:
+    - base_seed
+    - fold_index
+    - epoch_index
+    - nodule_uid
+    - augmentation_schema_version
+    schema_version: 1
+    train_only: true
+    w_axis_flip_probability: 0.5
+    z_order_reversal_probability: 0.5
+  batching:
+    drop_last: false
+    effective_batch_size: 16
+    final_partial_batch_reduction: sample_mean
+    gradient_accumulation_steps: 1
+    micro_batch_size: 16
+  optimizer:
+    betas:
+    - 0.9
+    - 0.999
+    epsilon: 1.0e-07
+    weight_decay: 0.0
+  precision:
+    amp_enabled: false
+    bfloat16_enabled: false
+    cuda_matmul_tf32_enabled: false
+    cudnn_tf32_enabled: false
+    floating_point: FP32
+  preflight:
+    device: NVIDIA_H200
+    maximum_peak_reserved_fraction: 0.85
+    oom_policy: block_without_batch_fallback
+    operations:
+    - forward
+    - backward
+    - adam_step
+    true_batch_size: 16
+  reproducibility:
+    statement: Strict deterministic algorithm enforcement is retained in warning mode because CUDA AvgPool3d backward has no deterministic implementation in the pinned PyTorch runtime. Fixed seeds, deterministic data ordering, deterministic augmentation, fixed initializations, FP32, TF32-off and environment provenance remain required; bitwise-identical CUDA training is not claimed.
+    torch_use_deterministic_algorithms: true
+    warn_only: true
+  scheduler:
+    bad_epoch_counter_reset_after_decay: true
+    checkpoint_tie_break: earlier_epoch
+    checkpoint_tolerance: 0.0
+    cooldown: 0
+    improvement_mode: current_lt_best_minus_min_delta
+    metric: validation_mse
+    min_delta: 0.0001
+    min_learning_rate: 0.0
+  statement: Baseline-v2 project pre-registered implementation choices, not exact hyperparameters reported by the reference paper.
+  training:
+    deterministic_head_initialization: fold_specific_domain_separated_sha256
+    early_stopping: false
+protocol_version: Baseline-v2
+reference_reported:
+  augmentation_families:
+  - flipping
+  - rotation_up_to_15_degrees
+  - z_order_reversal
+  batch_size: 16
+  citation: Dumaev et al. 2024, arXiv:2405.17483, Implementation details
+  epochs: 80
+  learning_rate: 0.0001
+  optimizer: Adam
+  scheduler:
+    bad_epochs_before_decay: 4
+    factor: 0.9
+    monitor: validation_loss
+schema_version: 2
+scope:
+  applies_to:
+  - blackbox
+  - standard_cbm
+  - cem
+  - gam
+  scientific_config: configs/baseline_v2.yaml
+  source_label: reference_aligned_common_training

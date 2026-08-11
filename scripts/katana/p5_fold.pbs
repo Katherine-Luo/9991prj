@@ -18,7 +18,7 @@ fi
 code_directory="${KATANA_P5_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
 environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
 python_binary="$environment_prefix/bin/python"
-execution_config="configs/experiments/baseline_v2_reference_training_h200.yaml"
+execution_config="configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
 run_directory="$code_directory/runs/baseline_v2/blackbox/fold_$fold_index"
 
 cd "$code_directory"

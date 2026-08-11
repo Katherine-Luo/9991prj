@@ -6,9 +6,9 @@ from lidc_baseline.config import canonical_yaml, compute_config_sha256, load_con
 from lidc_baseline.p5_blackbox import validate_execution_config
 
 
-SOURCE = Path("configs/experiments/baseline_v2_reference_training_h200.yaml")
-RESOLVED = Path("configs/experiments/baseline_v2_reference_training_h200.resolved.yaml")
-DIGEST = Path("configs/experiments/baseline_v2_reference_training_h200.sha256")
+SOURCE = Path("configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml")
+RESOLVED = Path("configs/experiments/baseline_v2_reference_training_h200_warn_only.resolved.yaml")
+DIGEST = Path("configs/experiments/baseline_v2_reference_training_h200_warn_only.sha256")
 
 
 def test_common_execution_config_is_canonical_and_frozen() -> None:
@@ -42,12 +42,12 @@ def test_reference_reported_and_project_choices_are_separated() -> None:
         "not exact hyperparameters reported by the reference paper."
     )
     assert config["execution_profile"] == {
-        "profile_id": "baseline-v2-formal-h200",
-        "amendment_type": "execution_hardware_profile",
+        "profile_id": "baseline-v2-formal-h200-warn-only",
+        "amendment_type": "execution_reproducibility_profile",
         "formal_gpu_model": "H200",
         "applies_to_formal_training": ["blackbox", "standard_cbm", "cem", "gam"],
-        "supersedes_execution_profile": "configs/experiments/baseline_v2_reference_training.yaml",
-        "statement": "Baseline-v2 execution/hardware profile amendment. H200 is the unified formal training GPU for P5-P8; this does not change the scientific protocol.",
+        "supersedes_execution_profile": "configs/experiments/baseline_v2_reference_training_h200.yaml",
+        "statement": "Baseline-v2 execution/reproducibility profile amendment. H200 remains the unified formal training GPU for P5-P8; CUDA operations without deterministic implementations are recorded as warnings rather than blocking backward.",
     }
 
 
@@ -94,10 +94,14 @@ def test_exact_project_training_choices_are_pre_registered() -> None:
         "cuda_matmul_tf32_enabled": False,
         "cudnn_tf32_enabled": False,
     }
+    assert project["reproducibility"]["torch_use_deterministic_algorithms"] is True
+    assert project["reproducibility"]["warn_only"] is True
 
 
-def test_legacy_l40s_execution_profile_cannot_drive_formal_p5_runs() -> None:
+def test_superseded_execution_profiles_cannot_drive_formal_p5_runs() -> None:
     from pytest import raises
 
     with raises(ValueError, match="H200_PROFILE_MISMATCH"):
         validate_execution_config("configs/experiments/baseline_v2_reference_training.yaml")
+    with raises(ValueError, match="H200_PROFILE_MISMATCH"):
+        validate_execution_config("configs/experiments/baseline_v2_reference_training_h200.yaml")
