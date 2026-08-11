@@ -42,11 +42,11 @@ last_verified_commit: 486c9c0
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P8 model、lifecycle与Stage A/Katana/formal/OOF/audit接口均已完成本地验证，KDM同步、H200 Stage A、五折formal runs与actual OOF尚未执行。 |
+| 当前阻塞项 | 无技术阻断；P8 remote input已就绪，唯一H200 Stage A job `8978152`正在排队等待H200资源，尚未开始执行。 |
 | 恢复阶段 | `P8` |
 | 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`并由`064ec70`封存启动状态；P8 execution supplement、resolved config与SHA-256已由`0b292e7`封存，model core与lifecycle分别由`0d04223`和`1c841a5`封存。Stage A commands、exact-whitelist KDM/H200 PBS、completion-aware formal orchestration、CPU OOF与脱敏aggregate audit接口已由`486c9c0`原子封存并通过本地验证。P8 direct测试`31 passed`，完整测试`277 passed`且仅3条既有dependency warnings；Bash/diff/frozen checks与Phase Compliance Reviewer均为`PASS`。Private exact transfer manifest本地verify为10 files / `143,473` bytes，internal SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`、file SHA-256=`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。尚未KDM同步或remote verify，未执行P8 Stage A、formal training/test或actual OOF；P9保持`NOT_STARTED`。 |
+| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`并由`064ec70`封存启动状态；P8 execution supplement、resolved config与SHA-256已由`0b292e7`封存，model core与lifecycle分别由`0d04223`和`1c841a5`封存。Stage A commands、exact-whitelist KDM/H200 PBS、completion-aware formal orchestration、CPU OOF与脱敏aggregate audit接口已由`486c9c0`原子封存并通过本地验证。P8 direct测试`31 passed`，完整测试`277 passed`且仅3条既有dependency warnings；Bash/diff/frozen checks与Phase Compliance Reviewer均为`PASS`。Exact-whitelist KDM同步已完成，Katana login-node `verify-stage-a`为`PASS`；P7 immutable base与P8 delta hashes均匹配，P8 delta为10 files / `143,473` bytes，internal/file SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`/`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。唯一H200 Stage A job `8978152.kman.restech.unsw.edu.au`已于2026-08-12 07:55 Sydney提交，当前为`Q`；未执行formal training/test或actual OOF，P9保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -74,15 +74,16 @@ last_verified_commit: 486c9c0
 - 已实现P8 exact-whitelist transfer/KDM接口、H200 Stage A PBS、带`P8_FORMAL_APPROVED=1`门的五折formal PBS和CPU-only OOF PBS。Formal orchestration支持epoch-boundary resume、completed training reuse、best-checkpoint test exactly once，以及已提交test artifacts的completion-aware zero-inference recovery；不会为已完成test执行第二次inference。
 - 已实现private OOF与tracked aggregate audit构建/验证接口：五折完成后才允许聚合2,633 nodules / 868 patients、固定fold counts、0 leakage、task metrics、alpha与贡献重建、private storage及deidentified fold/summary evidence；当前仅有接口与合成/本地测试，不存在actual P8 OOF或tracked scientific evidence。
 - Private exact transfer manifest本地verify为`PASS`：10 files / `143,473` bytes，internal SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`，manifest file SHA-256=`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。P8 direct测试`31 passed`、完整测试`277 passed`且仅有3条既有dependency warnings；Bash/diff/frozen checks及Phase Compliance Reviewer均为`PASS`。接口功能commit为`486c9c0`（local, unpushed）。
+- Exact-whitelist KDM同步已实际完成；Katana login node仅执行remote integrity，`verify-stage-a`为`PASS`。P7 immutable base与P8 delta的file counts、bytes及internal/file hashes均匹配；login node未运行GPU计算、训练或test。
+- 唯一P8 H200 Stage A job `8978152.kman.restech.unsw.edu.au`已于2026-08-12 07:55 Sydney提交至`csegpu12`。资源请求固定为H200×1、8 CPU、64 GB RAM、4小时walltime，不包含formal training或test。
 
 ### 正在进行
 
-- 接口批次状态同步后，按exact whitelist执行KDM同步与Katana login-node remote integrity verify；通过后才提交唯一H200 Stage A job。
+- Stage A job `8978152`当前仍为`Q/csegpu12`，H200显示`A:0`。Scheduler的预计启动时间与candidate vnode会随资源状态变化，不作为节点分配或开始执行证据。
 
 ### 尚未完成
 
-- KDM同步与remote integrity尚未执行；当前只有本地private transfer manifest verify，不得视为remote input ready。
-- H200 Stage A尚未提交或执行；不存在actual overfit/preflight、GPU、warning或peak-memory evidence。
+- H200 Stage A尚未开始或完成；不存在actual overfit/preflight、GPU、warning、peak-memory或Exit-status证据，不得声称Stage A `PASS`。
 - 五折80-epoch formal jobs/test exactly once/final verifier均未提交或执行；actual CPU OOF与tracked脱敏audit尚未生成。
 - 完整阶段门与用户最终确认。
 - P9未制定或实施。
@@ -439,7 +440,7 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | Execution supplement、model core、80-epoch lifecycle、Stage A/Katana/formal/OOF/audit接口均已本地实现；P8 direct`31 passed`、完整`277 passed`/3条既有warnings、exact 10-file manifest、Bash/diff/frozen checks及Phase Compliance Reviewer均`PASS`。尚未KDM同步、执行H200 Stage A、提交五折formal jobs或生成actual OOF/audit | 0 | 0 |
+| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 本地接口与验证均`PASS`；exact-whitelist KDM及remote `verify-stage-a`已通过，唯一H200 Stage A job `8978152`当前为`Q`且尚未开始。未提交五折formal jobs，未生成actual OOF/audit，不得声称Stage A通过 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -913,3 +914,4 @@ Bug 修复后：
 | 2026-08-12 | `LOCAL_MODEL_CORE_VERIFIED` | P8 | P8 model core已实现8个独立linear concept heads、8组×5个独立concept-local `input→32→16→1` ReLU experts、zero-initialized fold-level trainable learned-softmax alpha/global bias、activated predicted concepts-only task path、joint `L_GAM`、fold-specific deterministic initialization hashes及两种量纲贡献重建。直接测试`9 passed`、完整测试`261 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer`PASS`，冻结协议与execution profiles无diff。80-epoch lifecycle、Stage A、formal folds与OOF尚未完成；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `0d04223`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_LIFECYCLE_VERIFIED` | P8 | P8 lifecycle已实现80-epoch joint training、Adam/scheduler、minimum-validation-`L_GAM` checkpoint与earlier tie-break、full coverage/partial batch/train-only augmentation、epoch-boundary resume/completed reuse、initial/best/final alpha hashes、strict private prediction schema、test exactly-once/zero-inference recovery、FP32 numeric reconstruction verifier及五折2,633/868/0-leakage完整性接口。Direct config+lifecycle`22 passed`、完整`268 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer`PASS`，冻结V1/V2 requirements/config与execution profiles无diff。Stage A/Katana接口、formal folds与actual OOF尚未实现或执行；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `1c841a5`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_KATANA_AUDIT_INTERFACES_VERIFIED` | P8 | Stage A overfit/preflight commands、exact-whitelist KDM/H200 PBS、`P8_FORMAL_APPROVED=1`五折formal gate、completion-aware zero-inference recovery、CPU OOF及private/tracked aggregate/deidentified audit接口已实现并由`486c9c0`封存。Private exact manifest本地verify为10 files / `143,473` bytes，internal/file SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`/`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`；P8 direct`31 passed`、完整`277 passed`/3条既有warnings，Bash/diff/frozen checks与Phase Compliance Reviewer均`PASS`。尚未KDM同步、执行Stage A、提交formal jobs或生成actual OOF/audit；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `486c9c0`（local, unpushed）；本次状态同步commit待创建 |
+| 2026-08-12 | `REMOTE_STAGE_A_INPUT_READY` / `STAGE_A_QUEUED` | P8 | Exact-whitelist KDM同步已完成，Katana login-node `verify-stage-a`为`PASS`；P7 base与P8 10-file / `143,473`-byte delta hashes匹配。唯一H200 Stage A job `8978152`于07:55 Sydney提交至`csegpu12`，请求H200×1、8 CPU、64 GB、4h；提交后的初次观测曾估计08:38:59 / candidate `k204`，该值随后已变化，仅为历史调度快照，不代表实际分配或运行。当前稳定事实为job仍`Q`、H200 `A:0`。无formal folds、training/test或actual OOF；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Katana job `8978152`；本次状态同步commit待创建 |
