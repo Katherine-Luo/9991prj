@@ -6,16 +6,16 @@ active_requirements: docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md
 active_config: configs/baseline_v2.yaml
 supersedes_protocol: Baseline-v1
 protocol_transition: V2M
-operating_mode: NORMAL_DEVELOPMENT
-reading_scope: CURRENT_AND_NEXT
+operating_mode: BUG_MAINTENANCE
+reading_scope: FULL_DOCUMENT
 development_phase: P7
-development_phase_status: IN_PROGRESS
-maintenance_phase: null
-active_bug_ids: []
+development_phase_status: BLOCKED
+maintenance_phase: P7
+active_bug_ids: [BUG-P7-001]
 resume_phase: P7
 next_phase: P8
 last_updated: 2026-08-12
-last_verified_commit: 5c80991
+last_verified_commit: 4760cca
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -34,19 +34,19 @@ last_verified_commit: 5c80991
 
 | 字段 | 当前值 |
 |---|---|
-| 工作模式 | `NORMAL_DEVELOPMENT` |
-| 阅读范围 | `CURRENT_AND_NEXT` |
+| 工作模式 | `BUG_MAINTENANCE` |
+| 阅读范围 | `FULL_DOCUMENT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P7 Mixed-type CEM Regression` |
-| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
-| 维护目标阶段 | 无 |
-| 活动 Bug | 无 |
-| 当前阻塞项 | 无。P7 H200 Stage A已通过；五折formal jobs已一次性提交，当前均在`csegpu100`排队等待H200资源。 |
+| 阶段状态 | `BLOCKED / AT_RISK` |
+| 维护目标阶段 | `P7` |
+| 活动 Bug | `BUG-P7-001` |
+| 当前阻塞项 | Fold 0–3 formal runs均已完成80 epochs、test exactly once与final verifier PASS；Fold 4完成80 epochs并封存best epoch 44 checkpoint，但首次test forward在predictions落盘前因`P7_TEST_STATE_MIXTURE_MISMATCH`失败。用户已批准仅修复verifier/numeric reconstruction/diagnostic logging/claim-recovery，不得重训或修改科学/执行配置。 |
 | 恢复阶段 | `P7` |
-| 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
+| 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED / AT_RISK`，不得启动） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P7代码与接口封存至`5c80991`，combined/full tests=`30/245 passed`且Phase Compliance Reviewer为`PASS`；KDM/remote integrity及H200 Stage A job `8973913`均已通过。Submission Phase Compliance Reviewer为`PASS`后，已使用同一`p7_fold.pbs`与`P7_FORMAL_APPROVED=1`一次性提交唯一fold 0–4：fold0=`8974425`、fold1=`8974429`、fold2=`8974427`、fold3=`8974428`、fold4=`8974426`。五个jobs均为`Q`/`csegpu100`，统一请求H200×1、8 CPU、64 GB、96h；无额外P7 job或P8作业。当前仅排队，尚无formal epoch、checkpoint、test或OOF结果；P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
+| 状态依据 | P7已提交代码与接口封存至`5c80991`，formal submission状态anchor为`4760cca`。Jobs `8974425/8974429/8974427/8974428`对应fold 0–3，均Exit 0、80 epochs、test exactly once与final verifier PASS；Fold 4 job `8974426`完成80 epochs后Exit 1，best checkpoint SHA-256=`e245f06f4d001a1450a35bdfd87dd053d0210bc8b5fc942194a6a6cd8e641a07`、epoch 44、validation `L_CEM=0.01906260764475392`均只读验证有效，但test rows在commit前触发`P7_TEST_STATE_MIXTURE_MISMATCH`。首次forward无committed predictions/metrics/evaluation，必须登记为`INVALIDATED_PRECOMMIT_TEST_ATTEMPT`；P7为`BLOCKED / AT_RISK`，P8保持`NOT_STARTED / AT_RISK`。 |
 
 ## 3. 当前阶段：P7 Mixed-type CEM Regression
 
@@ -82,15 +82,17 @@ last_verified_commit: 5c80991
 - Stage A保持H200、FP32、AMP/BF16/TF32关闭及deterministic warn-only；warnings仅为预期的CUDA avg/max pool deterministic warnings。Private artifacts SHA-256：overfit=`db5da096416abdde2108b2ffbaad7d819aa022e0e1e99c2596c8c9ec39c4197c`，preflight=`e1da08a883b72827a5b9dbae6fc34f674db39fb6e7c508a3718d175f4edd2ec9`，log=`d2c3103282ee2e071b61d66fab197f266edaea188d03f2e2e2de4714407dbc1c`。Actual Stage A Phase Compliance Reviewer为`PASS`。
 - Submission Phase Compliance Reviewer为`PASS`后，已通过同一`p7_fold.pbs`和`P7_FORMAL_APPROVED=1`一次性提交五折：fold0=`8974425`、fold1=`8974429`、fold2=`8974427`、fold3=`8974428`、fold4=`8974426`。
 - 五个jobs均为`Q`、queue=`csegpu100`，统一请求H200×1、`ncpus=8`、`mem=64gb`、`walltime=96h`，除fold index外配置一致；只存在唯一fold 0–4，无额外P7 job或任何P8作业。
-- 当前证据只证明提交与排队，尚无formal epoch、best checkpoint、test exactly once、final verify或OOF结果。
+- Fold 0–3 formal jobs均完成80 epochs、test exactly once与final verifier PASS；Fold 4 job完成80 epochs并封存best epoch 44 / validation `L_CEM=0.01906260764475392`，但首次test forward在落盘前触发`P7_TEST_STATE_MIXTURE_MISMATCH`并以Exit 1终止。
+- Fold 4 best checkpoint只读完整性检查PASS：file SHA-256=`e245f06f4d001a1450a35bdfd87dd053d0210bc8b5fc942194a6a6cd8e641a07`、schema=1、747 tensors全部finite、strict load与provenance完全一致；checkpoint与严格加载后model的semantic SHA-256均为`d10d8a3b01d87311a3c5992f717d0b6b6d85730d70b162ac9d94da8f7ceadfde`。
+- Fold 4现有`test_claim.json`与预期564-sample claim完全一致，SHA-256=`055125afba805186f3b1b282270cdd3ef56958255df4ae2942b1d3d4303bb091`；无`test_predictions.parquet`、`metrics.json`或`test_evaluation.json`。用户批准将该次未提交结果的forward记为`INVALIDATED_PRECOMMIT_TEST_ATTEMPT`，只允许受控修复与一次recovery inference，不允许重训、重新选择checkpoint或改变任何模型/训练策略。
 
 ### 正在进行
 
-- 只读监控五个H200 formal jobs；全部完成并验证后才构建private OOF与tracked aggregate audit。
+- `BUG-P7-001`受控维护：实现float32-consistent或明确容差的state-mixture verifier、匿名诊断字段及claim-recovery transaction；审计必须固定`total_test_forward_attempts=2`、`invalidated_attempts=1`、`valid_committed_test_evaluations=1`、`test_driven_model_changes=NONE`。
 
 ### 尚未完成
 
-- 五折formal jobs、各折test exactly once与final verify。
+- Fold 4受控recovery test、final verify；Fold 0–3保持完全不变。
 - Private OOF、tracked aggregate audit及2,633/868 reconciliation。
 - P7阶段级双agent审查、`AWAITING_USER_APPROVAL`门、用户最终确认、合并和推送。
 - P8计划与开发未开始。
@@ -104,11 +106,11 @@ last_verified_commit: 5c80991
 | P7-R2 dynamic sample-conditioned states | `PASS_STAGE_A` | Commit `65ff300`的core tests及H200 job `8973913`均验证sample-conditioned dynamic states；实现中无静态state table |
 | P7-R3 joint loss与batch-shared training intervention | `PASS_STAGE_A` | Local lifecycle及H200 true-batch-16 Stage A验证task/concept/total loss、RandInt intervention、backward和Adam；五折正式rate evidence仍待formal runs |
 | P7-R4 normalized/rating contribution reconstruction | `PASS_STAGE_A` | H200 Stage A predicted/intervened normalized最大误差=`2.98e-8/1.49e-8`，rating均=`1.192e-7`；正式五折artifact reconstruction仍待验证 |
-| H200 Stage A、五折OOF与双agent阶段门 | `FORMAL_QUEUED` | Stage A PASS；submission Phase Compliance PASS。Jobs `8974425/8974429/8974427/8974428/8974426`对应fold 0–4，当前均Q/csegpu100；尚无epoch/test/OOF结果 |
+| H200 Stage A、五折OOF与双agent阶段门 | `BLOCKED_BUG_P7_001` | Stage A PASS；fold 0–3均80 epochs/Exit 0/test exactly once/final verify PASS。Fold 4训练与best checkpoint有效，但precommit test verifier失败；受控recovery与五折OOF尚未完成 |
 
 ### 未解决困难
 
-- 当前无P7特有开放困难；`DIF-P10-001`继续开放但不阻止本地开发，P7完成后补充private storage实测。
+- `BUG-P7-001`阻止Fold 4 committed test与五折OOF；`DIF-P10-001`继续开放但不影响本次受控修复。
 
 ## 4. 下一阶段：P8 CBM + GAM
 
@@ -371,8 +373,8 @@ Bug 修复后：
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
-| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | Interfaces、KDM/remote integrity及H200 Stage A均PASS；五折formal已一次性提交，jobs `8974425/8974429/8974427/8974428/8974426`当前均Q/csegpu100，submission Phase Compliance PASS；尚无epoch/test/OOF结果 | 0 | 0 |
-| P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P7 | Mixed-type CEM | `BLOCKED` | `AT_RISK` | Fold 0–3 formal/test/final verify PASS；Fold 4 80-epoch training与best checkpoint有效，但`BUG-P7-001`阻止committed test、final verify与五折OOF | 1 | 0 |
+| P8 | CBM + GAM | `NOT_STARTED` | `AT_RISK` | 未执行；P7 recovery、OOF、阶段门和交付前禁止启动 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -380,11 +382,27 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前无活动 Bug。P5 与P6均为`COMPLETED / ON_TRACK`并已交付；P7当前为`NORMAL_DEVELOPMENT / IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前活动Bug为`BUG-P7-001`。P7处于`BUG_MAINTENANCE / BLOCKED / AT_RISK`；P8保持`NOT_STARTED / AT_RISK`且不得启动。P5与P6均为`COMPLETED / ON_TRACK`并已交付；`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
 `OPEN` → `INVESTIGATING` → `FIXING` → `VERIFYING` → `RESOLVED`
+
+### BUG-P7-001：Fold 4 precommit test state-mixture verifier false failure
+
+- 状态：`FIXING`
+- 严重度：`HIGH`
+- 发现日期：2026-08-12
+- 影响阶段：P7
+- 影响验收标准：是；P7 formal五折必须各自test exactly once、final verifier PASS并构建2,633/868 OOF。Fold 4 training与checkpoint选择有效，但尚无有效committed test evaluation。
+- 恢复阶段：P7
+- 受影响下游阶段：P8（保持`NOT_STARTED / AT_RISK`，不得启动）
+- 现象：Fold 4 job `8974426`完成80 epochs并封存epoch 44 / validation `L_CEM=0.01906260764475392`的best checkpoint；test forward产生in-memory rows后，verifier以NumPy float64从JSON states/activated weights重建mixed embedding，并与H200 PyTorch FP32生成的mixed embedding按`atol=1e-6, rtol=0`比较，触发`P7_TEST_STATE_MIXTURE_MISMATCH`。由于校验先于原子Parquet写入，未产生committed predictions/metrics/evaluation，job Exit 1。
+- 首次尝试审计结论：记为`INVALIDATED_PRECOMMIT_TEST_ATTEMPT`；没有committed predictions/metrics，未用于模型、超参数、checkpoint或训练策略调整。后续审计必须固定`total_test_forward_attempts=2`、`invalidated_attempts=1`、`valid_committed_test_evaluations=1`、`test_driven_model_changes=NONE`。
+- 只读诊断：best checkpoint file/provenance/schema/strict load与history/runtime均PASS；checkpoint file SHA-256=`e245f06f4d001a1450a35bdfd87dd053d0210bc8b5fc942194a6a6cd8e641a07`，semantic SHA-256=`d10d8a3b01d87311a3c5992f717d0b6b6d85730d70b162ac9d94da8f7ceadfde`。History精确80行，minimum epoch=44；test claim为564 samples且schema/provenance一致，但predictions/metrics/evaluation均不存在。
+- 根因边界：当前证据排除checkpoint保存、strict loader、split/config/provenance、dynamic generator/scorer schema及test intervention；错误位于serialized FP32 state-mixture的numeric reconstruction/verifier边界。旧异常没有记录匿名row/group/dimension/expected/actual/max error，具体越界元素无法由现有产物恢复。
+- 批准修复：仅允许修复verifier numeric policy、诊断logging和claim-recovery path；Fold 0–3不得变更，Fold 4不得重训或重新选择checkpoint。修复验证后仅可使用同一best checkpoint、split与configs执行一次明确授权的recovery test inference，并将其封存为唯一有效committed evaluation。
+- 验证与修复commit：待完成。
 
 ### BUG-P5-002：Verifier 对 CSV/JSON float round-trip 使用零容差比较
 
@@ -795,3 +813,4 @@ Bug 修复后：
 | 2026-08-12 | `REMOTE_STAGE_A_INPUT_READY` | P7 | Exact-whitelist KDM sync已成功，Katana login-node `verify-stage-a`为`PASS`。P6 base为9 files / `168,005` bytes，internal/file SHA-256=`5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`/`eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`；P7 delta为9 files / `132,046` bytes，internal/file SHA-256=`ee90076103ad2114ca80cd8af073fd610fab4f809d1318ea601a885c283194a3`/`da3ce06f67849f871055c28cd5a533011d76c9f1daa84b7fc3dac77d6d1d9ecc`，scientific/P7 config hashes匹配。尚未qsub Stage A、formal或OOF job，未生成actual audit；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | Remote integrity evidence；本次状态同步commit待创建 |
 | 2026-08-12 | `STAGE_A_PASS` | P7 | H200 job `8973913`在`k204` GPU 5以Exit 0完成，02:58:47–03:01:36、walltime 2:38、run count 1。Overfit最近5步loss均值`0.1014839470→0.00539595308`；true batch 16 forward/task+concept+intervention/backward/Adam、dynamic states及precision gates均PASS。Predicted/intervened normalized reconstruction=`2.98e-8/1.49e-8`，rating均=`1.192e-7`；peak reserved=`3.1556%`。仅有预期avg/max pool warn-only warnings；Phase Compliance Reviewer `PASS`。仅存在private Stage A artifacts，五折formal/OOF尚未提交；P7保持`IN_PROGRESS`，P8保持`NOT_STARTED`。 | Job `8973913`；overfit `db5da096...c4197c`；preflight `e1da08a8...d2ec9`；log `d2c31032...dbc1c`；本次状态同步commit待创建 |
 | 2026-08-12 | `FORMAL_FOLDS_QUEUED` | P7 | Submission Phase Compliance Reviewer `PASS`后，使用同一`p7_fold.pbs`与`P7_FORMAL_APPROVED=1`一次性提交唯一fold 0–4：`8974425→0`、`8974429→1`、`8974427→2`、`8974428→3`、`8974426→4`。五个jobs均Q/csegpu100，统一请求H200×1、8 CPU、64 GB、96h；无额外P7 job或P8。当前仅排队，尚无epoch、checkpoint、test或OOF结果；P7保持`IN_PROGRESS`，P8保持`NOT_STARTED`。 | Jobs `8974425`、`8974429`、`8974427`、`8974428`、`8974426`；本次状态同步commit待创建 |
+| 2026-08-12 | `FORMAL_PARTIAL_PASS` / `BUG_DISCOVERED` / `RECOVERY_APPROVED` | P7 | Fold 0–3均完成80 epochs、Exit 0、test exactly once与final verifier PASS。Fold 4完成80 epochs并封存epoch 44 / validation `L_CEM=0.01906260764475392`的有效best checkpoint，但首次test forward在predictions落盘前因`P7_TEST_STATE_MIXTURE_MISMATCH`失败，job `8974426` Exit 1。用户批准登记`BUG-P7-001`并将首次未提交attempt标为`INVALIDATED_PRECOMMIT_TEST_ATTEMPT`；仅允许修复verifier/numeric reconstruction/diagnostic logging/claim-recovery并使用同一checkpoint执行一次授权recovery。Fold 0–3不得变化，Fold 4不得重训，P8保持`NOT_STARTED / AT_RISK`。 | Fold 4 best SHA `e245f06f...641a07`；test claim `055125af...091`；用户批准的受控recovery边界 |
