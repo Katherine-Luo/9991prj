@@ -1,0 +1,228 @@
+{
+  "best_epoch_index_by_fold": [
+    28,
+    21,
+    18,
+    15,
+    44
+  ],
+  "best_validation_total_loss_by_fold": [
+    0.020201367669300557,
+    0.0261302709102101,
+    0.023107624625428716,
+    0.022378616393079837,
+    0.01906260764475392
+  ],
+  "combined_cem_initialization_sha256_by_fold": [
+    "994c73d75e5e0032e5b799c64c0e6a06a16ec95a80af2db6b3209c069a124e71",
+    "7dee8c0e4004746da54af64680e8258c3f6b094a3e69b0308b00cf6672a61db7",
+    "1980764ebe6a97309f3ea22ed73a54b201fdfc8c11b5dcb86b6fcb1652c38e98",
+    "b1cb9a23c144894dd6835f76902ca059139209246943627dbf45fe9c33181fe5",
+    "d481f0837bb8c7e316a657e7410f6fc064b412ed592f168f4f357039c6b83718"
+  ],
+  "encoder_initialization_sha256_by_fold": [
+    "d7fa4604dfaa1ebee6d8653f70b9d3e97266dbbdbb0eed573a7b43cd8a12948e",
+    "c7a43fc72e50637ce6b918ec540301a4f59b69636f8b6f9d0810baaa89d4dd8e",
+    "ce78050e766b9d84333979f33833037407061529c449d41ecabfb672f4e31149",
+    "83d07375d8a470123f105d6d885b025da65024db48dca96aa4303dd92460c481",
+    "5d83267c5e8a3e89368d160f1a2ce46a387ca28cb2f6061c4bc55ffaca4afdf9"
+  ],
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "fold_test_counts": [
+    479,
+    502,
+    539,
+    549,
+    564
+  ],
+  "folds": 5,
+  "intervention_rates_by_fold": [
+    {
+      "decision_rates": {
+        "calcification": 0.2518008474576271,
+        "internalStructure": 0.25010593220338984,
+        "lobulation": 0.24819915254237288,
+        "margin": 0.24851694915254238,
+        "sphericity": 0.25010593220338984,
+        "spiculation": 0.2475635593220339,
+        "subtlety": 0.24947033898305085,
+        "texture": 0.24735169491525424
+      },
+      "overall_decision_rate": 0.24913930084745764,
+      "overall_sample_weighted_rate": 0.24910666843783208,
+      "sample_weighted_rates": {
+        "calcification": 0.2516471838469713,
+        "internalStructure": 0.2500265674814028,
+        "lobulation": 0.24795430393198725,
+        "margin": 0.24879117959617428,
+        "sphericity": 0.24990701381509034,
+        "spiculation": 0.2475557917109458,
+        "subtlety": 0.2493490967056323,
+        "texture": 0.2476222104144527
+      }
+    },
+    {
+      "decision_rates": {
+        "calcification": 0.2533119658119658,
+        "internalStructure": 0.25235042735042734,
+        "lobulation": 0.2467948717948718,
+        "margin": 0.2537393162393162,
+        "sphericity": 0.25405982905982905,
+        "spiculation": 0.25085470085470085,
+        "subtlety": 0.2455128205128205,
+        "texture": 0.24807692307692308
+      },
+      "overall_decision_rate": 0.25058760683760684,
+      "overall_sample_weighted_rate": 0.25045075349838536,
+      "sample_weighted_rates": {
+        "calcification": 0.2531485468245425,
+        "internalStructure": 0.25152045209903123,
+        "lobulation": 0.24677072120559743,
+        "margin": 0.25405005382131324,
+        "sphericity": 0.253713670613563,
+        "spiculation": 0.2506727664155005,
+        "subtlety": 0.2454790096878364,
+        "texture": 0.2482508073196986
+      }
+    },
+    {
+      "decision_rates": {
+        "calcification": 0.2535560344827586,
+        "internalStructure": 0.2480603448275862,
+        "lobulation": 0.2427801724137931,
+        "margin": 0.2535560344827586,
+        "sphericity": 0.25280172413793106,
+        "spiculation": 0.2433189655172414,
+        "subtlety": 0.2482758620689655,
+        "texture": 0.25668103448275864
+      },
+      "overall_decision_rate": 0.2498787715517241,
+      "overall_sample_weighted_rate": 0.2498760456017269,
+      "sample_weighted_rates": {
+        "calcification": 0.2535617916891527,
+        "internalStructure": 0.24801672962763086,
+        "lobulation": 0.24278872099298435,
+        "margin": 0.25344036697247707,
+        "sphericity": 0.2529074473826228,
+        "spiculation": 0.24324743658931464,
+        "subtlety": 0.24831354560172694,
+        "texture": 0.25673232595790607
+      }
+    },
+    {
+      "decision_rates": {
+        "calcification": 0.25219298245614036,
+        "internalStructure": 0.25296052631578947,
+        "lobulation": 0.24649122807017543,
+        "margin": 0.24802631578947368,
+        "sphericity": 0.25800438596491226,
+        "spiculation": 0.24890350877192982,
+        "subtlety": 0.2618421052631579,
+        "texture": 0.25570175438596493
+      },
+      "overall_decision_rate": 0.25301535087719296,
+      "overall_sample_weighted_rate": 0.2530620863210149,
+      "sample_weighted_rates": {
+        "calcification": 0.25182708218422506,
+        "internalStructure": 0.25320601213458355,
+        "lobulation": 0.2469249862107005,
+        "margin": 0.24862107004964148,
+        "sphericity": 0.2580529509100938,
+        "spiculation": 0.2485176503033646,
+        "subtlety": 0.2621414782129068,
+        "texture": 0.2552054605626034
+      }
+    },
+    {
+      "decision_rates": {
+        "calcification": 0.24561403508771928,
+        "internalStructure": 0.2442982456140351,
+        "lobulation": 0.24879385964912282,
+        "margin": 0.2493421052631579,
+        "sphericity": 0.256359649122807,
+        "spiculation": 0.25219298245614036,
+        "subtlety": 0.25548245614035087,
+        "texture": 0.2481359649122807
+      },
+      "overall_decision_rate": 0.25002741228070174,
+      "overall_sample_weighted_rate": 0.2500612575924903,
+      "sample_weighted_rates": {
+        "calcification": 0.2457620099392601,
+        "internalStructure": 0.24407785753727224,
+        "lobulation": 0.24851601325234676,
+        "margin": 0.24933738266151298,
+        "sphericity": 0.2558669243511872,
+        "spiculation": 0.25229845389287686,
+        "subtlety": 0.255611540585312,
+        "texture": 0.24901987852015461
+      }
+    }
+  ],
+  "invalidated_attempts_by_fold": [
+    0,
+    0,
+    0,
+    0,
+    1
+  ],
+  "method_label": "A project-specific mixed-type extension of the original CEM.",
+  "model": "mixed_type_cem",
+  "oof_nodules": 2633,
+  "oof_patients": 868,
+  "oof_predictions_sha256": "a42350e63908b2fa8fdfdd5c952428efe60f1ae5d6dbeccfe531f0ce121b996f",
+  "oof_unique_nodules": 2633,
+  "p7_execution_config_sha256": "60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c",
+  "patient_leakage": 0,
+  "pooled_contribution_reconstruction": {
+    "bias_scale_max_absolute_error": 5.960464477539063e-08,
+    "contribution_scale_max_absolute_error": 0.0,
+    "normalized_max_absolute_error": 9.872019290924072e-08,
+    "rating_scale_max_absolute_error": 4.917383193969727e-07
+  },
+  "pooled_oof_task_metrics": {
+    "normalized_mae": 0.12103491232382986,
+    "normalized_rmse": 0.1570851310776033,
+    "original_scale_mae": 0.48413964929531944,
+    "original_scale_rmse": 0.6283405243104132,
+    "pearson": 0.7296343128723418,
+    "prediction_above_1_rate": 0.0,
+    "prediction_above_5_on_original_scale_rate": 0.0,
+    "prediction_below_0_rate": 0.004177744018230156,
+    "prediction_below_1_on_original_scale_rate": 0.004177744018230156,
+    "prediction_max": 0.9837640523910522,
+    "prediction_min": -0.04427418112754822,
+    "samples": 2633,
+    "spearman": 0.6399537566979854
+  },
+  "private_run_storage": {
+    "file_count": 50,
+    "total_bytes": 1425996600
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256_by_fold": [
+    "543ec76c07f9113ba84130f2cf4caace4f217e114052066dc2eb25859be61833",
+    "d4f204e1411cecfad11b94adf6f4eb328aaad12c18f37e5fe74a38d8aedeacb7",
+    "722791eb9443b7718f63f70b5f4294e8609e3d8cbc1593cce79cd531f8bbf124",
+    "eb27e847838281af43ad6a1683ef3e0e5cacad26e8602291968f68b196e2e44f",
+    "f6ac19b39f892e1fedd432aa3d6f2efc943d519fe6d7df27e0d975682725b6bb"
+  ],
+  "status": "PASS",
+  "test_driven_model_changes": "NONE",
+  "test_evaluated_once_all_folds": true,
+  "total_test_forward_attempts_by_fold": [
+    1,
+    1,
+    1,
+    1,
+    2
+  ],
+  "valid_committed_test_evaluations_by_fold": [
+    1,
+    1,
+    1,
+    1,
+    1
+  ]
+}

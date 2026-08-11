@@ -1,0 +1,76 @@
+{
+  "best_checkpoint_sha256": "e245f06f4d001a1450a35bdfd87dd053d0210bc8b5fc942194a6a6cd8e641a07",
+  "best_epoch_index": 44,
+  "best_validation_total_loss": 0.01906260764475392,
+  "combined_cem_initialization_sha256": "d481f0837bb8c7e316a657e7410f6fc064b412ed592f168f4f357039c6b83718",
+  "contribution_reconstruction": {
+    "bias_scale_max_absolute_error": 2.9802322387695312e-08,
+    "contribution_scale_max_absolute_error": 0.0,
+    "normalized_max_absolute_error": 9.778887033462524e-08,
+    "rating_scale_max_absolute_error": 3.725290298461914e-07
+  },
+  "encoder_initialization_sha256": "5d83267c5e8a3e89368d160f1a2ce46a387ca28cb2f6061c4bc55ffaca4afdf9",
+  "epochs": 80,
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "fold_index": 4,
+  "intervention_rates": {
+    "decision_rates": {
+      "calcification": 0.24561403508771928,
+      "internalStructure": 0.2442982456140351,
+      "lobulation": 0.24879385964912282,
+      "margin": 0.2493421052631579,
+      "sphericity": 0.256359649122807,
+      "spiculation": 0.25219298245614036,
+      "subtlety": 0.25548245614035087,
+      "texture": 0.2481359649122807
+    },
+    "overall_decision_rate": 0.25002741228070174,
+    "overall_sample_weighted_rate": 0.2500612575924903,
+    "sample_weighted_rates": {
+      "calcification": 0.2457620099392601,
+      "internalStructure": 0.24407785753727224,
+      "lobulation": 0.24851601325234676,
+      "margin": 0.24933738266151298,
+      "sphericity": 0.2558669243511872,
+      "spiculation": 0.25229845389287686,
+      "subtlety": 0.255611540585312,
+      "texture": 0.24901987852015461
+    }
+  },
+  "invalidated_attempts": 1,
+  "method_label": "A project-specific mixed-type extension of the original CEM.",
+  "model": "mixed_type_cem",
+  "p7_execution_config_sha256": "60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c",
+  "private_run_storage": {
+    "file_count": 12,
+    "total_bytes": 285539021
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256": "f6ac19b39f892e1fedd432aa3d6f2efc943d519fe6d7df27e0d975682725b6bb",
+  "status": "PASS",
+  "task_metrics": {
+    "normalized_mae": 0.12001131284303838,
+    "normalized_rmse": 0.156416524875942,
+    "original_scale_mae": 0.48004525137215354,
+    "original_scale_rmse": 0.625666099503768,
+    "pearson": 0.683544274063926,
+    "prediction_above_1_rate": 0.0,
+    "prediction_above_5_on_original_scale_rate": 0.0,
+    "prediction_below_0_rate": 0.0,
+    "prediction_below_1_on_original_scale_rate": 0.0,
+    "prediction_max": 0.9837640523910522,
+    "prediction_min": 0.003125317394733429,
+    "samples": 564,
+    "spearman": 0.5675299404077538
+  },
+  "test_driven_model_changes": "NONE",
+  "test_evaluated_once": true,
+  "test_evaluation_sha256": "b2749bc972911ef6eb19fefa96f53823e2af1768e23b39d4393a76227fee3ed0",
+  "test_predictions_sha256": "43245258a11e08b3ab77360326806ec1df2112818977a3cc8482bf93bd0ec95c",
+  "test_samples": 564,
+  "total_test_forward_attempts": 2,
+  "train_samples_per_epoch": 1811,
+  "valid_committed_test_evaluations": 1
+}
