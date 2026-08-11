@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P5
 next_phase: P6
 last_updated: 2026-08-11
-last_verified_commit: 38fca8b
+last_verified_commit: f09acbb
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 38fca8b
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无。`BUG-P5-001` 已修复并通过 H200 Stage A 回归验证；用户已明确批准恢复 P5。下一步仅可启动 formal Fold 0；folds 1–4 与 P6 均未获授权。 |
+| 当前阻塞项 | 无协议或实现阻塞。`BUG-P5-001` 已修复并通过 H200 Stage A 回归验证；用户已明确批准恢复 P5。formal Fold 0 job `8965243.kman.restech.unsw.edu.au` 已提交并在 `csegpu48` 队列等待 H200 资源；folds 1–4 与 P6 均未获授权。 |
 | 恢复阶段 | `P5` |
 | 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 anchors 截至 `38fca8b` 均仅位于本地分支、尚未推送。旧 strict H200 job `8964634` 在 `k205` 上以 Exit 1 结束；warn-only remediation 的 resolved SHA-256 为 `66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb`，P5 transfer manifest 为 7 files / `94,596` bytes，SHA-256 `fa1acbe51a3e15a0c78212c4ce7c6365dbde318959bfc249e5f76b4a0dc3c36b`。重跑 job `8965003` 已在 `k220` 的 NVIDIA H200 GPU 2 完成（`Exit_status=0`）：8 samples/40 steps overfit MSE 从 `0.1297724843` 降至 `0.0642339364`；true batch 16 forward/MSE/backward/Adam step 均为 true；peak reserved 为 `2,860,515,328 / 150,393,585,664 bytes = 1.9020%`，低于 85% 门槛。运行按预期记录 AvgPool3d 与 MaxPool3d 非确定性 warn-only warnings。BUG 修复的 Phase Compliance Reviewer 为 `PASS`，用户已明确批准继续；冻结 V1/V2 requirements/config 无 diff，formal Fold 0 尚未启动，P6 未开始。 |
+| 状态依据 | `main` 与 `origin/main` 为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 anchors 截至 `f09acbb` 均仅位于本地分支、尚未推送。旧 strict H200 job `8964634` 在 `k205` 上以 Exit 1 结束；warn-only remediation 的 resolved SHA-256 为 `66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb`，P5 transfer manifest 为 7 files / `94,596` bytes，SHA-256 `fa1acbe51a3e15a0c78212c4ce7c6365dbde318959bfc249e5f76b4a0dc3c36b`。重跑 job `8965003` 已在 `k220` 的 NVIDIA H200 GPU 2 完成（`Exit_status=0`）：8 samples/40 steps overfit MSE 从 `0.1297724843` 降至 `0.0642339364`；true batch 16 forward/MSE/backward/Adam step 均为 true；peak reserved 为 `2,860,515,328 / 150,393,585,664 bytes = 1.9020%`，低于 85% 门槛。运行按预期记录 AvgPool3d 与 MaxPool3d 非确定性 warn-only warnings。BUG 修复的 Phase Compliance Reviewer 为 `PASS`，用户已明确批准继续；冻结 V1/V2 requirements/config 无 diff。formal Fold 0 job `8965243.kman.restech.unsw.edu.au` 当前为 `Q`，显式请求 `csegpu48`、`ngpus=1`、`gpu_model=H200`、`cpu_per_gpu_gte_8=1`、`mem=46gb` 和 `walltime=48:00:00`；尚未开始训练或 test，P6 未开始。 |
 
 ## 3. 当前阶段：P5 Reference-aligned Black-box Regression
 
@@ -71,14 +71,15 @@ last_verified_commit: 38fca8b
 - H200 private transfer manifest 已验证并完成 KDM sync：P4 immutable base 保持不变，H200 P5 delta 为 7 files / `92,118` bytes；transfer manifest SHA-256 为 `d15f5f95f67983f4e51e7a1a0275611b7d786f8eee62e3c171644a78510e83a0`，remote integrity verify 为 `PASS`。旧 L40S job `8964315.kman.restech.unsw.edu.au` 已在 `Q` 状态取消且未运行；新 H200 job `8964634.kman.restech.unsw.edu.au` 后续已启动并以 Exit 1 失败，详见 `BUG-P5-001`。
 - 已实现 P5 aggregate audit batch：成功完成 formal fold 后，`p5_audit.py` 将验证 private run、one-time test、profile-bound formal provenance、CUDA H200 runtime 和纯 FP32 invariants（AMP/BF16/CUDA matmul TF32/cuDNN TF32 均关闭），再使用与真实 Stage A outputs 兼容的独立 provenance schema 验证 overfit/preflight 证据，最后生成脱敏 tracked fold JSON。Audit implementation 与 tests 已由 `dff1356` 本地提交，H200 amendment 已由 `c5ee485` 本地提交；Stage A runtime evidence 已产生，但 formal Fold 0 尚未完成，因此当前没有 tracked P5 fold audit artifact。
 - H200 job `8964634` 已实际获得 `k205` NVIDIA H200 并开始执行；queue wait `eligible_time=00:04:16`，remote integrity 再次为 `PASS`。Overfit backward 随后因 `avg_pool3d_backward_cuda` 缺少 deterministic implementation 而失败，job `Exit_status=1`；因此已确认硬件分配、数据完整性和远程工作集不是本次失败原因。重跑 job `8965003` 随后在 `k220` 的 NVIDIA H200 GPU 2 成功完成（Exit 0）；它通过 8-sample/40-step overfit 和 true-batch-16 forward/MSE/backward/Adam preflight，未启动 formal Fold 0。
+- 用户在 Stage A 通过后明确批准继续 P5；唯一获授权的 formal Fold 0 job `8965243.kman.restech.unsw.edu.au` 已提交。只读 `qstat -fx` 于 2026-08-11 记录其为 `Q`，队列为 `csegpu48`，请求 `ngpus=1`、`gpu_model=H200`、`cpu_per_gpu_gte_8=1`、`mem=46gb` 和 `walltime=48:00:00`。该 job 尚未获得节点，尚未开始 80 epochs 训练、best-checkpoint 固定或 test evaluation。
 
 ### 正在进行
 
-- `BUG-P5-001` 已关闭，P5 已恢复 `NORMAL_DEVELOPMENT`。用户当前只授权启动 formal Fold 0 的 80-epoch run、best-checkpoint 固定、一次性 test evaluation 与其 private audit；formal Fold 0 尚未启动。
+- `BUG-P5-001` 已关闭，P5 已恢复 `NORMAL_DEVELOPMENT`。用户当前只授权 formal Fold 0 的 80-epoch run、best-checkpoint 固定、一次性 test evaluation 与其 private audit；job `8965243.kman.restech.unsw.edu.au` 已在 `csegpu48` 队列提交并等待 H200 资源，尚未启动。
 
 ### 尚未完成
 
-- Formal Fold 0 80-epoch run、一次性 test evaluation 和 tracked fold audit 均未启动。
+- Formal Fold 0 80-epoch run、一次性 test evaluation 和 tracked fold audit 均未完成；job `8965243.kman.restech.unsw.edu.au` 当前为 `Q`，尚未开始。
 - Fold 0 技术门通过后仍须等待用户中间确认；未经确认不得提交 folds 1–4 jobs。
 - Folds 1–4、五折 OOF reconciliation、P5 阶段双审查、最终用户确认、合并与推送均尚未完成。
 
@@ -92,7 +93,7 @@ last_verified_commit: 38fca8b
 | H200 Katana Stage A transfer/PBS interfaces | `PASS` | 旧 strict-profile delta（7 files / `92,118` bytes，manifest `d15f5f95...e83a0`）的 KDM sync/remote verify 为 `PASS`，但该 profile 已不能驱动修复后的 Stage A。新 warn-only delta（manifest `fa1acbe5...c3c36b`）已完成 KDM sync 与 remote re-verify `PASS`；job `8965003` 显式请求 H200，并已在 `k220` GPU 2 以 Exit 0 完成 |
 | P5 aggregate audit implementation | `PASS` | 本地未推送 commit `11658ab` 将 Formal 与 Stage A 的 real-compatible provenance schemas 扩展为记录 `torch_use_deterministic_algorithms=true` 和 `deterministic_algorithms_warn_only=true`。Stage A runtime evidence 已产生；formal Fold 0 audit artifact 尚未产生 |
 | Fold 0 train-only overfit 与 H200 batch-16 preflight | `PASS` | Job `8964634` 在 `k205` H200 上因旧 strict profile Exit 1；warn-only job `8965003` 已在 `k220` GPU 2 以 Exit 0 完成。8 samples/40 steps overfit MSE 从 `0.1297724843` 降至 `0.0642339364`；true batch 16 forward/MSE/backward/Adam 均通过；peak reserved `2,860,515,328 / 150,393,585,664 bytes = 1.9020%`，低于 85% 门槛。运行发出预期的 AvgPool3d 与 MaxPool3d warn-only warnings |
-| Fold 0 formal 80 epochs、best checkpoint 与一次性 test | `PENDING` | 尚未执行；完成后必须等待用户中间确认 |
+| Fold 0 formal 80 epochs、best checkpoint 与一次性 test | `QUEUED` | job `8965243.kman.restech.unsw.edu.au` 当前在 `csegpu48` 等待 H200；尚未开始训练、checkpoint 固定或 test。完成后必须等待用户中间确认 |
 | Folds 1–4 与 2,633 OOF reconciliation | `PENDING` | Fold 0 获用户确认前禁止开始 |
 | 冻结协议保护、双 agent 审查与阶段治理 | `PASS` | `BUG-P5-001` 已按修复、H200 Stage A 回归、Phase Compliance Reviewer、Status Synchronization Reviewer 和用户明确确认的顺序关闭；冻结 V1/V2 requirements/config 未改。P5 恢复正常开发，只授权 formal Fold 0；folds 1–4 与 P6 未获授权 |
 
@@ -285,7 +286,7 @@ Bug 修复后：
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
-| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | `BUG-P5-001` 已修复并通过 H200 Stage A；用户当前只授权 formal Fold 0，tracked audit 尚未产生 | 0 | 0 |
+| P5 | Black-box DenseNet regression | `IN_PROGRESS` | `ON_TRACK` | `BUG-P5-001` 已修复并通过 H200 Stage A；唯一获授权的 formal Fold 0 job `8965243` 正在 `csegpu48` 等待 H200，tracked audit 尚未产生；folds 1–4 与 P6 未获授权 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 全部五折、阶段验收、用户确认与交付前禁止开始 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -624,3 +625,4 @@ Bug 修复后：
 | 2026-08-11 | `BUG_RETRY_QUEUED` | P5 | warn-only profile 的 KDM sync 与新的 remote integrity verify 均为 `PASS`；重跑 H200 Stage A job `8965003.kman.restech.unsw.edu.au` 已提交，显式请求 `gpu_model=H200`。当前 job 为 `Q`，scheduler comment 为 `Insufficient amount of resource: ngpus`，estimated start 为 2026-08-11 10:48:47；尚未执行 overfit、preflight 或 Fold 0，P5 继续 `BLOCKED`、P6 保持 `NOT_STARTED`。 | Katana job `8965003` |
 | 2026-08-11 | `BUG_STAGE_A_PASS` / `BUG_VERIFYING` | P5 | H200 Stage A job `8965003.kman.restech.unsw.edu.au` 在 `k220` NVIDIA H200 GPU 2 以 `Exit_status=0` 完成；8 samples/40 steps overfit MSE 从 `0.1297724843` 降至 `0.0642339364`，true batch 16 forward/MSE/backward/Adam step 均通过，peak reserved 为 `2,860,515,328 / 150,393,585,664 bytes = 1.9020%`（低于 85%）。运行记录预期的 AvgPool3d 与 MaxPool3d warn-only warnings。P5 不再因 Stage A 技术阻断，但继续 `BUG_MAINTENANCE / VERIFYING`；完成合规复审并向用户报告确认前禁止启动 formal Fold 0，P6 保持 `NOT_STARTED`。冻结 V1/V2 requirements/config 未修改。 | Katana job `8965003` |
 | 2026-08-11 | `BUG_RESOLVED` / `P5_RESUMED` | P5 | `BUG-P5-001` 的 warn-only remediation、H200 Stage A 回归与 Bug 修复 Phase Compliance Reviewer 均为 `PASS`；用户明确批准恢复 P5。状态恢复为 `NORMAL_DEVELOPMENT / CURRENT_AND_NEXT`，P5 为 `IN_PROGRESS / ON_TRACK`，仅授权启动 formal Fold 0。folds 1–4 与 P6 仍未获授权，冻结 V1/V2 requirements/config 未修改。 | `11658ab`（local, unpushed）；Katana job `8965003`；用户确认 |
+| 2026-08-11 | `FORMAL_FOLD0_QUEUED` | P5 | 用户批准继续 P5 后，唯一获授权的 formal Fold 0 job `8965243.kman.restech.unsw.edu.au` 已提交。只读核验显示其为 `Q`，队列 `csegpu48`，显式请求一张 H200（`ngpus=1`、`gpu_model=H200`、`cpu_per_gpu_gte_8=1`、`mem=46gb`、`walltime=48:00:00`）。尚未开始训练、best checkpoint 或 test；folds 1–4 与 P6 继续禁止。 | Katana `qstat -fx 8965243` |
