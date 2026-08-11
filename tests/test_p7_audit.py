@@ -107,6 +107,10 @@ def test_p7_build_oof_materializes_private_and_deidentified_outputs(
             "test_evaluated_once": True,
             "test_samples": 2,
             "intervention_rates": {"overall_decision_rate": 0.25},
+            "total_test_forward_attempts": 2 if fold == 4 else 1,
+            "invalidated_attempts": 1 if fold == 4 else 0,
+            "valid_committed_test_evaluations": 1,
+            "test_driven_model_changes": "NONE",
         }
         for fold in range(5)
     ]
@@ -137,6 +141,10 @@ def test_p7_build_oof_materializes_private_and_deidentified_outputs(
     assert report["oof_nodules"] == 10
     assert report["patient_leakage"] == 0
     assert report["test_evaluated_once_all_folds"] is True
+    assert report["total_test_forward_attempts_by_fold"] == [1, 1, 1, 1, 2]
+    assert report["invalidated_attempts_by_fold"] == [0, 0, 0, 0, 1]
+    assert report["valid_committed_test_evaluations_by_fold"] == [1] * 5
+    assert report["test_driven_model_changes"] == "NONE"
     assert len(pd.read_parquet(oof_path)) == 10
     tracked = "".join(
         path.read_text(encoding="utf-8") for path in audit_root.glob("*.json")

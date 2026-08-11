@@ -81,6 +81,18 @@ CONTINUOUS_SCORER_SEED_DOMAIN = "Baseline-v2/P7/mixed-cem-continuous-scorer"
 CATEGORICAL_SCORER_SEED_DOMAIN = "Baseline-v2/P7/mixed-cem-categorical-scorer"
 TASK_HEAD_SEED_DOMAIN = "Baseline-v2/P7/mixed-cem-task-head"
 INTERVENTION_SCHEMA_VERSION = 1
+STATE_MIXTURE_NUMERIC_SCHEMA = "fp32_serialized_weighted_sum_v1"
+STATE_MIXTURE_ABSOLUTE_FLOOR = 1e-6
+STATE_MIXTURE_FLOAT32_OPERATION_FACTOR = 16.0
+RECOVERY_BUG_ID = "BUG-P7-001"
+RECOVERY_INVALIDATED_STATUS = "INVALIDATED_PRECOMMIT_TEST_ATTEMPT"
+RECOVERY_MODEL_CHANGE_STATUS = "NONE"
+RECOVERY_APPROVED_BEST_CHECKPOINT_SHA256 = (
+    "e245f06f4d001a1450a35bdfd87dd053d0210bc8b5fc942194a6a6cd8e641a07"
+)
+RECOVERY_APPROVED_ORIGINAL_CLAIM_SHA256 = (
+    "055125afba805186f3b1b282270cdd3ef56958255df4ae2942b1d3d4303bb091"
+)
 
 
 def _torch() -> Any:
@@ -1221,12 +1233,60 @@ def _distribution_has_modal_tie(distribution: np.ndarray) -> bool:
     )
 
 
+def _state_mixture_diagnostic(
+    mixed: np.ndarray,
+    activated: np.ndarray,
+    states: np.ndarray,
+    *,
+    group: str,
+    anonymous_row_index: int,
+) -> dict[str, Any]:
+    """Validate serialized FP32 mixture values with an explicit roundoff budget."""
+    size = CONCEPT_OUTPUT_SIZES[group]
+    if group in CATEGORICAL_CONCEPTS:
+        products = activated.reshape(size, 1) * states.reshape(size, EMBEDDING_SIZE)
+    else:
+        reshaped_states = states.reshape(CONTINUOUS_STATE_COUNT, EMBEDDING_SIZE)
+        products = np.stack(
+            (
+                (1.0 - activated[0]) * reshaped_states[0],
+                activated[0] * reshaped_states[1],
+            )
+        )
+    expected = products.sum(axis=0, dtype=np.float64)
+    absolute_error = np.abs(mixed - expected)
+    magnitude = np.maximum(np.abs(products).sum(axis=0), 1.0)
+    allowed = (
+        STATE_MIXTURE_ABSOLUTE_FLOOR
+        + STATE_MIXTURE_FLOAT32_OPERATION_FACTOR
+        * np.finfo(np.float32).eps
+        * magnitude
+    )
+    maximum_index = int(np.argmax(absolute_error))
+    report = {
+        "schema": STATE_MIXTURE_NUMERIC_SCHEMA,
+        "anonymous_row_index": int(anonymous_row_index),
+        "group": group,
+        "dimension_index": maximum_index,
+        "expected_value": float(expected[maximum_index]),
+        "actual_value": float(mixed[maximum_index]),
+        "maximum_absolute_error": float(absolute_error[maximum_index]),
+        "allowed_absolute_error": float(allowed[maximum_index]),
+    }
+    if np.any(absolute_error > allowed):
+        raise ValueError(
+            "P7_TEST_STATE_MIXTURE_MISMATCH:"
+            + canonical_json_bytes(report).decode("utf-8")
+        )
+    return report
+
+
 def _validate_test_predictions(
     frame: pd.DataFrame,
     records: Sequence[ConceptRecord],
     row_provenance: Mapping[str, Any],
     model: Any | None = None,
-) -> None:
+) -> dict[str, Any]:
     expected = {record.nodule_uid: record for record in records}
     required = {
         "nodule_uid",
@@ -1277,7 +1337,9 @@ def _validate_test_predictions(
         if model is not None
         else None
     )
-    for uid, record in expected.items():
+    maximum_mixture_error = 0.0
+    maximum_allowed_mixture_error = 0.0
+    for anonymous_row_index, (uid, record) in enumerate(expected.items()):
         row = by_uid.loc[uid]
         if str(row["patient_key"]) != record.patient_key:
             raise ValueError("P7_TEST_PATIENT_KEY_MISMATCH")
@@ -1379,20 +1441,25 @@ def _validate_test_predictions(
                 expected_activation = np.exp(shifted) / np.exp(shifted).sum()
                 if not np.allclose(activated, expected_activation, atol=1e-6, rtol=0.0):
                     raise ValueError("P7_TEST_LOGIT_ACTIVATION_MISMATCH")
-                expected_mixed = (
-                    activated.reshape(size, 1) * states.reshape(size, 16)
-                ).sum(axis=0)
             else:
                 expected_activation = 1.0 / (1.0 + np.exp(-logits))
                 if not np.allclose(activated, expected_activation, atol=1e-6, rtol=0.0):
                     raise ValueError("P7_TEST_LOGIT_ACTIVATION_MISMATCH")
-                reshaped_states = states.reshape(2, 16)
-                expected_mixed = (
-                    (1.0 - activated[0]) * reshaped_states[0]
-                    + activated[0] * reshaped_states[1]
-                )
-            if not np.allclose(mixed, expected_mixed, atol=1e-6, rtol=0.0):
-                raise ValueError("P7_TEST_STATE_MIXTURE_MISMATCH")
+            mixture_diagnostic = _state_mixture_diagnostic(
+                mixed,
+                activated,
+                states,
+                group=group,
+                anonymous_row_index=anonymous_row_index,
+            )
+            maximum_mixture_error = max(
+                maximum_mixture_error,
+                float(mixture_diagnostic["maximum_absolute_error"]),
+            )
+            maximum_allowed_mixture_error = max(
+                maximum_allowed_mixture_error,
+                float(mixture_diagnostic["allowed_absolute_error"]),
+            )
             raw_contribution = float(row[f"{group}_raw_contribution"])
             rating_contribution = float(row[f"{group}_rating_contribution"])
             if not math.isclose(
@@ -1437,6 +1504,11 @@ def _validate_test_predictions(
             rating_sum, 1.0 + 4.0 * raw, rel_tol=0.0, abs_tol=1e-6
         ):
             raise ValueError("P7_TEST_RATING_RECONSTRUCTION_MISMATCH")
+    return {
+        "state_mixture_numeric_schema": STATE_MIXTURE_NUMERIC_SCHEMA,
+        "state_mixture_maximum_absolute_error": maximum_mixture_error,
+        "state_mixture_maximum_allowed_absolute_error": maximum_allowed_mixture_error,
+    }
 
 
 def _validate_evaluation_artifacts(
@@ -1470,14 +1542,129 @@ def _validate_evaluation_artifacts(
     if evaluation.get("metrics_sha256") != sha256_file(metrics_path):
         raise ValueError("P7_TEST_METRICS_HASH_MISMATCH")
     frame = pd.read_parquet(predictions_path)
-    _validate_test_predictions(frame, records, row_provenance, model)
+    mixture_diagnostics = _validate_test_predictions(
+        frame, records, row_provenance, model
+    )
     if int(evaluation.get("test_samples", -1)) != len(frame):
         raise ValueError("P7_TEST_EVALUATION_SAMPLE_COUNT_MISMATCH")
     metrics = regression_metrics(frame.to_dict("records"))
     stored_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
     if metrics != stored_metrics:
         raise ValueError("P7_TEST_METRICS_MISMATCH")
+    recovery_audit_name = evaluation.get("recovery_attempt_audit")
+    if recovery_audit_name is None:
+        expected_attempts = {
+            "total_test_forward_attempts": 1,
+            "invalidated_attempts": 0,
+            "valid_committed_test_evaluations": 1,
+            "test_driven_model_changes": RECOVERY_MODEL_CHANGE_STATUS,
+        }
+    else:
+        if recovery_audit_name != "test_attempt_audit.json":
+            raise ValueError("P7_TEST_RECOVERY_AUDIT_NAME_MISMATCH")
+        audit_path = output / str(recovery_audit_name)
+        if evaluation.get("recovery_attempt_audit_sha256") != sha256_file(audit_path):
+            raise ValueError("P7_TEST_RECOVERY_AUDIT_HASH_MISMATCH")
+        audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        expected_audit = {
+            "schema_version": SCHEMA_VERSION,
+            "bug_id": RECOVERY_BUG_ID,
+            "fold_index": int(provenance["fold_index"]),
+            "status": "RECOVERY_COMPLETE",
+            "best_checkpoint_sha256": completion["best_checkpoint_sha256"],
+            "original_test_claim_sha256": evaluation[
+                "original_test_claim_sha256"
+            ],
+            "recovery_authorization_sha256": evaluation[
+                "recovery_authorization_sha256"
+            ],
+            "recovery_claim_sha256": evaluation["recovery_claim_sha256"],
+            "test_predictions_sha256": sha256_file(predictions_path),
+            "metrics_sha256": sha256_file(metrics_path),
+            "total_test_forward_attempts": 2,
+            "invalidated_attempts": 1,
+            "valid_committed_test_evaluations": 1,
+            "test_driven_model_changes": RECOVERY_MODEL_CHANGE_STATUS,
+            "invalidated_attempt": {
+                "attempt_index": 1,
+                "status": RECOVERY_INVALIDATED_STATUS,
+                "reason": "VERIFIER_IMPLEMENTATION_BUG",
+                "mismatch_code": "P7_TEST_STATE_MIXTURE_MISMATCH",
+                "committed_predictions": False,
+                "committed_metrics": False,
+                "committed_evaluation": False,
+            },
+            "valid_committed_attempt": {
+                "attempt_index": 2,
+                "status": "VALID_COMMITTED_TEST_EVALUATION",
+                "same_best_checkpoint": True,
+                "same_split": True,
+                "same_scientific_config": True,
+                "same_execution_config": True,
+                "same_p7_config": True,
+            },
+            **mixture_diagnostics,
+        }
+        if audit != expected_audit:
+            raise ValueError("P7_TEST_RECOVERY_AUDIT_CONTENT_MISMATCH")
+        expected_attempts = {
+            "total_test_forward_attempts": 2,
+            "invalidated_attempts": 1,
+            "valid_committed_test_evaluations": 1,
+            "test_driven_model_changes": RECOVERY_MODEL_CHANGE_STATUS,
+        }
+        if completion.get("test_evaluated") is True and completion.get(
+            "recovery_attempt_audit_sha256"
+        ) != evaluation.get("recovery_attempt_audit_sha256"):
+            raise ValueError("P7_COMPLETION_RECOVERY_AUDIT_HASH_MISMATCH")
+    if any(evaluation.get(key, value) != value for key, value in expected_attempts.items()):
+        raise ValueError("P7_TEST_ATTEMPT_ACCOUNTING_MISMATCH")
+    if recovery_audit_name is not None and completion.get("test_evaluated") is True and any(
+        completion.get(key) != value for key, value in expected_attempts.items()
+    ):
+        raise ValueError("P7_COMPLETION_ATTEMPT_ACCOUNTING_MISMATCH")
     return frame, metrics
+
+
+def _recovery_authorization(
+    *,
+    context: Mapping[str, Any],
+    claim_path: Path,
+    expected_best_checkpoint_sha256: str,
+    expected_original_claim_sha256: str,
+) -> dict[str, Any]:
+    if int(context["provenance"]["fold_index"]) != 4:
+        raise ValueError("P7_RECOVERY_FOLD_NOT_AUTHORIZED")
+    if (
+        expected_best_checkpoint_sha256
+        != RECOVERY_APPROVED_BEST_CHECKPOINT_SHA256
+        or expected_original_claim_sha256
+        != RECOVERY_APPROVED_ORIGINAL_CLAIM_SHA256
+    ):
+        raise ValueError("P7_RECOVERY_APPROVED_ARTIFACT_ALLOWLIST_MISMATCH")
+    completion = context["completion"]
+    if completion.get("best_checkpoint_sha256") != expected_best_checkpoint_sha256:
+        raise ValueError("P7_RECOVERY_BEST_CHECKPOINT_MISMATCH")
+    if sha256_file(claim_path) != expected_original_claim_sha256:
+        raise ValueError("P7_RECOVERY_ORIGINAL_CLAIM_HASH_MISMATCH")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "bug_id": RECOVERY_BUG_ID,
+        "fold_index": 4,
+        "status": "USER_AUTHORIZED_CONTROLLED_RECOVERY",
+        "best_checkpoint_sha256": expected_best_checkpoint_sha256,
+        "original_test_claim_sha256": expected_original_claim_sha256,
+        "invalidated_attempt_status": RECOVERY_INVALIDATED_STATUS,
+        "invalidated_attempts": 1,
+        "authorized_recovery_forward_attempts": 1,
+        "required_valid_committed_test_evaluations": 1,
+        "test_driven_model_changes": RECOVERY_MODEL_CHANGE_STATUS,
+        "same_best_checkpoint_required": True,
+        "same_split_required": True,
+        "same_scientific_config_required": True,
+        "same_execution_config_required": True,
+        "same_p7_config_required": True,
+    }
 
 
 def _trained_context(
@@ -1549,6 +1736,7 @@ def evaluate_test_once(
     device_name: str,
     num_workers: int,
     output_root: Path,
+    recovery_authorization: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     output = run_directory(fold_index, output_root)
     with exclusive_fold_lifecycle_lock(output / ".p7_lifecycle.lock"):
@@ -1562,6 +1750,7 @@ def evaluate_test_once(
             device_name=device_name,
             num_workers=num_workers,
             output_root=output_root,
+            recovery_authorization=recovery_authorization,
         )
 
 
@@ -1576,6 +1765,7 @@ def _evaluate_test_once_locked(
     device_name: str,
     num_workers: int,
     output_root: Path,
+    recovery_authorization: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     torch = _torch()
     device = torch.device(device_name)
@@ -1604,6 +1794,9 @@ def _evaluate_test_once_locked(
     predictions_path = output / "test_predictions.parquet"
     metrics_path = output / "metrics.json"
     claim_path = output / "test_claim.json"
+    recovery_authorization_path = output / "test_recovery_authorization.json"
+    recovery_claim_path = output / "test_recovery_claim.json"
+    attempt_audit_path = output / "test_attempt_audit.json"
     row_provenance = {
         **context["provenance"],
         "checkpoint_sha256": completion["best_checkpoint_sha256"],
@@ -1643,23 +1836,89 @@ def _evaluate_test_once_locked(
         completion["status"] = "TRAINING_COMPLETE_TEST_EVALUATED"
         completion["test_evaluated"] = True
         completion["test_evaluation_sha256"] = sha256_file(evaluation_path)
+        for key in (
+            "total_test_forward_attempts",
+            "invalidated_attempts",
+            "valid_committed_test_evaluations",
+            "test_driven_model_changes",
+        ):
+            if key in evaluation:
+                completion[key] = evaluation[key]
+        if "recovery_attempt_audit_sha256" in evaluation:
+            completion["recovery_attempt_audit_sha256"] = evaluation[
+                "recovery_attempt_audit_sha256"
+            ]
         _atomic_json(context["completion_path"], completion)
         return {"evaluation": evaluation, "metrics": metrics, "recovered": True}
     if completion.get("test_evaluated") is True:
         raise ValueError("P7_COMPLETION_CLAIMS_MISSING_EVALUATION")
+    controlled_recovery: dict[str, Any] | None = None
+    recovery_claim_created = False
     if claim_path.exists():
         if json.loads(claim_path.read_text(encoding="utf-8")) != claim:
             raise ValueError("P7_TEST_CLAIM_MISMATCH")
         if not predictions_path.exists():
-            raise RuntimeError("P7_TEST_CLAIM_WITHOUT_PREDICTIONS_REQUIRES_AUDIT")
+            if recovery_authorization is None:
+                raise RuntimeError(
+                    "P7_TEST_CLAIM_WITHOUT_PREDICTIONS_REQUIRES_AUDIT"
+                )
+            if set(recovery_authorization) != {
+                "bug_id",
+                "expected_best_checkpoint_sha256",
+                "expected_original_claim_sha256",
+            } or recovery_authorization.get("bug_id") != RECOVERY_BUG_ID:
+                raise ValueError("P7_RECOVERY_AUTHORIZATION_SCHEMA_MISMATCH")
+            controlled_recovery = _recovery_authorization(
+                context=context,
+                claim_path=claim_path,
+                expected_best_checkpoint_sha256=recovery_authorization[
+                    "expected_best_checkpoint_sha256"
+                ],
+                expected_original_claim_sha256=recovery_authorization[
+                    "expected_original_claim_sha256"
+                ],
+            )
+            if recovery_authorization_path.exists():
+                if json.loads(
+                    recovery_authorization_path.read_text(encoding="utf-8")
+                ) != controlled_recovery:
+                    raise ValueError("P7_RECOVERY_AUTHORIZATION_CONTENT_MISMATCH")
+            else:
+                _atomic_json(recovery_authorization_path, controlled_recovery)
+            recovery_claim = {
+                **context["provenance"],
+                "status": "RECOVERY_TEST_EVALUATION_CLAIMED",
+                "bug_id": RECOVERY_BUG_ID,
+                "attempt_index": 2,
+                "best_checkpoint_sha256": completion["best_checkpoint_sha256"],
+                "original_test_claim_sha256": sha256_file(claim_path),
+                "recovery_authorization_sha256": sha256_file(
+                    recovery_authorization_path
+                ),
+                "expected_test_samples": len(records),
+            }
+            if recovery_claim_path.exists():
+                if json.loads(recovery_claim_path.read_text(encoding="utf-8")) != recovery_claim:
+                    raise ValueError("P7_RECOVERY_CLAIM_MISMATCH")
+                raise RuntimeError(
+                    "P7_RECOVERY_CLAIM_WITHOUT_PREDICTIONS_REQUIRES_AUDIT"
+                )
+            _atomic_json(recovery_claim_path, recovery_claim)
+            recovery_claim_created = True
     else:
+        if recovery_authorization is not None:
+            raise ValueError("P7_RECOVERY_REQUIRES_EXISTING_ORIGINAL_CLAIM")
         _atomic_json(claim_path, claim)
     context["model"].to(device)
     if predictions_path.exists():
         frame = pd.read_parquet(predictions_path)
-        _validate_test_predictions(frame, records, row_provenance, context["model"])
+        mixture_diagnostics = _validate_test_predictions(
+            frame, records, row_provenance, context["model"]
+        )
         predictions = frame.to_dict("records")
     else:
+        if recovery_authorization is not None and not recovery_claim_created:
+            raise RuntimeError("P7_RECOVERY_FORWARD_NOT_AUTHORIZED")
         predictions = _prediction_rows(
             context["model"],
             records,
@@ -1672,10 +1931,74 @@ def _evaluate_test_once_locked(
         for row in predictions:
             row.update(row_provenance)
         frame = pd.DataFrame(predictions)
-        _validate_test_predictions(frame, records, row_provenance, context["model"])
+        mixture_diagnostics = _validate_test_predictions(
+            frame, records, row_provenance, context["model"]
+        )
         _atomic_parquet(predictions_path, frame)
     metrics = regression_metrics(predictions)
     _atomic_json(metrics_path, metrics)
+    attempt_fields: dict[str, Any] = {
+        "total_test_forward_attempts": 1,
+        "invalidated_attempts": 0,
+        "valid_committed_test_evaluations": 1,
+        "test_driven_model_changes": RECOVERY_MODEL_CHANGE_STATUS,
+    }
+    recovery_evaluation_fields: dict[str, Any] = {}
+    if recovery_authorization is not None:
+        if controlled_recovery is None:
+            controlled_recovery = json.loads(
+                recovery_authorization_path.read_text(encoding="utf-8")
+            )
+        attempt_fields = {
+            "total_test_forward_attempts": 2,
+            "invalidated_attempts": 1,
+            "valid_committed_test_evaluations": 1,
+            "test_driven_model_changes": RECOVERY_MODEL_CHANGE_STATUS,
+        }
+        attempt_audit = {
+            "schema_version": SCHEMA_VERSION,
+            "bug_id": RECOVERY_BUG_ID,
+            "fold_index": int(context["provenance"]["fold_index"]),
+            "status": "RECOVERY_COMPLETE",
+            "best_checkpoint_sha256": completion["best_checkpoint_sha256"],
+            "original_test_claim_sha256": sha256_file(claim_path),
+            "recovery_authorization_sha256": sha256_file(
+                recovery_authorization_path
+            ),
+            "recovery_claim_sha256": sha256_file(recovery_claim_path),
+            "test_predictions_sha256": sha256_file(predictions_path),
+            "metrics_sha256": sha256_file(metrics_path),
+            **attempt_fields,
+            "invalidated_attempt": {
+                "attempt_index": 1,
+                "status": RECOVERY_INVALIDATED_STATUS,
+                "reason": "VERIFIER_IMPLEMENTATION_BUG",
+                "mismatch_code": "P7_TEST_STATE_MIXTURE_MISMATCH",
+                "committed_predictions": False,
+                "committed_metrics": False,
+                "committed_evaluation": False,
+            },
+            "valid_committed_attempt": {
+                "attempt_index": 2,
+                "status": "VALID_COMMITTED_TEST_EVALUATION",
+                "same_best_checkpoint": True,
+                "same_split": True,
+                "same_scientific_config": True,
+                "same_execution_config": True,
+                "same_p7_config": True,
+            },
+            **mixture_diagnostics,
+        }
+        _atomic_json(attempt_audit_path, attempt_audit)
+        recovery_evaluation_fields = {
+            "recovery_attempt_audit": attempt_audit_path.name,
+            "recovery_attempt_audit_sha256": sha256_file(attempt_audit_path),
+            "original_test_claim_sha256": sha256_file(claim_path),
+            "recovery_authorization_sha256": sha256_file(
+                recovery_authorization_path
+            ),
+            "recovery_claim_sha256": sha256_file(recovery_claim_path),
+        }
     evaluation = {
         **context["provenance"],
         "status": "TEST_EVALUATED_ONCE",
@@ -1688,13 +2011,56 @@ def _evaluate_test_once_locked(
         "test_predictions_sha256": sha256_file(predictions_path),
         "metrics_sha256": sha256_file(metrics_path),
         "test_samples": len(frame),
+        **attempt_fields,
+        **recovery_evaluation_fields,
+        **mixture_diagnostics,
     }
     _atomic_json(evaluation_path, evaluation)
     completion["status"] = "TRAINING_COMPLETE_TEST_EVALUATED"
     completion["test_evaluated"] = True
     completion["test_evaluation_sha256"] = sha256_file(evaluation_path)
+    completion.update(attempt_fields)
+    if recovery_authorization is not None:
+        completion["recovery_attempt_audit_sha256"] = sha256_file(
+            attempt_audit_path
+        )
     _atomic_json(context["completion_path"], completion)
     return {"evaluation": evaluation, "metrics": metrics}
+
+
+def recover_invalidated_precommit_test(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p7_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    num_workers: int,
+    output_root: Path,
+    bug_id: str,
+    expected_best_checkpoint_sha256: str,
+    expected_original_claim_sha256: str,
+) -> dict[str, Any]:
+    if bug_id != RECOVERY_BUG_ID:
+        raise ValueError("P7_RECOVERY_BUG_ID_MISMATCH")
+    return evaluate_test_once(
+        scientific_config_path=scientific_config_path,
+        execution_config_path=execution_config_path,
+        p7_config_path=p7_config_path,
+        manifest_path=manifest_path,
+        roi_index_path=roi_index_path,
+        fold_index=fold_index,
+        device_name=device_name,
+        num_workers=num_workers,
+        output_root=output_root,
+        recovery_authorization={
+            "bug_id": bug_id,
+            "expected_best_checkpoint_sha256": expected_best_checkpoint_sha256,
+            "expected_original_claim_sha256": expected_original_claim_sha256,
+        },
+    )
 
 
 def _intervention_rates(history: pd.DataFrame) -> dict[str, Any]:
@@ -1892,6 +2258,18 @@ def _verify_fold_locked(
             raise ValueError("P7_VERIFY_TEST_COUNT_MISMATCH")
         report["test_samples"] = len(frame)
         report["test_evaluated_once"] = True
+        report["total_test_forward_attempts"] = int(
+            evaluation.get("total_test_forward_attempts", 1)
+        )
+        report["invalidated_attempts"] = int(
+            evaluation.get("invalidated_attempts", 0)
+        )
+        report["valid_committed_test_evaluations"] = int(
+            evaluation.get("valid_committed_test_evaluations", 1)
+        )
+        report["test_driven_model_changes"] = evaluation.get(
+            "test_driven_model_changes", RECOVERY_MODEL_CHANGE_STATUS
+        )
         report["maximum_normalized_reconstruction_error"] = float(
             frame["normalized_reconstruction_max_abs_error"].max()
         )
@@ -2254,6 +2632,20 @@ def _parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--fold", type=int, required=True, choices=range(5))
     evaluate_parser.add_argument("--device", default="cuda")
     evaluate_parser.add_argument("--num-workers", type=int, default=4)
+    recovery_parser = subparsers.add_parser("recover-test")
+    _common_arguments(recovery_parser)
+    recovery_parser.add_argument("--fold", type=int, required=True, choices=(4,))
+    recovery_parser.add_argument("--device", default="cuda")
+    recovery_parser.add_argument("--num-workers", type=int, default=4)
+    recovery_parser.add_argument(
+        "--bug-id", required=True, choices=(RECOVERY_BUG_ID,)
+    )
+    recovery_parser.add_argument(
+        "--expected-best-checkpoint-sha256", required=True
+    )
+    recovery_parser.add_argument(
+        "--expected-original-claim-sha256", required=True
+    )
     verify_parser = subparsers.add_parser("verify")
     _common_arguments(verify_parser)
     scope = verify_parser.add_mutually_exclusive_group(required=True)
@@ -2301,6 +2693,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             device_name=arguments.device,
             num_workers=arguments.num_workers,
             output_root=arguments.output_root,
+        )
+    elif arguments.command == "recover-test":
+        report = recover_invalidated_precommit_test(
+            **common,
+            fold_index=arguments.fold,
+            device_name=arguments.device,
+            num_workers=arguments.num_workers,
+            output_root=arguments.output_root,
+            bug_id=arguments.bug_id,
+            expected_best_checkpoint_sha256=(
+                arguments.expected_best_checkpoint_sha256
+            ),
+            expected_original_claim_sha256=(
+                arguments.expected_original_claim_sha256
+            ),
         )
     elif arguments.fold is not None:
         report = verify_fold(

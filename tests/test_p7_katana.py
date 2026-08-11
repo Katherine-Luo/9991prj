@@ -56,7 +56,7 @@ def test_p7_delta_manifest_verifies_exact_files_and_hashes(tmp_path: Path) -> No
     write_json(manifest, payload)
     result = verify_transfer_manifest(tmp_path, relative_manifest)
     assert result["status"] == "PASS"
-    assert result["verified_files"] == 9
+    assert result["verified_files"] == 10
     assert read_transfer_manifest(manifest) == payload
     assert transfer_file_list(tmp_path, relative_manifest) == sorted(
         paths + [relative_manifest.as_posix()]
@@ -109,6 +109,7 @@ def test_p7_delta_contains_only_p7_stage_formal_and_audit_files() -> None:
         "configs/experiments/baseline_v2_p7_mixed_cem_h200.resolved.yaml",
         "configs/experiments/baseline_v2_p7_mixed_cem_h200.sha256",
         "scripts/katana/p7_fold.pbs",
+        "scripts/katana/p7_fold4_recovery.pbs",
         "scripts/katana/p7_oof.pbs",
         "scripts/katana/p7_stage_a.pbs",
         "src/lidc_baseline/p7_audit.py",
@@ -126,6 +127,7 @@ def test_p7_scripts_enforce_stage_hardware_and_scope_gates() -> None:
         Path("scripts/katana/sync_p7_stage_a.sh"),
         Path("scripts/katana/p7_stage_a.pbs"),
         Path("scripts/katana/p7_fold.pbs"),
+        Path("scripts/katana/p7_fold4_recovery.pbs"),
         Path("scripts/katana/p7_oof.pbs"),
     )
     for path in paths:
@@ -143,7 +145,12 @@ def test_p7_scripts_enforce_stage_hardware_and_scope_gates() -> None:
     assert "p7_mixed_cem train" in formal
     assert "evaluate-test" in formal and "p7_mixed_cem verify" in formal
     assert "--resume" in formal
-    oof = paths[3].read_text(encoding="utf-8")
+    recovery = paths[3].read_text(encoding="utf-8")
+    assert "gpu_model=H200" in recovery
+    assert "recover-test" in recovery and "BUG-P7-001" in recovery
+    assert "p7_mixed_cem train" not in recovery
+    assert "evaluate-test" not in recovery
+    oof = paths[4].read_text(encoding="utf-8")
     assert "p7_audit build-oof" in oof
     assert "p7_mixed_cem train" not in oof and "evaluate-test" not in oof
     for path in paths:

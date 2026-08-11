@@ -172,7 +172,16 @@ def _fold_report(
             completion["best_validation_total_loss"]
         ),
         "test_evaluated_once": bool(verified["test_evaluated_once"]),
-        "test_inference_transactions": 1,
+        "total_test_forward_attempts": int(
+            verified.get("total_test_forward_attempts", 1)
+        ),
+        "invalidated_attempts": int(verified.get("invalidated_attempts", 0)),
+        "valid_committed_test_evaluations": int(
+            verified.get("valid_committed_test_evaluations", 1)
+        ),
+        "test_driven_model_changes": verified.get(
+            "test_driven_model_changes", "NONE"
+        ),
         "intervention_rates": verified["intervention_rates"],
         "contribution_reconstruction": errors,
         "task_metrics": regression_metrics(predictions.to_dict("records")),
@@ -291,9 +300,20 @@ def build_oof_audit(
         "fold_test_counts": list(EXPECTED_FOLD_TEST_COUNTS),
         "test_evaluated_once_all_folds": all(
             item["test_evaluated_once"]
-            and item["test_inference_transactions"] == 1
+            and item["valid_committed_test_evaluations"] == 1
+            and item["test_driven_model_changes"] == "NONE"
             for item in fold_reports
         ),
+        "total_test_forward_attempts_by_fold": [
+            item["total_test_forward_attempts"] for item in fold_reports
+        ],
+        "invalidated_attempts_by_fold": [
+            item["invalidated_attempts"] for item in fold_reports
+        ],
+        "valid_committed_test_evaluations_by_fold": [
+            item["valid_committed_test_evaluations"] for item in fold_reports
+        ],
+        "test_driven_model_changes": "NONE",
         "pooled_oof_task_metrics": regression_metrics(pooled.to_dict("records")),
         "pooled_contribution_reconstruction": errors,
         "best_epoch_index_by_fold": [

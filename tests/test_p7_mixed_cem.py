@@ -287,11 +287,32 @@ def test_prediction_artifact_preserves_states_and_detects_tampering(
     )
     frame = pd.DataFrame(rows)
     frame["fold_index"] = 0
-    p7._validate_test_predictions(frame, records, {"fold_index": 0}, model)
+    diagnostics = p7._validate_test_predictions(
+        frame, records, {"fold_index": 0}, model
+    )
+    assert diagnostics["state_mixture_numeric_schema"] == (
+        "fp32_serialized_weighted_sum_v1"
+    )
+    roundoff = frame.copy()
+    observed_mixed = json.loads(str(roundoff.loc[0, "subtlety_mixed_embedding"]))
+    observed_mixed[0] += 5e-7
+    roundoff.loc[0, "subtlety_mixed_embedding"] = json.dumps(observed_mixed)
+    p7._validate_test_predictions(roundoff, records, {"fold_index": 0}, model)
     tampered = frame.copy()
     tampered.loc[0, "subtlety_states"] = json.dumps([[0.0] * 16, [0.0] * 16])
     with pytest.raises(ValueError, match="P7_TEST_STATE_MIXTURE_MISMATCH"):
         p7._validate_test_predictions(tampered, records, {"fold_index": 0}, model)
+    real_mismatch = frame.copy()
+    observed_mixed = json.loads(
+        str(real_mismatch.loc[0, "subtlety_mixed_embedding"])
+    )
+    observed_mixed[0] += 1e-3
+    real_mismatch.loc[0, "subtlety_mixed_embedding"] = json.dumps(observed_mixed)
+    with pytest.raises(ValueError, match="anonymous_row_index.*group.*subtlety") as error:
+        p7._validate_test_predictions(
+            real_mismatch, records, {"fold_index": 0}, model
+        )
+    assert "nodule-0" not in str(error.value)
     invalid_bool = frame.copy()
     invalid_bool["extreme_binary_eligible"] = invalid_bool[
         "extreme_binary_eligible"
@@ -567,7 +588,13 @@ def test_test_transaction_recovers_without_second_inference(
         "roi_index": pd.DataFrame(),
         "split": {},
     }
-    monkeypatch.setattr(p7, "_trained_context", lambda **_kwargs: context)
+    def load_context(**_kwargs: object) -> dict[str, object]:
+        context["completion"] = json.loads(
+            completion_path.read_text(encoding="utf-8")
+        )
+        return context
+
+    monkeypatch.setattr(p7, "_trained_context", load_context)
     monkeypatch.setattr(
         p7, "build_partition_concept_records", lambda *_args, **_kwargs: records
     )
@@ -580,7 +607,15 @@ def test_test_transaction_recovers_without_second_inference(
         return [{"nodule_uid": "nodule-0", "target_normalized": 0.2, "malignancy_raw_score": 0.3}]
 
     monkeypatch.setattr(p7, "_prediction_rows", fake_predictions)
-    monkeypatch.setattr(p7, "_validate_test_predictions", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        p7,
+        "_validate_test_predictions",
+        lambda *_args, **_kwargs: {
+            "state_mixture_numeric_schema": p7.STATE_MIXTURE_NUMERIC_SCHEMA,
+            "state_mixture_maximum_absolute_error": 0.0,
+            "state_mixture_maximum_allowed_absolute_error": 1e-6,
+        },
+    )
     monkeypatch.setattr(
         p7,
         "regression_metrics",
@@ -616,4 +651,173 @@ def test_test_transaction_recovers_without_second_inference(
     assert inference_calls == 1
     with pytest.raises(FileExistsError, match="P7_TEST_ALREADY_EVALUATED"):
         evaluate_test_once(**common)
+    assert inference_calls == 1
+
+
+def test_fold4_controlled_recovery_records_two_attempts_and_one_evaluation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "fold_4"
+    output.mkdir(parents=True)
+    execution = load_config(
+        "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+    )
+    model = build_model()
+    records = concept_records(tmp_path, 1)
+    completion_path = output / "training_complete.json"
+    completion = {
+        "status": "TRAINING_COMPLETE_TEST_NOT_EVALUATED",
+        "test_evaluated": False,
+        "best_checkpoint_sha256": "e" * 64,
+        "best_epoch_index": 44,
+        "best_validation_total_loss": 0.019,
+    }
+    completion_path.write_text(json.dumps(completion), encoding="utf-8")
+    provenance = {"fold_index": 4, "model": "mixed_type_cem"}
+    context = {
+        "execution": execution,
+        "completion": completion,
+        "completion_path": completion_path,
+        "output": output,
+        "provenance": provenance,
+        "model": model,
+        "manifest": pd.DataFrame(),
+        "roi_index": pd.DataFrame(),
+        "split": {},
+    }
+    def load_recovery_context(**_kwargs: object) -> dict[str, object]:
+        context["completion"] = json.loads(
+            completion_path.read_text(encoding="utf-8")
+        )
+        return context
+
+    monkeypatch.setattr(p7, "_trained_context", load_recovery_context)
+    monkeypatch.setattr(
+        p7, "build_partition_concept_records", lambda *_args, **_kwargs: records
+    )
+    monkeypatch.setattr(p7, "EXPECTED_FOLD_TEST_COUNTS", {4: 1})
+    claim = {
+        **provenance,
+        "status": "TEST_EVALUATION_CLAIMED",
+        "best_checkpoint_sha256": completion["best_checkpoint_sha256"],
+        "best_epoch_index": 44,
+        "expected_test_samples": 1,
+    }
+    p7._atomic_json(output / "test_claim.json", claim)
+    original_claim_sha256 = p7.sha256_file(output / "test_claim.json")
+    with pytest.raises(
+        ValueError, match="P7_RECOVERY_APPROVED_ARTIFACT_ALLOWLIST_MISMATCH"
+    ):
+        p7._recovery_authorization(
+            context=context,
+            claim_path=output / "test_claim.json",
+            expected_best_checkpoint_sha256=completion["best_checkpoint_sha256"],
+            expected_original_claim_sha256=original_claim_sha256,
+        )
+    monkeypatch.setattr(
+        p7,
+        "RECOVERY_APPROVED_BEST_CHECKPOINT_SHA256",
+        completion["best_checkpoint_sha256"],
+    )
+    monkeypatch.setattr(
+        p7,
+        "RECOVERY_APPROVED_ORIGINAL_CLAIM_SHA256",
+        original_claim_sha256,
+    )
+    inference_calls = 0
+
+    def fake_predictions(*_args: object, **_kwargs: object) -> list[dict[str, object]]:
+        nonlocal inference_calls
+        inference_calls += 1
+        return [
+            {
+                "nodule_uid": "nodule-0",
+                "target_normalized": 0.2,
+                "malignancy_raw_score": 0.3,
+            }
+        ]
+
+    mixture_diagnostics = {
+        "state_mixture_numeric_schema": p7.STATE_MIXTURE_NUMERIC_SCHEMA,
+        "state_mixture_maximum_absolute_error": 8e-7,
+        "state_mixture_maximum_allowed_absolute_error": 3e-6,
+    }
+    monkeypatch.setattr(p7, "_prediction_rows", fake_predictions)
+    monkeypatch.setattr(
+        p7,
+        "_validate_test_predictions",
+        lambda *_args, **_kwargs: mixture_diagnostics,
+    )
+    monkeypatch.setattr(
+        p7,
+        "regression_metrics",
+        lambda _rows: {"samples": 1, "original_scale_mae": 0.4},
+    )
+    common = {
+        "scientific_config_path": Path("scientific.yaml"),
+        "execution_config_path": Path("execution.yaml"),
+        "p7_config_path": Path("p7.yaml"),
+        "manifest_path": Path("manifest.parquet"),
+        "roi_index_path": Path("roi_index.parquet"),
+        "fold_index": 4,
+        "device_name": "cpu",
+        "num_workers": 0,
+        "output_root": tmp_path,
+    }
+    with pytest.raises(
+        RuntimeError, match="P7_TEST_CLAIM_WITHOUT_PREDICTIONS_REQUIRES_AUDIT"
+    ):
+        evaluate_test_once(**common)
+    assert inference_calls == 0
+    original_atomic_json = p7._atomic_json
+    failed_completion_seal = False
+
+    def fail_completion_seal_once(
+        path: Path, payload: dict[str, object]
+    ) -> None:
+        nonlocal failed_completion_seal
+        if (
+            path == completion_path
+            and (output / "test_evaluation.json").exists()
+            and not failed_completion_seal
+        ):
+            failed_completion_seal = True
+            raise RuntimeError("simulated recovery completion interruption")
+        original_atomic_json(path, payload)
+
+    monkeypatch.setattr(p7, "_atomic_json", fail_completion_seal_once)
+    with pytest.raises(
+        RuntimeError, match="simulated recovery completion interruption"
+    ):
+        p7.recover_invalidated_precommit_test(
+            **common,
+            bug_id=p7.RECOVERY_BUG_ID,
+            expected_best_checkpoint_sha256=completion["best_checkpoint_sha256"],
+            expected_original_claim_sha256=original_claim_sha256,
+        )
+    assert inference_calls == 1
+    recovered = p7.recover_invalidated_precommit_test(
+        **common,
+        bug_id=p7.RECOVERY_BUG_ID,
+        expected_best_checkpoint_sha256=completion["best_checkpoint_sha256"],
+        expected_original_claim_sha256=original_claim_sha256,
+    )
+    assert inference_calls == 1
+    assert recovered["evaluation"]["total_test_forward_attempts"] == 2
+    assert recovered["evaluation"]["invalidated_attempts"] == 1
+    assert recovered["evaluation"]["valid_committed_test_evaluations"] == 1
+    assert recovered["evaluation"]["test_driven_model_changes"] == "NONE"
+    attempt_audit = json.loads(
+        (output / "test_attempt_audit.json").read_text(encoding="utf-8")
+    )
+    assert attempt_audit["invalidated_attempt"]["status"] == (
+        "INVALIDATED_PRECOMMIT_TEST_ATTEMPT"
+    )
+    with pytest.raises(FileExistsError, match="P7_TEST_ALREADY_EVALUATED"):
+        p7.recover_invalidated_precommit_test(
+            **common,
+            bug_id=p7.RECOVERY_BUG_ID,
+            expected_best_checkpoint_sha256=completion["best_checkpoint_sha256"],
+            expected_original_claim_sha256=original_claim_sha256,
+        )
     assert inference_calls == 1

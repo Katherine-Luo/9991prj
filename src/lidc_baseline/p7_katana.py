@@ -27,6 +27,7 @@ P7_DELTA_FILES = (
     "configs/experiments/baseline_v2_p7_mixed_cem_h200.resolved.yaml",
     "configs/experiments/baseline_v2_p7_mixed_cem_h200.sha256",
     "scripts/katana/p7_fold.pbs",
+    "scripts/katana/p7_fold4_recovery.pbs",
     "scripts/katana/p7_oof.pbs",
     "scripts/katana/p7_stage_a.pbs",
     "src/lidc_baseline/p7_audit.py",
