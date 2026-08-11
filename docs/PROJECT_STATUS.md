@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P7
 next_phase: P8
 last_updated: 2026-08-12
-last_verified_commit: 65ff300
+last_verified_commit: e168bb8
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -46,7 +46,7 @@ last_verified_commit: 65ff300
 | 恢复阶段 | `P7` |
 | 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P6已由`6876234`完成并交付，post-delivery状态commit `d2def18`已推送；P7启动状态与execution config分别由`6631173`和`cd3fbfb`封存。P7 model-core commit `65ff300`已实现并测试sample-conditioned dynamic states、共享scorers、joint-loss/RandInt intervention primitives、确定性初始化以及normalized/rating contribution reconstruction；专项`15 passed`、完整`230 passed`且Phase Compliance Reviewer为`PASS`。当前尚未实现完整training lifecycle/checkpoint/resume/test-once，也未执行Stage A或formal folds；冻结V1/V2 requirements/config、P4 inputs及H200 common profile未修改。P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
+| 状态依据 | P6已由`6876234`完成并交付；P7启动、execution config、model core及lifecycle已依次由`6631173`、`cd3fbfb`、`65ff300`和`e168bb8`封存。Lifecycle实现80-epoch joint training、checkpoint/resume/completed reuse、minimum-validation-total-loss selection、partition coverage/provenance、strict H200/FP32 gate、test exactly once/recovery、fold/all verifier及Stage A primitives/CLI；P7专项`21 passed`、完整`236 passed`且仅有3条既有dependency warnings，Phase Compliance Reviewer为`PASS`。实际Stage A、KDM、formal folds、OOF与tracked audit尚未执行或完成，完整Katana接口仍待实现；冻结V1/V2 requirements/config及H200/P7 profiles无diff。P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P7 Mixed-type CEM Regression
 
@@ -67,15 +67,19 @@ last_verified_commit: 65ff300
 - 已实现`L_CEM=L_task+0.01*L_concept`、八组等权concept loss、batch-shared/group-independent RandInt mask、仅替换mixture weights且保留当前sample states的training intervention primitives；相同seed inputs可复现，改变batch index会改变决策。
 - 已实现fold-specific隔离初始化seed/hash，以及raw/intervened mixed embeddings的normalized与rating-point group contributions；直接测试验证两种量纲reconstruction误差均不超过`1e-6`。
 - Model-core专项测试`15 passed`、完整测试`230 passed`；Phase Compliance Reviewer为`PASS`，冻结协议与execution profiles无diff。
+- Lifecycle commit `e168bb8`已实现固定80 epochs的joint training、Adam与validation-total-loss scheduler、minimum validation total loss checkpoint及earlier-epoch tie-break；epoch-boundary resume和completed-run reuse均验证provenance与artifact hashes。
+- Train/validation epoch路径按完整partition sample sums/counts聚合，验证每个UID恰好覆盖一次并保存nodule-set hashes；训练记录decision/sample-weighted intervention rates，validation不施加干预。
+- 已实现严格H200/FP32/no-AMP/BF16/TF32 runtime gate、test schema/tie/extreme/contribution语义、best checkpoint固定后的test exactly once transaction及中断恢复、fold/all final verifier和Stage A overfit/preflight primitives/CLI。
+- Lifecycle commit `e168bb8`的P7专项`21 passed`、完整`236 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config及H200/P7 profiles无diff，`git diff --check`为`PASS`。
 
 ### 正在进行
 
-- 实现80-epoch training lifecycle、checkpoint/resume/test-once与严格provenance/partition guards。
-- 后续按批准顺序实现Katana Stage A、五折formal execution和private OOF/tracked aggregate audit。
+- 完成Katana transfer/KDM/PBS、formal-fold与OOF/audit接口。
+- 后续按批准顺序执行H200 Stage A、五折formal execution和private OOF/tracked aggregate audit。
 
 ### 尚未完成
 
-- P7完整training lifecycle、checkpoint/resume/test-once、Katana/audit接口及其行为测试。
+- P7完整Katana transfer/PBS、formal-fold、OOF/audit接口及其行为测试。
 - H200 Stage A、五折各80 epochs、test exactly once、final verifies及2,633/868 OOF reconciliation。
 - P7阶段级双agent审查、`AWAITING_USER_APPROVAL`门、用户最终确认、合并和推送。
 - P8计划与开发未开始。
@@ -87,7 +91,7 @@ last_verified_commit: 65ff300
 | P7 execution supplement、resolved config与hash | `PASS` | Commit `cd3fbfb`（local, unpushed）；SHA-256 `60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c`；专项`5 passed`、完整`220 passed`；Phase Compliance Reviewer `PASS` |
 | P7-R1 mixed-type扩展声明 | `IN_PROGRESS` | README与execution supplement已明确声明项目特定mixed-type扩展并区分原始CEM；未来result artifacts仍须沿用该声明 |
 | P7-R2 dynamic sample-conditioned states | `PASS_CORE` | Commit `65ff300`实现八组sample-conditioned generators、共享scorers与mixed embeddings；测试验证固定probabilities时改变feature会改变states、batch samples使用自身feature且不存在静态state table |
-| P7-R3 joint loss与batch-shared training intervention | `IN_PROGRESS` | Commit `65ff300`实现精确joint loss、可复现8组RandInt mask及mixture-weight-only intervention；正式80-epoch日志、长期rate gates和validation checkpoint仍待lifecycle/formal验证 |
+| P7-R3 joint loss与batch-shared training intervention | `PASS_LOCAL` | Model core与当前lifecycle批次实现精确joint loss、可复现8组RandInt mask、mixture-weight-only intervention、80-epoch日志、rate accounting、scheduler及minimum-validation-total checkpoint；正式H200 rate gates仍待Stage A/formal验证 |
 | P7-R4 normalized/rating contribution reconstruction | `PASS_CORE` | Commit `65ff300`的直接测试验证raw及intervened outputs在normalized/rating量纲均≤`1e-6`；正式五折artifact reconstruction仍待验证 |
 | H200 Stage A、五折OOF与双agent阶段门 | `PENDING` | 尚未执行 |
 
@@ -356,7 +360,7 @@ Bug 修复后：
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
-| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | Execution supplement及model-core已由`cd3fbfb`/`65ff300`封存；dynamic states、joint-loss/RandInt primitives与两种量纲reconstruction通过专项`15 passed`、完整`230 passed`及Phase Compliance `PASS`；lifecycle、Stage A与formal folds尚未完成 | 0 | 0 |
+| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | Execution supplement/model-core/lifecycle已由`cd3fbfb`/`65ff300`/`e168bb8`封存；80-epoch/resume/test-once/verifier/Stage A primitives通过专项`21 passed`、完整`236 passed`/3条既有warnings及Phase Compliance `PASS`；Katana接口、实际Stage A、formal folds和OOF尚未完成 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
@@ -775,3 +779,4 @@ Bug 修复后：
 | 2026-08-12 | `PHASE_STARTED` | P7 | 用户批准Mixed-type CEM Regression实施计划；P7进入`IN_PROGRESS / ON_TRACK`，使用P4 shared encoder initialization、统一H200 profile与batch-shared group-independent `p=0.25`训练干预。当前仅启动本地开发，Stage A与formal folds尚未执行；P8保持`NOT_STARTED`。 | `p7-mixed-cem`本地分支；基线`d2def18` |
 | 2026-08-12 | `LOCAL_CONFIG_VERIFIED` | P7 | P7 execution supplement、resolved config、SHA-256与README mixed-type扩展声明已由本地commit封存；resolved SHA-256=`60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c`。Supplement固定共享continuous/categorical scorers及batch-shared、group-independent的8维RandInt干预决策。配置专项`5 passed`、完整`220 passed`、Phase Compliance Reviewer `PASS`。尚未实现P7模型或执行Stage A/formal folds；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | `cd3fbfb`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_MODEL_CORE_VERIFIED` | P7 | P7 model core已实现sample-conditioned dynamic state generators、共享continuous/categorical scorers、mixed embeddings、unconstrained task head、joint-loss与batch-shared/group-independent RandInt intervention primitives、确定性初始化及normalized/rating contributions。专项`15 passed`、完整`230 passed`、Phase Compliance Reviewer `PASS`；直接测试覆盖无静态state table、feature-conditioned state变化、mixture-weight-only intervention及raw/intervened reconstruction≤`1e-6`。完整lifecycle、Stage A、formal folds和OOF尚未完成；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | `65ff300`（local, unpushed）；本次状态同步commit待创建 |
+| 2026-08-12 | `LOCAL_LIFECYCLE_VERIFIED` | P7 | P7 lifecycle实现80-epoch joint training、Adam/scheduler、minimum-validation-total checkpoint与tie-break、epoch-boundary resume/completed reuse、train/validation coverage及UID hashes、strict H200/FP32 gate、RandInt rate accounting、严格test schema、test exactly once/recovery、fold/all verifier及Stage A primitives/CLI。专项`21 passed`、完整`236 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer `PASS`，冻结V1/V2 requirements/config与H200/P7 profiles无diff。实际Stage A/KDM/formal folds/OOF/audit尚未执行或完成，完整Katana接口仍待实现；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | `e168bb8`（local, unpushed）；本次状态同步commit待创建 |
