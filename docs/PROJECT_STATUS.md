@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P7
-development_phase_status: COMPLETED
+development_phase: P8
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P7
-next_phase: P8
+resume_phase: P8
+next_phase: P9
 last_updated: 2026-08-12
-last_verified_commit: e195a94
+last_verified_commit: 437ce85
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`e195a94`。P8保持`NOT_STARTED`，不得启动或规划。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`437ce85`。用户已批准P8 End-to-end CBM + learned-softmax GAM实施计划，P8现为唯一允许开发的阶段；P9保持`NOT_STARTED`。
 
 ## 1. 阅读规则
 
@@ -38,17 +38,60 @@ last_verified_commit: e195a94
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P7 Mixed-type CEM Regression` |
-| 阶段状态 | `COMPLETED / ON_TRACK` |
+| 当前开发阶段 | `P8 End-to-end CBM + Learned-softmax GAM Regression` |
+| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P7已完成交付。P8尚未制定或批准实施计划。 |
-| 恢复阶段 | `P7` |
-| 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED`，不得启动或制定实施计划） |
+| 当前阻塞项 | 无；P8技术实现、Stage A、五折formal runs与OOF尚未完成。 |
+| 恢复阶段 | `P8` |
+| 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | 受控recovery job `8976532`在H200 `k201`以Exit 0完成，Fold 4 final verifier `PASS`，best epoch 44、validation `L_CEM=0.0190626076447539`与checkpoint保持不变；564个test samples、audit=`2/1/1/NONE`，normalized/rating reconstruction最大误差=`1.192e-7/4.768e-7`。CPU OOF job `8976537`在`k125`以0 GPU、Exit 0完成；OOF精确覆盖2,633 nodules / 868 patients、fold counts=`479/502/539/549/564`、0 leakage，private OOF/summary SHA-256=`a42350e6...1b996f`/`30d0ee1d...d4dfdc`。Pooled original MAE/RMSE=`0.4841396493/0.6283405243`、normalized MAE=`0.1210349123`、Pearson/Spearman=`0.7296343/0.6399538`，pooled reconstruction最大误差=`4.917e-7`。六个tracked audit JSON由`fe30579`封存；`BUG-P7-001`已解决，用户于2026-08-12明确确认P7。Completion commit `e195a949d62772fd6009e61f7f6540e5893b43a9`已fast-forward合并并推送；`HEAD=main=origin/main`、ahead/behind=`0/0`，合并后完整测试`246 passed`且仅3条既有warnings，冻结文件与P7 config hash检查均`PASS`。P8保持`NOT_STARTED`。 |
+| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`；当前尚未创建P8 config、代码、测试或Katana产物，P9保持`NOT_STARTED`。 |
 
-## 3. 当前阶段：P7 Mixed-type CEM Regression
+## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
+
+### 阶段目标
+
+在P4固定patient-level splits与shared DenseNet-121 encoder initialization、统一H200 warn-only execution profile上，实现端到端joint CBM + GAM regression。八个linear concept heads产生activated predicted concepts；每组由5个concept-local `32→16` ReLU subnetworks及zero-initialized learned-softmax alpha组成，task只读取predicted concepts，并以bias加八组贡献重建unconstrained malignancy score。
+
+### 已完成
+
+- 用户已明确批准P8实施计划，并固定端到端联合训练、alpha logits全零初始化、Stage A通过后一次提交五折且无Fold-0中间确认门。
+- 已从交付完成的`main`创建本地分支`p8-gam`；P7代码与private artifacts不作为P8训练初始化，P8每折仍从同一P4 shared encoder initialization开始。
+- 冻结V1/V2 requirements/config、P4 splits/initializations与common H200 profile均保持不变。
+
+### 正在进行
+
+- 单独封存P8启动状态；随后依次实现P8 execution supplement、GAM model/lifecycle、Katana/OOF/audit接口及直接测试。
+
+### 尚未完成
+
+- P8 source/resolved execution supplement与SHA-256。
+- End-to-end GAM模型、80-epoch lifecycle、test exactly once、final verifier及自动测试。
+- KDM exact-whitelist、H200 Stage A、五折formal runs、CPU OOF与tracked脱敏audit。
+- 完整阶段门与用户最终确认。
+- P9未制定或实施。
+
+### 验收边界
+
+- 仅实现P8-R1–P8-R3与P8阶段所需运行/完整性证据；不实现P9完整concept metrics、跨模型比较、centering、intervention curves、Grad-CAM、occlusion或bootstrap。
+- P8进入`AWAITING_USER_APPROVAL`前必须通过H200 Stage A、五折80 epochs、test exactly once、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、完整测试与双agent阶段审查。
+
+## 4. 下一阶段：P9 统一评估、干预与解释
+
+### 进入条件
+
+- P8必须完成全部技术验收、用户确认、完成封存、合并与GitHub推送。
+
+### 第一批任务
+
+- 尚未制定或批准；P9保持`NOT_STARTED`。
+
+<!-- NORMAL_READING_END -->
+
+## 5. P7 完成前开发快照
+
+> 本节是P7交付完成前的历史快照；其中关于P8尚未启动的表述已由第3节当前P8 `IN_PROGRESS`状态取代，不代表当前生命周期。
 
 ### 阶段目标
 
@@ -119,7 +162,7 @@ last_verified_commit: e195a94
 
 - `DIF-P10-001`继续开放，但不阻止P7阶段门或用户确认。
 
-## 4. 下一阶段：P8 CBM + GAM
+### 当时的下一阶段：P8 CBM + GAM
 
 ### 阶段目标
 
@@ -381,15 +424,15 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；须另行制定并批准实施计划后才能启动 | 0 | 0 |
-| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 用户已批准端到端joint CBM + learned-softmax GAM计划；本地分支`p8-gam`已创建，当前仅启动状态更新，技术实现与Stage A/formal/OOF均尚未完成 | 0 | 0 |
+| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P7-001`已通过受控Fold 4 recovery、final verifier与五折OOF验证并标记为`RESOLVED`；用户已确认P7，P7现为`NORMAL_DEVELOPMENT / COMPLETED / ON_TRACK`且已交付。P8保持`NOT_STARTED`且不得启动或规划。P5与P6均为`COMPLETED / ON_TRACK`并已交付；`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前无活动Bug。`BUG-P7-001`已通过受控Fold 4 recovery、final verifier与五折OOF验证并标记为`RESOLVED`；P7为`COMPLETED / ON_TRACK`且已交付。用户已批准P8计划，P8现为`IN_PROGRESS / ON_TRACK`；P9保持`NOT_STARTED`且不得启动或规划。P5与P6均为`COMPLETED / ON_TRACK`并已交付；`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
@@ -850,3 +893,4 @@ Bug 修复后：
 | 2026-08-12 | `BUG_RESOLVED` / `FIVE_FOLD_OOF_PASS` / `PHASE_AWAITING_APPROVAL` | P7 | KDM与remote integrity通过后，H200 recovery job `8976532`以Exit 0完成唯一授权的Fold 4 recovery；checkpoint与best epoch 44保持不变，final verifier PASS，audit=`2/1/1/NONE`。CPU OOF job `8976537`以0 GPU、Exit 0完成；OOF精确覆盖2,633 nodules / 868 patients、fold counts=`479/502/539/549/564`、0 leakage，pooled original MAE/RMSE=`0.4841396493/0.6283405243`、normalized MAE=`0.1210349123`、Pearson/Spearman=`0.7296343/0.6399538`，reconstruction≤`4.917e-7`。六个tracked audit JSON由`fe30579`封存，Actual Evidence Phase Compliance Reviewer为`PASS`；`BUG-P7-001`转为`RESOLVED`，P7恢复`AWAITING_USER_APPROVAL / ON_TRACK`，P8保持`NOT_STARTED`。 | Jobs `8976532`、`8976537`；`c190710`、`fe30579`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `PHASE_COMPLETED` | P7 | 用户明确确认P7；Stage A、五折80 epochs、valid committed tests、final verifies、受控Fold 4 recovery、2,633 nodules / 868 patients OOF、0 patient leakage、贡献重建、六个脱敏audit、完整`246 passed`与阶段审查证据均已封存。P7转为`COMPLETED / ON_TRACK`，P8保持`NOT_STARTED`。完成状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称已交付。 | 用户确认；`c190710`、`fe30579`、`2c95fb1`；本次completion status commit待创建 |
 | 2026-08-12 | `DELIVERED` | P7 | Completion commit `e195a94`已fast-forward合并至`main`并推送GitHub。合并后完整测试`246 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config与common H200 profile无diff，P7 config hash一致。`HEAD=main=origin/main=e195a949d62772fd6009e61f7f6540e5893b43a9`，ahead/behind=`0/0`。P7为`COMPLETED / ON_TRACK`且已交付；P8保持`NOT_STARTED`，未制定或实施。 | `e195a94`；本次post-delivery状态同步commit待创建 |
+| 2026-08-12 | `PHASE_STARTED` | P8 | 用户批准End-to-end CBM + Learned-softmax GAM Regression实施计划；P8进入`IN_PROGRESS / ON_TRACK`。固定端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha，以及Stage A通过后一次提交五个H200 folds且无Fold-0中间确认。当前仅创建`p8-gam`本地分支并更新启动状态，尚未实现P8 config/model/lifecycle或提交任何Katana job；P9保持`NOT_STARTED`。 | `p8-gam`本地分支；基线`437ce85`；本次启动状态commit待创建 |
