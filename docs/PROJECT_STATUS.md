@@ -42,11 +42,11 @@ last_verified_commit: 377dbeb
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P8-001`已由修复后的完整H200 Stage A重跑验证并标记为`RESOLVED`。 |
-| 当前阻塞项 | 无技术阻塞；用户已正式批准Stage A并授权一次性提交Fold 0–4，但五折formal jobs尚未实际提交。 |
+| 当前阻塞项 | 无技术阻塞；五折formal jobs已完整提交并在`csegpu100`排队，等待H200资源分配。 |
 | 恢复阶段 | `P8`（已恢复正常开发） |
 | 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | 修复后的10-file exact manifest已完成KDM同步并通过remote integrity，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。有效Stage A job `8978425`在`csegpu12`/`k201` H200 GPU 3以`Exit_status=0`、`run_count=1`完成；8-sample/40-step overfit最近5步均值从`0.4029014229774475`降至`0.06921419948339462`，true batch 16 forward、task/concept/total loss、backward、Adam、8组alpha gradient/update/simplex及贡献重建均为`PASS`，peak reserved fraction=`0.01902019501277658`。仅有预期的pool3d deterministic warn-only warnings，Phase Compliance Reviewer为`PASS`。旧job `8978152`仍分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt；远端仅有两份Stage A JSON，没有formal、test或OOF产物。用户已正式批准P8 H200 Stage A并授权一次性提交Fold 0–4；实际提交时五个`qsub`参数均须设置`P8_FORMAL_APPROVED=1`，当前尚未执行提交。P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 |
+| 状态依据 | 修复后的10-file exact manifest已完成KDM同步并通过remote integrity，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。有效Stage A job `8978425`在`csegpu12`/`k201` H200 GPU 3以`Exit_status=0`、`run_count=1`完成；8-sample/40-step overfit最近5步均值从`0.4029014229774475`降至`0.06921419948339462`，true batch 16 forward、task/concept/total loss、backward、Adam、8组alpha gradient/update/simplex及贡献重建均为`PASS`，peak reserved fraction=`0.01902019501277658`。仅有预期的pool3d deterministic warn-only warnings，Phase Compliance Reviewer为`PASS`。旧job `8978152`仍分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt。用户授权后已使用`P8_FORMAL_APPROVED=1`一次性提交唯一Fold 0–4：fold0=`8978475`、fold1=`8978478`、fold2=`8978477`、fold3=`8978474`、fold4=`8978476`；五个job目前均为`Q`/`csegpu100`，尚未开始训练。只读heartbeat `monitor-p8-gam-five-folds`已启用。P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -89,11 +89,12 @@ last_verified_commit: 377dbeb
 
 ### 正在进行
 
-- 用户已正式批准P8 H200 Stage A并授权一次性提交Fold 0–4及创建只读后台定时监控。下一步是在保持冻结配置与common H200 profile不变的前提下，通过既有formal gate提交五折；五个`qsub`参数均须设置`P8_FORMAL_APPROVED=1`。当前授权已生效，但尚未实际提交任何formal job或创建训练产物。
+- 用户已正式批准P8 H200 Stage A；唯一Fold 0–4已一次性提交：fold0=`8978475`、fold1=`8978478`、fold2=`8978477`、fold3=`8978474`、fold4=`8978476`。五个`Job_Name`均为`p8_fold.pbs`，状态均为`Q`、queue均为`csegpu100`，统一请求H200×1、8 CPU、64 GB RAM、96小时walltime，并均设置`P8_FORMAL_APPROVED=1`；唯一参数差异为`P8_FOLD_INDEX=0..4`，没有重复或遗漏。
+- ACTIVE heartbeat automation `monitor-p8-gam-five-folds`每10分钟只读监控五折。监控期间严禁`qdel`、`qalter`、额外`qsub`、replacement、training profile变更、OOF或P9；五折全部终态后只报告并暂停。
 
 ### 尚未完成
 
-- 五折80-epoch formal jobs/test exactly once/final verifier均未提交或执行；actual CPU OOF与tracked脱敏audit尚未生成。
+- 五折80-epoch formal jobs已提交并排队，但尚未开始或完成；test exactly once与final verifier尚未执行，actual CPU OOF与tracked脱敏audit尚未生成。
 - 完整阶段门与用户最终确认。
 - P9未制定或实施。
 
@@ -450,7 +451,7 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | `BUG-P8-001`修复`377dbeb`及回归/完整测试均`PASS`；更新manifest已remote验证。H200 Stage A job `8978425` Exit 0，overfit、true-batch-16、alpha、reconstruction、precision与memory gates及Phase Compliance均`PASS`；旧`8978152`仍为precompute invalid/non-attempt。Formal/OOF尚未开始 | 0 | 0 |
+| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | `BUG-P8-001`修复`377dbeb`及回归/完整测试均`PASS`；更新manifest已remote验证。H200 Stage A job `8978425` Exit 0，overfit、true-batch-16、alpha、reconstruction、precision与memory gates及Phase Compliance均`PASS`；旧`8978152`仍为precompute invalid/non-attempt。唯一Fold 0–4 formal jobs已提交且均在`csegpu100`排队，训练/OOF尚未开始 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -480,7 +481,7 @@ Bug 修复后：
 - 修复：commit `377dbeb`仅分离CLI dispatch的`source_common`与`lifecycle_common`，确保`overfit-check`/`preflight`不接收`output_root`；回归测试覆盖两个命令。未修改model、loss、config/profile、P4 initialization、训练或验收标准。
 - 本地验证：`tests/test_p8_gam.py`为`19 passed`，完整`279 passed`/3条既有warnings；Phase Compliance Reviewer、diff/frozen checks均`PASS`。更新后的private exact manifest本地verify为10 files / `143,590` bytes，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。
 - 远程验证：更新后的10-file manifest已KDM同步并通过remote integrity，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。有效Stage A job `8978425`在`csegpu12`/`k201` H200 GPU 3上于2026-08-12 08:50:53 AEST启动，`run_count=1`、walltime=`00:02:33`、`Exit_status=0`。Overfit最近5步均值`0.4029014229774475→0.06921419948339462`；true batch 16 forward/loss/backward/Adam、八组alpha finite nonzero gradient/update/simplex、FP32/no-AMP/BF16/TF32、encoder hashes与peak-memory gate全部`PASS`。Task/concept/total loss=`0.10217960178852081/0.46578413248062134/0.567963719367981`，normalized/rating reconstruction最大误差=`2.9802322387695312e-08/1.1920928955078125e-07`，peak reserved fraction=`0.01902019501277658`。仅有预期pool3d warn-only warnings；overfit/preflight/log SHA-256=`54eca3b186ee2ead480eebae1947b3405424a3d5910fd802eed0ade452a13630`/`c2d5e2dc9915e34aefc8eda5d6d94eab3712486c6cc3dfcbdb7b0e7aae188a7b`/`5d4f34c60d107b135511e0965493b16197ef8e69e484f12e68f4f28f044662cf`。远端只有两份Stage A JSON，没有formal/test/OOF artifact；Phase Compliance Reviewer为`PASS`。
-- 解除条件：已满足。旧job `8978152`永久保持`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt；修复后的完整重跑`8978425`满足全部原定Stage A gates。P8恢复正常开发；用户现已授权formal execution，实际五个`qsub`参数须设置`P8_FORMAL_APPROVED=1`，但formal jobs尚未提交。
+- 解除条件：已满足。旧job `8978152`永久保持`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt；修复后的完整重跑`8978425`满足全部原定Stage A gates。P8恢复正常开发；用户已授权formal execution，唯一五折已使用`P8_FORMAL_APPROVED=1`提交并排队。
 - 修复commit：`377dbeb`（local, unpushed）。
 
 ### BUG-P7-001：Fold 4 precommit test state-mixture verifier false failure
@@ -948,3 +949,4 @@ Bug 修复后：
 | 2026-08-12 | `BUG_FIX_LOCAL_PASS` / `BUG_VERIFYING` | P8 | Commit `377dbeb`仅分离CLI `source_common`/`lifecycle_common`，修复`overfit-check`与`preflight`收到不支持`output_root`的问题；两命令回归测试通过。`test_p8_gam`为`19 passed`、完整`279 passed`/3条既有warnings、Phase Compliance Reviewer及diff/frozen checks均`PASS`。更新private manifest本地verify为10 files / `143,590` bytes，internal/file SHA=`24ef05e1...26a`/`eda1026b...07e`。尚未KDM同步新manifest或重跑Stage A；`8978152`仍为precompute invalid/non-attempt，无formal/P9。P8继续`BLOCKED / AT_RISK`，P9继续`NOT_STARTED / AT_RISK`。 | `377dbeb`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `BUG_RESOLVED` / `STAGE_A_PASS` | P8 | 更新后的10-file manifest已完成KDM与remote integrity。有效H200 Stage A job `8978425`在`csegpu12`/`k201` GPU 3以Exit 0、run count 1完成；8-sample/40-step overfit最近5步均值`0.4029014229774475→0.06921419948339462`，true batch 16 forward/task+concept+total loss/backward/Adam、八组alpha gradient/update/simplex、encoder、FP32/no-AMP/BF16/TF32、reconstruction和peak-memory gates均PASS，warnings仅为预期pool3d warn-only。旧`8978152`保持precompute invalid/non-attempt。Remote仅有两份Stage A JSON，无formal/test/OOF；`P8_FORMAL_APPROVED=0`。Phase Compliance Reviewer为`PASS`，`BUG-P8-001`标记`RESOLVED`，P8恢复`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Job `8978425`；overfit `54eca3b1...a13630`；preflight `c2d5e2dc...188a7b`；log `5d4f34c6...662cf`；本次状态同步commit待创建 |
 | 2026-08-12 | `FORMAL_EXECUTION_APPROVED` | P8 | 用户正式批准P8 H200 Stage A并授权一次性提交Fold 0–4及创建只读后台定时监控。正式提交必须保持冻结scientific/execution profile，五个`qsub`参数均设置`P8_FORMAL_APPROVED=1`。本记录形成时尚未实际提交任何formal job，未生成training/test/OOF产物；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | 用户明确授权；本次状态同步commit待创建 |
+| 2026-08-12 | `FORMAL_FOLDS_QUEUED` | P8 | 使用同一`p8_fold.pbs`和`P8_FORMAL_APPROVED=1`一次性提交唯一Fold 0–4：`8978475→0`、`8978478→1`、`8978477→2`、`8978474→3`、`8978476→4`。五个jobs均为`Q`/`csegpu100`，统一请求H200×1、8 CPU、64 GB、96h，只有`P8_FOLD_INDEX`不同，无重复或遗漏。ACTIVE heartbeat `monitor-p8-gam-five-folds`每10分钟只读监控，禁止取消、修改、重提、替换、改profile、运行OOF或启动P9。当前训练尚未开始或完成；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Jobs `8978474`–`8978478`；本次状态同步commit待创建 |
