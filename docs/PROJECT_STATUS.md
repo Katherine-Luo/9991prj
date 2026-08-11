@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P7
 next_phase: P8
 last_updated: 2026-08-12
-last_verified_commit: d2def18
+last_verified_commit: cd3fbfb
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -46,7 +46,7 @@ last_verified_commit: d2def18
 | 恢复阶段 | `P7` |
 | 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P6已由`6876234`完成并交付，post-delivery状态commit `d2def18`已推送；开发前`HEAD=main=origin/main=d2def184bc3d39ccef4a9f4186a59109dc3d39cf`且ahead/behind=`0/0`。用户已明确批准P7 Mixed-type CEM实施计划，并固定共享动态state scorers、batch-shared group-independent RandInt mask与Stage A后一次提交五折。当前分支为`p7-mixed-cem`，尚无P7模型、config、Stage A或formal artifacts；冻结V1/V2 requirements/config、P4 inputs及H200 common profile未修改。P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
+| 状态依据 | P6已由`6876234`完成并交付，post-delivery状态commit `d2def18`已推送；P7启动状态由`6631173`封存。用户已明确批准P7 Mixed-type CEM实施计划，并固定共享动态state scorers、batch-shared group-independent RandInt mask与Stage A后一次提交五折。P7 execution supplement、README方法声明及配置测试已由本地未推送commit `cd3fbfb`封存，resolved SHA-256为`60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c`；专项`5 passed`、完整`220 passed`且Phase Compliance Reviewer为`PASS`。当前尚无P7模型、Stage A或formal artifacts；冻结V1/V2 requirements/config、P4 inputs及H200 common profile未修改。P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P7 Mixed-type CEM Regression
 
@@ -54,20 +54,24 @@ last_verified_commit: d2def18
 
 在P4固定patient-level splits与shared DenseNet-121 encoder initialization、P5–P6已验证的common H200 warn-only execution profile上，实现项目特定的mixed-type CEM：由每个sample的`h(x)`动态生成八组16维states，以continuous/categorical mixture weights形成8×16 concept representation，并使用无feature bypass的unconstrained linear regression task head。
 
-### 已完成前置与P7启动
+### 已完成前置、P7启动与执行配置
 
 - P6已完成、确认、合并并推送；P7的2,633个ROI、五折split、P4 shared encoder initializations、common H200 profile与训练公平性规则均可复用。
 - 用户已批准P7最终实施计划，并固定共享continuous/categorical scorers、batch-shared且group-independent的`p=0.25`训练干预、Stage A通过后一次提交五个H200 formal folds。
 - 已从最新交付`main`创建本地分支`p7-mixed-cem`；P8保持`NOT_STARTED`。
+- P7 source/resolved execution supplement及SHA-256已冻结；resolved SHA-256为`60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c`，由本地未推送commit `cd3fbfb`封存。
+- README与execution supplement均将P7明确声明为“A project-specific mixed-type extension of the original CEM”，并区分原始CEM要素与本项目mixed continuous/multiclass扩展及预注册实现选择。
+- Execution supplement固定continuous groups共享`Linear(32,1)` scorer、categorical states共享`Linear(16,1)` scorer；训练干预使用batch-shared、group-independent的8维`torch.randint(0,4)` decision vector，值为0时仅替换mixture weights，保留当前sample动态states，concept loss使用未干预预测且validation/test禁用干预。
+- 配置专项测试`5 passed`、完整测试`220 passed`；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config与H200 common profile无diff。
 
 ### 正在进行
 
-- 冻结P7 source/resolved execution supplement及SHA-256，并实现dynamic states、mixed-type probabilities、joint loss、batch-shared RandInt、contributions与确定性初始化。
+- 实现dynamic states、mixed-type probabilities、joint loss、batch-shared RandInt、contributions与确定性初始化。
 - 后续按批准顺序实现lifecycle、test-once、Katana Stage A、五折formal execution和private OOF/tracked aggregate audit。
 
 ### 尚未完成
 
-- P7 execution supplement、模型/loss/intervention、checkpoint/resume/test-once、Katana/audit接口与自动测试。
+- P7模型/loss/intervention、checkpoint/resume/test-once、Katana/audit接口及其行为测试。
 - H200 Stage A、五折各80 epochs、test exactly once、final verifies及2,633/868 OOF reconciliation。
 - P7阶段级双agent审查、`AWAITING_USER_APPROVAL`门、用户最终确认、合并和推送。
 - P8计划与开发未开始。
@@ -76,10 +80,10 @@ last_verified_commit: d2def18
 
 | P7 验收项 | 状态 | 证据 |
 |---|---|---|
-| P7 execution supplement、resolved config与hash | `PENDING` | 尚未创建 |
-| P7-R1 mixed-type扩展声明 | `IN_PROGRESS` | 已获用户批准；README/config/result artifacts尚未落盘 |
+| P7 execution supplement、resolved config与hash | `PASS` | Commit `cd3fbfb`（local, unpushed）；SHA-256 `60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c`；专项`5 passed`、完整`220 passed`；Phase Compliance Reviewer `PASS` |
+| P7-R1 mixed-type扩展声明 | `IN_PROGRESS` | README与execution supplement已明确声明项目特定mixed-type扩展并区分原始CEM；未来result artifacts仍须沿用该声明 |
 | P7-R2 dynamic sample-conditioned states | `PENDING` | 尚未实现或测试 |
-| P7-R3 joint loss与batch-shared training intervention | `PENDING` | 尚未实现或测试 |
+| P7-R3 joint loss与batch-shared training intervention | `IN_PROGRESS` | Execution supplement已冻结joint objective及batch-shared/group-independent RandInt语义；运行时代码与行为测试尚未实现 |
 | P7-R4 normalized/rating contribution reconstruction | `PENDING` | 尚未实现或测试 |
 | H200 Stage A、五折OOF与双agent阶段门 | `PENDING` | 尚未执行 |
 
@@ -348,7 +352,7 @@ Bug 修复后：
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
-| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | 实施计划已批准；本地启动状态已审查，Stage A与formal folds尚未执行 | 0 | 0 |
+| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | 实施计划与execution supplement已批准/冻结；SHA-256=`60e84612...c63a2c`，配置专项`5 passed`、完整`220 passed`、Phase Compliance Reviewer `PASS`；模型、Stage A与formal folds尚未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
@@ -765,3 +769,4 @@ Bug 修复后：
 | 2026-08-12 | `PHASE_COMPLETED` | P6 | 用户明确确认 P6；Stage A、五折 concept/task 各80 epochs、test exactly once、final verifies、2,633 nodules / 868 patients OOF、0 patient leakage、贡献重建、六个脱敏 audit、完整 `215 passed` 与双 agent 阶段门证据均已封存。Completion-sealing Phase Compliance Reviewer为`PASS`、Status Synchronization Reviewer为`UPDATED`。P6 转为 `COMPLETED / ON_TRACK`，P7 保持 `NOT_STARTED`。完成状态 commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称已经交付。 | 用户确认；`f1d29e9`、`bed615f`、`f9410c0`；本次 completion status commit 待创建 |
 | 2026-08-12 | `DELIVERED` | P6 | Completion commit `6876234`已fast-forward合并至`main`并首次推送GitHub。合并后完整测试`215 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config与H200/P6 profiles无diff。`git fetch`后`HEAD=main=origin/main=6876234c0a480ba5e7f231464044484889ddcc99`，ahead/behind=`0/0`。P6为`COMPLETED / ON_TRACK`且已交付；P7保持`NOT_STARTED`，未制定或实施。 | `6876234` |
 | 2026-08-12 | `PHASE_STARTED` | P7 | 用户批准Mixed-type CEM Regression实施计划；P7进入`IN_PROGRESS / ON_TRACK`，使用P4 shared encoder initialization、统一H200 profile与batch-shared group-independent `p=0.25`训练干预。当前仅启动本地开发，Stage A与formal folds尚未执行；P8保持`NOT_STARTED`。 | `p7-mixed-cem`本地分支；基线`d2def18` |
+| 2026-08-12 | `LOCAL_CONFIG_VERIFIED` | P7 | P7 execution supplement、resolved config、SHA-256与README mixed-type扩展声明已由本地commit封存；resolved SHA-256=`60e84612eec0ce60b0d17284f6888ddea3627778ab39bcee4c0c6ee3b0c63a2c`。Supplement固定共享continuous/categorical scorers及batch-shared、group-independent的8维RandInt干预决策。配置专项`5 passed`、完整`220 passed`、Phase Compliance Reviewer `PASS`。尚未实现P7模型或执行Stage A/formal folds；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | `cd3fbfb`（local, unpushed）；本次状态同步commit待创建 |
