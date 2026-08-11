@@ -1,0 +1,123 @@
+schema_version: 1
+protocol_version: Baseline-v2
+phase: P6
+model: standard_cbm
+scientific_config:
+  path: configs/baseline_v2.yaml
+  sha256: 07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce
+common_execution_profile:
+  path: configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml
+  resolved_sha256: 66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb
+  formal_gpu_model: H200
+project_preregistered:
+  statement: Baseline-v2 P6 project pre-registered implementation choices, not exact hyperparameters reported by the reference paper.
+  concept_predictor:
+    encoder_feature_size: 1024
+    feature_transform:
+      - relu
+      - global_average_pooling
+    head_type: independent_linear_no_hidden_layer
+    group_order:
+      - subtlety
+      - internalStructure
+      - calcification
+      - sphericity
+      - margin
+      - lobulation
+      - spiculation
+      - texture
+    heads:
+      subtlety: {output_size: 1, activation: sigmoid}
+      internalStructure: {output_size: 4, activation: softmax}
+      calcification: {output_size: 6, activation: softmax}
+      sphericity: {output_size: 1, activation: sigmoid}
+      margin: {output_size: 1, activation: sigmoid}
+      lobulation: {output_size: 1, activation: sigmoid}
+      spiculation: {output_size: 1, activation: sigmoid}
+      texture: {output_size: 1, activation: sigmoid}
+    canonical_task_vector:
+      dimension: 16
+      source: activated_predictions
+      layout:
+        - subtlety_sigmoid_scalar
+        - internalStructure_softmax_classes_1_to_4
+        - calcification_softmax_classes_1_to_6
+        - sphericity_sigmoid_scalar
+        - margin_sigmoid_scalar
+        - lobulation_sigmoid_scalar
+        - spiculation_sigmoid_scalar
+        - texture_sigmoid_scalar
+      preactivation_logits_as_task_input: false
+      malignancy_as_input_concept: false
+    logits:
+      retain_for_audit_and_future_gradcam: true
+      task_head_input: false
+  concept_loss:
+    continuous: sample_mean_mse_on_sigmoid_prediction
+    categorical: sample_mean_soft_target_cross_entropy_from_logits
+    categorical_hard_modal_labels: false
+    class_weights: false
+    group_reduction: arithmetic_mean_of_8_group_losses
+    epoch_reduction: sum_then_divide_by_partition_sample_count
+  sequential_training:
+    concept_stage:
+      epochs: 80
+      train_augmentation: true
+      validation_augmentation: false
+      optimizer_and_batching: inherit_common_execution_profile
+      scheduler_monitor: validation_concept_loss
+      checkpoint_objective: minimum_validation_concept_loss
+      checkpoint_tie_break: earlier_epoch
+    cache_gate:
+      source_checkpoint: frozen_concept_best
+      predictor_mode: eval
+      predictor_requires_grad: false
+      batchnorm_state: frozen
+      input_augmentation: false
+      generated_before_task_training:
+        - train
+        - validation
+      forbidden_before_task_best:
+        - test
+      values: activated_predicted_concepts_float32
+      ground_truth_concepts_as_task_features: forbidden
+      retain_preactivation_logits_for_audit: true
+    task_stage:
+      epochs: 80
+      input: frozen_activated_predicted_concepts
+      input_dimension: 16
+      ground_truth_concepts: forbidden
+      reads_images: false
+      reads_encoder_features: false
+      head: unconstrained_linear_16_to_1
+      output_activation: none
+      optimizer_and_batching: inherit_common_execution_profile
+      scheduler_monitor: validation_task_mse
+      checkpoint_objective: minimum_validation_task_mse
+      checkpoint_tie_break: earlier_epoch
+    test_transaction:
+      require_concept_best: true
+      require_verified_train_validation_cache: true
+      require_task_best: true
+      generate_test_concepts_after_task_best_only: true
+      test_inference_exactly_once: true
+  deterministic_initialization:
+    concept_head_seed_material: Baseline-v2/P6/standard-cbm-concept-head/<group> || fold_seed
+    task_head_seed_material: Baseline-v2/P6/standard-cbm-task-head || fold_seed
+    derivation: sha256_material_first_8_bytes_unsigned_big_endian_mask_63_bits
+    isolated_cpu_rng: true
+    order_independent_concept_heads: true
+  contributions:
+    continuous: activated_scalar_times_linear_weight
+    categorical: activated_probability_vector_dot_linear_weight_block
+    normalized_reconstruction_tolerance: 1.0e-6
+    rating_point_multiplier: 4.0
+    rating_scale_bias: 1_plus_4_times_raw_bias
+    rating_reconstruction_tolerance: 1.0e-6
+  execution_gate:
+    stage_a_fold: 0
+    stage_a_formal_training: false
+    submit_all_five_formal_folds_after_stage_a_pass: true
+    intermediate_fold_0_approval_required: false
+    formal_folds: [0, 1, 2, 3, 4]
+    formal_gpu_model: H200
