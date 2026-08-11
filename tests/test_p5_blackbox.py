@@ -46,6 +46,7 @@ from lidc_baseline.p5_blackbox import (
     configure_fp32_determinism,
     reproducibility_provenance,
     restore_rng_state,
+    serialized_float_consistent,
     train_one_epoch,
     train_fold,
     validate_execution_config,
@@ -129,6 +130,20 @@ def test_scheduler_decays_after_exactly_four_consecutive_bad_epochs() -> None:
     assert scheduler.step(1.0) is True
     assert optimizer.param_groups[0]["lr"] == pytest.approx(9e-5)
     assert scheduler.bad_epoch_counter == 0
+
+
+def test_serialized_float_consistency_accepts_tiny_round_trip_difference() -> None:
+    assert serialized_float_consistent(
+        0.01997598138996362,
+        0.0199759813899636,
+    )
+
+
+def test_serialized_float_consistency_rejects_real_objective_mismatch() -> None:
+    assert not serialized_float_consistent(
+        0.01997598138996362,
+        0.01997698138996362,
+    )
 
 
 def test_scheduler_tolerance_is_independent_of_exact_checkpoint_rule() -> None:

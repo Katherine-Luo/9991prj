@@ -50,6 +50,8 @@ EXPECTED_FOLD_TEST_COUNTS = (479, 502, 539, 549, 564)
 EXECUTION_CONFIG_DEFAULT = Path(
     "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
 )
+SERIALIZED_FLOAT_REL_TOL = 1e-12
+SERIALIZED_FLOAT_ABS_TOL = 1e-12
 
 
 def _torch() -> Any:
@@ -816,6 +818,20 @@ def checkpoint_improves(current_validation_mse: float, best_validation_mse: floa
     if not math.isfinite(current):
         raise ValueError("NONFINITE_VALIDATION_MSE")
     return current < best
+
+
+def serialized_float_consistent(left: float, right: float) -> bool:
+    """Compare equivalent finite values after JSON/CSV serialization round-trips."""
+    left_value = float(left)
+    right_value = float(right)
+    if not math.isfinite(left_value) or not math.isfinite(right_value):
+        return False
+    return math.isclose(
+        left_value,
+        right_value,
+        rel_tol=SERIALIZED_FLOAT_REL_TOL,
+        abs_tol=SERIALIZED_FLOAT_ABS_TOL,
+    )
 
 
 def regression_metrics(predictions: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -1743,11 +1759,9 @@ def _verify_fold_locked(
         raise ValueError("P5_CHECKPOINT_SELECTION_MISMATCH")
     if int(best_payload["epoch_index"]) != minimum_epoch:
         raise ValueError("P5_BEST_PAYLOAD_EPOCH_MISMATCH")
-    if not math.isclose(
+    if not serialized_float_consistent(
         float(completion["best_validation_mse"]),
         float(history.iloc[minimum_index]["validation_mse"]),
-        rel_tol=0.0,
-        abs_tol=0.0,
     ):
         raise ValueError("P5_BEST_OBJECTIVE_MISMATCH")
     if completion.get("history_sha256") != sha256_file(output / "history.csv"):
