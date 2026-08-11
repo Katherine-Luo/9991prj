@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P5
-development_phase_status: COMPLETED
+development_phase: P6
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P5
-next_phase: P6
+resume_phase: P6
+next_phase: P7
 last_updated: 2026-08-11
-last_verified_commit: c392c04
+last_verified_commit: 9c8b60b
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4 与 P5 均已完成、获用户确认并推送；P5 最终交付 anchor 为 `c392c04`。P6 保持 `NOT_STARTED`，须另行制定实施计划并获得用户批准。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4 与 P5 均已完成、获用户确认并推送；P5 最终交付 anchor 为 `c392c04`。P6 最终实施计划已获用户明确批准，当前为唯一允许开发的阶段；P7 保持 `NOT_STARTED`。
 
 ## 1. 阅读规则
 
@@ -38,17 +38,69 @@ last_verified_commit: c392c04
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P5 Reference-aligned Black-box Regression` |
-| 阶段状态 | `COMPLETED / ON_TRACK` |
+| 当前开发阶段 | `P6 Sequential Standard CBM Regression` |
+| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞。P5 已 fast-forward 合并至 `main`、通过合并后完整测试与冻结检查并推送 GitHub；post-delivery 状态同步也已提交并推送。本地 `main`、`HEAD` 与 `origin/main` 均为 `c392c04c556a563c4b1fefd6ae69c3735c742083`。P6 保持 `NOT_STARTED`。 |
-| 恢复阶段 | `P5` |
-| 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
+| 当前阻塞项 | 无。P6 已获最终实施计划批准并在本地分支 `p6-standard-cbm` 启动；当前尚无 P6 实现、正式训练或远程作业。 |
+| 恢复阶段 | `P6` |
+| 下一阶段 | `P7 Mixed-type CEM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P5 completion commit `147f8f0` 已 fast-forward 合并并推送，post-delivery 状态同步 commit `c392c04` 也已推送；本地 `main`、`HEAD` 与 `origin/main` 均为 `c392c04c556a563c4b1fefd6ae69c3735c742083`。合并后完整测试为 `173 passed`，冻结 V1/V2 requirements/config 无 diff，post-delivery Phase Compliance Reviewer 为 `PASS`。P5 verified anchors 包括 OOF implementation `a81d06b`、脱敏 audit evidence `0359d61`、approval gate `6e07bb5`、completion `147f8f0` 与最终 delivery sync `c392c04`。五折 H200 formal runs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633 nodules / 868 patients OOF、0 leakage、六个脱敏 audit 和 private OOF SHA-256 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8` 均已交付。P5 为 `COMPLETED / ON_TRACK`，无活动 Bug；P6 仍为 `NOT_STARTED`。 |
+| 状态依据 | `main`、`HEAD` 与 `origin/main` 在 P6 分支创建前均为已交付的 `9c8b60b26bd6070dea4c86ce0c1250070ca3cf50`；工作区在阶段启动前干净。用户已批准 P6 最终实施计划及四项澄清：Stage 2 只使用 frozen predicted concepts；task-head 输入为 activated canonical 16D vector；test concepts 只在 task-best 固定后生成；Stage A 通过后可一次提交五个 H200 formal folds。P6 当前为 `IN_PROGRESS / ON_TRACK`，P7 仍为 `NOT_STARTED`。 |
 
-## 3. 当前阶段：P5 Reference-aligned Black-box Regression
+## 3. 当前阶段：P6 Sequential Standard CBM Regression
+
+### 阶段目标
+
+在 P4 固定 patient-level splits、共享 DenseNet-121 encoder initialization 和 P5 已验证的 common H200 warn-only execution profile上，实现两阶段 sequential Standard CBM：先训练八组 concept predictor，再使用 frozen activated predicted concepts 训练 unconstrained linear malignancy regression head。
+
+### 已完成
+
+- P5 已完成、确认并推送；P6 的数据、ROI、splits、shared encoder initialization、H200 execution profile和训练公平性规则均可复用。
+- 用户已批准 P6 最终实施计划与四项实现澄清。
+- 已从已交付 `main` 创建本地分支 `p6-standard-cbm`。
+
+### 正在进行
+
+- 启动 P6 状态治理；尚未创建 execution supplement、模型、cache、训练、Katana或audit实现。
+
+### 尚未完成
+
+- P6 execution supplement及hash。
+- Concept predictor、八组等权loss、deterministic head initialization和两阶段lifecycle。
+- Leakage-safe train/validation concept caches和test-once transaction。
+- H200 Stage A、五折formal runs、OOF、脱敏audit及阶段门。
+
+### 验收进度
+
+| P6 验收项 | 状态 | 证据 |
+|---|---|---|
+| P6-R1 concept predictor与八组等权loss | `NOT_STARTED` | 待实现 |
+| P6-R2 sequential frozen-prediction task training | `NOT_STARTED` | 待实现 |
+| P6-R3 normalized/rating contribution reconstruction | `NOT_STARTED` | 待实现 |
+| H200 Stage A、五折OOF与双agent阶段门 | `NOT_STARTED` | 待执行 |
+
+### 未解决困难
+
+- 当前无 P6 特有开放困难；`DIF-P10-001`继续开放但不阻止P6。
+
+## 4. 下一阶段：P7 Mixed-type CEM
+
+### 阶段目标
+
+仅在 P6 完成、用户确认并推送后另行制定；当前不实现或详细规划。
+
+### 进入条件
+
+- P6 必须通过全部技术验收、双agent审查、用户确认、合并与GitHub推送。
+
+### 第一批任务
+
+- 尚未制定或批准；P7保持`NOT_STARTED`。
+
+<!-- NORMAL_READING_END -->
+
+## 5. P5 历史开发快照
 
 ### 阶段目标
 
@@ -106,7 +158,7 @@ last_verified_commit: c392c04
 
 - `DIF-P10-001` 继续为 `OPEN`，当前不阻止 P5；P5 必须记录 checkpoints、history、predictions 与 runtime 的实际 storage，供 P10 总工作集估算使用。
 
-## 4. 下一阶段：P6 Standard CBM
+### P6 启动前历史快照
 
 ### 阶段目标
 
@@ -121,7 +173,7 @@ last_verified_commit: c392c04
 
 - 尚未制定或批准；P6 保持 `NOT_STARTED`。
 
-<!-- NORMAL_READING_END -->
+<!-- P5_HISTORICAL_SNAPSHOT_END -->
 
 ---
 
@@ -292,7 +344,7 @@ Bug 修复后：
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
-| P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 全部五折、阶段验收、用户确认与交付前禁止开始 | 0 | 0 |
+| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | 最终实施计划与四项澄清已获批准；本地分支已启动，当前尚无实现、训练或远程作业 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -302,7 +354,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前无活动 Bug。P5 为 `NORMAL_DEVELOPMENT / COMPLETED / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试、双 agent 审查、用户确认、Git 交付与 post-delivery 状态同步均为 `PASS`。P5 无剩余交付工作，P6–P8 均保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
+当前无活动 Bug。P5 为 `COMPLETED / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试、双 agent 审查、用户确认、Git 交付与 post-delivery 状态同步均为 `PASS`。P6 当前为 `NORMAL_DEVELOPMENT / IN_PROGRESS / ON_TRACK`，P7–P8 保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
 
 ### Bug 状态
 
@@ -675,3 +727,4 @@ Bug 修复后：
 | 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `FIVE_FOLD_OOF_PASS` | P5 | Stage B jobs `8965994`–`8965997` 均完成 80 epochs、minimum-validation-MSE checkpoint、test exactly once 与 final verify，且 `Exit_status=0`。CPU OOF job `8966614` 在 `k189` Exit 0；OOF 精确覆盖 2,633 nodules / 868 patients，fold counts `[479,502,539,549,564]`，patient leakage 为 0。六个 tracked P5 audit JSON 已通过脱敏检查；private OOF 仅保留在 Katana，SHA-256 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`。Direct `8 passed`、full `173 passed`、Phase Compliance Reviewer `PASS`、Status Synchronization Reviewer `UPDATED`；P5 转为 `AWAITING_USER_APPROVAL / ON_TRACK`，仅等待用户最终确认，P6 保持 `NOT_STARTED`，尚未合并或推送。 | `a81d06b`、`0359d61`（本地未推送）；Katana jobs `8965994`–`8965997`、`8966614` |
 | 2026-08-11 | `PHASE_COMPLETED` | P5 | 用户明确确认 P5；五折 Black-box H200 formal runs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633 nodules / 868 patients OOF、0 patient leakage、六个脱敏 audit、完整 `173 passed` 与双 agent 审查均已封存。P5 转为 `COMPLETED / ON_TRACK`，P6 保持 `NOT_STARTED`。Completion status commit、fast-forward merge、`main` 完整测试和 GitHub push 尚待执行，不得声称已交付。 | 用户确认；`a81d06b`、`0359d61`、`6e07bb5`；本次 completion status commit 待创建 |
 | 2026-08-11 | `DELIVERED` | P5 | P5 已由 completion commit `147f8f0` fast-forward 合并至 `main` 并推送 GitHub；合并后完整测试 `173 passed`、冻结 V1/V2 requirements/config 无 diff，post-delivery Phase Compliance Reviewer 为 `PASS`。Post-delivery 状态同步 commit `c392c04` 也已推送；最终核验时本地 `main`、`HEAD` 与 `origin/main` 三方均为 `c392c04c556a563c4b1fefd6ae69c3735c742083`，P6 保持 `NOT_STARTED`。 | `147f8f0`、`c392c04` |
+| 2026-08-11 | `PHASE_STARTED` | P6 | 用户批准 Sequential Standard CBM Regression 最终实施计划及四项澄清；P6 进入 `IN_PROGRESS / ON_TRACK`。Stage 2 只使用 frozen predicted concepts，task-head 输入固定为 activated 16D vector，test concept predictions 只在 task-best 固定后生成；Stage A 通过后可一次提交五个 H200 formal folds。P7 保持 `NOT_STARTED`。 | `p6-standard-cbm` 本地分支；基线 `9c8b60b` |
