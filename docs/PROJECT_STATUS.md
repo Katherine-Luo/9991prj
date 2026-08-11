@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P8
 next_phase: P9
 last_updated: 2026-08-12
-last_verified_commit: 0d04223
+last_verified_commit: 1c841a5
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 0d04223
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无；P8 model core已完成本地验证，80-epoch lifecycle、Stage A、五折formal runs与OOF尚未完成。 |
+| 当前阻塞项 | 无；P8 model core与80-epoch lifecycle已完成本地验证，Stage A/Katana接口、五折formal runs与actual OOF尚未完成。 |
 | 恢复阶段 | `P8` |
 | 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`并由`064ec70`封存启动状态；P8 execution supplement、resolved config与SHA-256已由`0b292e7`封存。Model core已实现8个linear concept heads、8组×5个concept-local experts、learned-softmax alpha、joint loss、确定性初始化与贡献重建并通过本地验证，由`0d04223`原子封存；80-epoch lifecycle、Stage A、Katana/formal/OOF仍未完成，P9保持`NOT_STARTED`。 |
+| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`并由`064ec70`封存启动状态；P8 execution supplement、resolved config与SHA-256已由`0b292e7`封存。Model core已由`0d04223`原子封存；80-epoch joint lifecycle、checkpoint/resume、alpha provenance、test exactly-once transaction、strict numeric verifier及五折OOF集合完整性接口已由`1c841a5`原子封存并完成本地验证。Direct config+lifecycle测试`22 passed`，完整测试`268 passed`且仅3条既有dependency warnings，Phase Compliance Reviewer为`PASS`。Stage A/Katana接口尚未实现，未执行任何P8 Stage A、formal training/test或actual OOF；P9保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -65,15 +65,20 @@ last_verified_commit: 0d04223
 - 每组fold-level trainable alpha logits与global raw bias均以零初始化；alpha softmax初始权重精确为`0.2`，直接测试验证每组alpha均获得finite nonzero gradient并在Adam step后更新。Concept heads与40个experts使用fold-specific、domain-separated、CPU RNG-isolated初始化及per-component/combined semantic hashes，并从P4 shared encoder artifact加载且复核encoder semantic/file hashes。
 - 已实现`L_GAM=L_task+L_concept`、八组等权concept loss、unconstrained `raw_task_score=raw_bias+Σgroup_contribution`及normalized/rating-scale贡献重建；构造`>1`输出保持未裁剪，tampering guard可阻断，重建误差门固定为`≤1e-6`。
 - Model-core直接测试`9 passed`、完整测试`261 passed`且仅有3条既有dependency warnings；AST/whitespace检查与Phase Compliance Reviewer均为`PASS`，冻结V1/V2 requirements/config、common H200 profile及P8 execution supplement无diff。功能commit为`0d04223`（local, unpushed）。
+- 已实现固定80 epochs的joint training lifecycle：复用common H200 profile的Adam、validation-`L_GAM` scheduler、minimum validation total-loss checkpoint与earlier-epoch tie-break；epoch history逐项保存task MSE、concept loss、8组loss、total loss、LR、full train/validation coverage与UID-set hashes，并保留partial final batch与train-only augmentation边界。
+- 已实现epoch-boundary atomic `last.pt`/`best.pt`、optimizer/scheduler/RNG/history resume与completed-run verified reuse。Checkpoint metadata绑定validation task/concept/8-group/total objectives及alpha snapshot；initial、best与final alpha均保存per-group/combined semantic hashes，并与history、checkpoint state及completion hashes交叉验证。
+- 已实现best checkpoint封存后的test exactly-once transaction：claim、private predictions、metrics、evaluation与completion按hash/provenance提交；已提交evaluation可在中断后zero-inference恢复，已完成test再次调用会阻断。Private schema严格保存activated concepts、logits、expert outputs、alpha logits/weights、targets/ties/valid-reader counts、8组贡献、bias与完整provenance，缺失/额外字段、tampering和artifact corruption均阻断。
+- Strict verifier使用显式FP32 serialization/scale-aware numeric policy重建expert outputs、alpha-weighted group contributions及normalized/rating scores，保留匿名diagnostic而不包含patient/nodule标识；fold verifier重建minimum-validation-`L_GAM` checkpoint、H200/FP32/no-AMP/BF16/TF32 runtime、coverage、alpha gradient/update和test-once证据。`verify --scope all`接口验证五折test counts、2,633 nodules / 868 patients及0 patient leakage，并有count/patient/leakage负测试；该接口不代表actual OOF已经生成。
+- Lifecycle批次的direct config+lifecycle测试为`22 passed`，完整测试为`268 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config、common H200 profile及P8 execution supplement无diff。Lifecycle功能commit为`1c841a5`（local, unpushed）。
 
 ### 正在进行
 
-- Model-core批次状态同步后，继续实现80-epoch GAM lifecycle、checkpoint/resume、test transaction、Stage A及Katana/OOF/audit接口与测试。
+- Lifecycle批次状态同步后，继续实现H200 Stage A、Katana exact-whitelist transfer/PBS、formal-fold orchestration及private OOF/tracked aggregate audit接口与测试。
 
 ### 尚未完成
 
-- 80-epoch lifecycle、checkpoint/resume、test exactly once、final verifier及对应自动测试。
-- KDM exact-whitelist、H200 Stage A、五折formal runs、CPU OOF与tracked脱敏audit。
+- H200 Stage A overfit/preflight命令、Katana exact-whitelist/KDM/PBS及formal-fold/CPU OOF/tracked aggregate audit接口；本批CLI当前仅包含`train`、`evaluate-test`和`verify`。
+- KDM同步与remote integrity、H200 Stage A实际执行、五折80-epoch formal runs/test exactly once/final verifier、actual CPU OOF与tracked脱敏audit。
 - 完整阶段门与用户最终确认。
 - P9未制定或实施。
 
@@ -429,7 +434,7 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 用户已批准端到端joint CBM + learned-softmax GAM计划；execution supplement/resolved/hash与model core均已实现，本批次直接`9 passed`、完整`261 passed`/3条既有warnings、Phase Compliance Reviewer`PASS`；80-epoch lifecycle、Stage A/formal/OOF仍尚未完成 | 0 | 0 |
+| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 用户已批准端到端joint CBM + learned-softmax GAM计划；execution supplement/resolved/hash、model core及80-epoch lifecycle/checkpoint/resume/test-once/strict verifier/OOF完整性接口均已实现。Direct config+lifecycle`22 passed`、完整`268 passed`/3条既有warnings、Phase Compliance Reviewer`PASS`；Stage A/Katana接口、formal folds与actual OOF仍尚未实现或执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -901,3 +906,4 @@ Bug 修复后：
 | 2026-08-12 | `PHASE_STARTED` | P8 | 用户批准End-to-end CBM + Learned-softmax GAM Regression实施计划；P8进入`IN_PROGRESS / ON_TRACK`。固定端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha，以及Stage A通过后一次提交五个H200 folds且无Fold-0中间确认。当前仅创建`p8-gam`本地分支并更新启动状态，尚未实现P8 config/model/lifecycle或提交任何Katana job；P9保持`NOT_STARTED`。 | `p8-gam`本地分支；基线`437ce85`；本次启动状态commit待创建 |
 | 2026-08-12 | `LOCAL_CONFIG_VERIFIED` | P8 | P8 execution supplement、deterministic resolved config与SHA-256已创建并验证；resolved SHA-256为`1569b09c83d6a785601c181d615ac656b71623d054e45705bc0a35b17ba2dc7f`。Supplement固定8组×5个concept-local learned-softmax subnetworks、zero alpha/global bias、activated predicted concepts-only task path、joint loss、无intervention及H200 Stage A/五折提交边界。配置专项`6 passed`、完整测试`252 passed`且仅3条既有dependency warnings，Phase Compliance Reviewer`PASS`。尚未实现P8模型/lifecycle或执行Stage A/formal/OOF；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `0b292e7`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_MODEL_CORE_VERIFIED` | P8 | P8 model core已实现8个独立linear concept heads、8组×5个独立concept-local `input→32→16→1` ReLU experts、zero-initialized fold-level trainable learned-softmax alpha/global bias、activated predicted concepts-only task path、joint `L_GAM`、fold-specific deterministic initialization hashes及两种量纲贡献重建。直接测试`9 passed`、完整测试`261 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer`PASS`，冻结协议与execution profiles无diff。80-epoch lifecycle、Stage A、formal folds与OOF尚未完成；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `0d04223`（local, unpushed）；本次状态同步commit待创建 |
+| 2026-08-12 | `LOCAL_LIFECYCLE_VERIFIED` | P8 | P8 lifecycle已实现80-epoch joint training、Adam/scheduler、minimum-validation-`L_GAM` checkpoint与earlier tie-break、full coverage/partial batch/train-only augmentation、epoch-boundary resume/completed reuse、initial/best/final alpha hashes、strict private prediction schema、test exactly-once/zero-inference recovery、FP32 numeric reconstruction verifier及五折2,633/868/0-leakage完整性接口。Direct config+lifecycle`22 passed`、完整`268 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer`PASS`，冻结V1/V2 requirements/config与execution profiles无diff。Stage A/Katana接口、formal folds与actual OOF尚未实现或执行；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `1c841a5`（local, unpushed）；本次状态同步commit待创建 |
