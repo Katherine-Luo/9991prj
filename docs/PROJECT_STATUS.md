@@ -14,8 +14,8 @@ maintenance_phase: null
 active_bug_ids: []
 resume_phase: P6
 next_phase: P7
-last_updated: 2026-08-11
-last_verified_commit: e9b3284
+last_updated: 2026-08-12
+last_verified_commit: f1d29e9
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: e9b3284
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞。P6五折formal jobs已一次性提交至`csegpu100`且当前均为`Q`；正常等待H200资源，不取消、不修改、不重复提交。 |
+| 当前阻塞项 | 无技术阻塞。P6五折formal jobs已全部`Exit 0`并通过final verify；OOF/audit功能已由本地原子commit `f1d29e9`封存，当前仅待状态同步commit、KDM同步及Katana CPU OOF执行。 |
 | 恢复阶段 | `P6` |
 | 下一阶段 | `P7 Mixed-type CEM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
-| 最近更新 | 2026-08-11 |
-| 状态依据 | Stage A状态commit `e9b3284`为当前本地已提交基线、尚未推送；Phase Compliance Reviewer为`PASS`，remote integrity再次为`PASS`。五折formal jobs已使用同一`p6_fold.pbs`、`P6_FORMAL_APPROVED=1`和frozen P6/H200 profiles一次性提交：fold 0=`8969575`、fold 1=`8969576`、fold 2=`8969577`、fold 3=`8969578`、fold 4=`8969579`。五个jobs当前均在`csegpu100`为`Q`，每个请求H200×1、8 CPU、64 GB、96小时，除fold index外配置相同。只读heartbeat automation `monitor-p6-standard-cbm-folds`每10分钟监控，严禁取消、修改或重提。只读核验无额外P6 jobs且无P7 jobs/artifacts；当前没有formal training completion、test、OOF或audit证据。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
+| 最近更新 | 2026-08-12 |
+| 状态依据 | 当前已提交基线为`f1d29e9`（local, unpushed）。Formal jobs fold 0=`8969575`、fold 1=`8969576`、fold 2=`8969577`、fold 3=`8969578`、fold 4=`8969579`均为`Exit 0`；每折concept/task各完成80 epochs、test exactly once、final verify `PASS`，test counts依次为`479/502/539/549/564`且必需private artifacts齐全。只读heartbeat automation已在五折完成后删除。OOF/audit功能commit `f1d29e9`已封存private raw OOF、P6 task/integrity tracked audit、manifest独立patient mapping、CPU PBS与Katana 9-file whitelist；专项`9 passed`、完整`215 passed`，Phase Compliance Reviewer为`PASS`。Private transfer manifest verify为`PASS`：9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`，file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。当前状态同步commit尚待创建，且尚未KDM同步或执行remote OOF，因此尚无OOF或concept scientific results；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P6 Sequential Standard CBM Regression
 
@@ -82,26 +82,31 @@ last_verified_commit: e9b3284
 - Peak reserved memory为`2,860,515,328 / 150,393,585,664 bytes = 1.902%`，低于85%门槛；运行保持FP32、AMP/BF16/TF32关闭，仅记录预期的`avg_pool3d_backward_cuda`与`max_pool3d_with_indices_backward_cuda` warn-only warnings。
 - Stage A private artifacts SHA-256：overfit `8e09c877fe0d3e438c9e322b3b7a73cb75003f607d964b0f5dd175459b1778f7`，preflight `4ad4d6b9a714d73f8f6dd3acee0342baf8dc5c2cb24a8f5b91f7f4ac013d3aec`，job log `23b7759acaeb9f7288de61b84f2f99caf98909de46aa6b9766b2d18cb70c3144`；Stage A Phase Compliance Reviewer为`PASS`。
 - Remote integrity再次为`PASS`后，已使用同一`p6_fold.pbs`与`P6_FORMAL_APPROVED=1`一次性提交五折：fold 0=`8969575`、fold 1=`8969576`、fold 2=`8969577`、fold 3=`8969578`、fold 4=`8969579`。
-- 五个jobs均位于`csegpu100`，每个请求H200×1、8 CPU、64 GB RAM和96小时walltime；除fold index外execution profile完全相同，当前状态均为`Q`。
-- 已创建只读heartbeat automation `monitor-p6-standard-cbm-folds`，每10分钟监控五折队列/进度；不得取消、修改或重复提交。当前无额外P6 jobs，无P7 jobs或artifacts。
+- 五个jobs均按相同frozen P6/H200 execution profile完成并为`Exit 0`；每折concept stage与task stage各完成80 epochs，test exactly once且final verifier均为`PASS`，test counts依次为`479/502/539/549/564`，必需private artifacts齐全。
+- 五折完成后已删除只读heartbeat automation `monitor-p6-standard-cbm-folds`；没有取消、修改或重复提交任何formal job，也没有启动P7。
+- OOF/audit功能commit `f1d29e9`已封存private raw OOF materialization、P6 task/integrity tracked audit、manifest独立patient mapping与leakage guard、CPU-only PBS以及Katana 9-file exact whitelist；该commit为local、unpushed。
+- OOF/audit专项测试`9 passed`、完整测试`215 passed`，Phase Compliance Reviewer为`PASS`。更新后的private transfer manifest本地verify为`PASS`：9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`，manifest file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。
 
 ### 正在进行
 
-- 只读监控jobs `8969575`–`8969579`的排队、启动和训练进度；在五折全部完成前不生成或宣称OOF结果。
+- 创建本次状态同步原子commit；随后通过KDM同步9-file whitelist，在Katana提交CPU OOF job并生成private raw OOF与脱敏tracked audit evidence。
 
 ### 尚未完成
 
-- 五折formal runs完成、每折test exactly once/final verify、OOF、脱敏audit及阶段门。
+- OOF/audit状态同步原子commit。
+- 9-file whitelist的KDM同步、remote integrity verification及Katana CPU OOF execution。
+- Private raw OOF、tracked task/integrity audit evidence、2,633/868覆盖与0 patient leakage验证。
+- P6完整阶段门、阶段级双agent审查与用户最终确认。
 
 ### 验收进度
 
 | P6 验收项 | 状态 | 证据 |
 |---|---|---|
 | P6 execution supplement、resolved config与hash | `PASS` | SHA-256 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`；专项 `4 passed`、完整 `177 passed`；Phase Compliance Reviewer `PASS` |
-| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | 本地测试及H200 Stage A overfit/true-batch-16 concept forward/8-loss/backward/Adam均`PASS`；正式fold证据待完成 |
-| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | H200 Stage A train/validation cache与frozen predicted 16D task step均`PASS`且predictor/BN hashes不变；正式fold证据待完成 |
-| P6-R3 normalized/rating contribution reconstruction | `IN_PROGRESS` | Unit与严格test-row reconstruction≤`1e-6`已验证；正式fold predictions重建证据待完成 |
-| H200 Stage A、五折OOF与双agent阶段门 | `IN_PROGRESS` | Stage A`PASS`；formal jobs `8969575`–`8969579`均已提交且当前为`Q`。训练完成、OOF和阶段级审查待完成 |
+| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | 本地测试、H200 Stage A及五折formal concept stages各80 epochs均完成；五折jobs均`Exit 0`且final verify `PASS`。OOF aggregate reconciliation尚待执行 |
+| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | H200 Stage A及五折formal task stages各80 epochs均完成；每折test exactly once，test counts为`479/502/539/549/564`。OOF集合与leakage验证尚待执行 |
+| P6-R3 normalized/rating contribution reconstruction | `IN_PROGRESS` | Unit与五折严格test-row verifier均通过≤`1e-6` reconstruction；pooled private OOF reconstruction audit尚待执行 |
+| H200 Stage A、五折OOF与双agent阶段门 | `IN_PROGRESS` | Stage A与五折formal execution均`PASS`；OOF/audit功能已由`f1d29e9`封存，专项`9 passed`、完整`215 passed`、Phase Compliance Reviewer`PASS`。状态同步commit、KDM同步、remote OOF、tracked evidence和阶段级审查待完成 |
 
 ### 未解决困难
 
@@ -367,7 +372,7 @@ Bug 修复后：
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
-| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | Stage A`PASS`；五折H200 formal jobs `8969575`–`8969579`已提交、当前均为`Q`并由只读heartbeat监控。Formal completion、OOF及audit尚未完成 | 0 | 0 |
+| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | Stage A与五折H200 formal jobs `8969575`–`8969579`均`PASS`/`Exit 0`；每折concept/task各80 epochs、test exactly once、final verify `PASS`。OOF/audit功能已由本地commit `f1d29e9`封存，但状态同步、KDM同步、远程OOF与阶段门尚未完成 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -758,3 +763,5 @@ Bug 修复后：
 | 2026-08-11 | `LOCAL_STAGE_A_INTERFACES_VERIFIED` | P6 | P6 Stage A preflight、Katana transfer/KDM/PBS与formal-fold接口已实现并通过本地验证。Direct+Katana tests `38 passed`、完整有效环境`211 passed`（3条既有dependency warnings）、Bash和Phase Compliance Reviewer均`PASS`。Private transfer manifest为7 files / `151,376` bytes，internal SHA-256 `a9319c7de65f412791e6f901ea26415b8e068e0694762da25ebbc92beb1de8f9`，file SHA-256 `35a1abd6632d409c40e6b0577a01f198bde44596f287cf8a4cdb50b0d6f58d2f`。功能commit已创建；未KDM sync、未提交/执行Stage A或formal jobs。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `9d7d28c`（local, unpushed）；状态同步commit待创建 |
 | 2026-08-11 | `STAGE_A_PASS` | P6 | KDM与remote integrity为`PASS`；job `8969550`在`k219` H200上Exit 0完成。Overfit concept loss `0.4910895228→0.0769991726`；true batch 16 concept forward/8-loss/backward/Adam、train/validation caches各16、frozen predicted 16D task forward/MSE/backward/Adam均通过，predictor/BN hashes不变，peak reserved `1.902%`，FP32/no-AMP/BF16/TF32。仅出现预期pool3d warn-only warnings，Phase Compliance Reviewer`PASS`。按获批计划可一次提交五个formal folds；当前尚无formal jobs/artifacts。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | Katana job `8969550`；overfit `8e09c877...78f7`；preflight `4ad4d6b9...3aec`；log `23b7759a...3144` |
 | 2026-08-11 | `FORMAL_FOLDS_QUEUED` | P6 | Remote integrity再次`PASS`后，使用同一`p6_fold.pbs`和`P6_FORMAL_APPROVED=1`一次性提交fold 0–4：`8969575`、`8969576`、`8969577`、`8969578`、`8969579`。五个jobs均在`csegpu100`为`Q`，每个请求H200×1、8 CPU、64 GB、96小时，除fold index外配置一致；无额外P6或P7 jobs。只读heartbeat `monitor-p6-standard-cbm-folds`每10分钟监控，严禁取消、修改或重提。当前尚无formal completion、OOF或audit结果；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | Katana jobs `8969575`–`8969579`；Stage A状态基线`e9b3284` |
+| 2026-08-12 | `FORMAL_FOLDS_PASS` | P6 | Formal jobs `8969575`–`8969579`全部`Exit 0`；每折concept/task各完成80 epochs、test exactly once、final verify `PASS`，test counts依次为`479/502/539/549/564`且必需private artifacts齐全。五折完成后只读heartbeat automation已删除。尚未运行OOF，不宣称pooled OOF或concept scientific results；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | Katana jobs `8969575`–`8969579`；当前已提交基线`7121df3` |
+| 2026-08-12 | `LOCAL_OOF_AUDIT_IMPLEMENTED` | P6 | 本地功能commit已实现private raw OOF、P6 task/integrity tracked audit、manifest独立patient mapping、CPU PBS与Katana 9-file whitelist。专项`9 passed`、完整`215 passed`，Phase Compliance Reviewer`PASS`；private transfer manifest verify为9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`、file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。状态同步commit尚待创建，且未KDM同步或执行remote OOF，因此无OOF或concept scientific results；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `f1d29e9`（local, unpushed）；状态同步commit待创建 |
