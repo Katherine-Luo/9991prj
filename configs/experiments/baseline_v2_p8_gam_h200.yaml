@@ -1,0 +1,148 @@
+schema_version: 1
+protocol_version: Baseline-v2
+phase: P8
+model: end_to_end_cbm_learned_softmax_gam
+method_declaration:
+  statement: Baseline-v2 P8 project pre-registered implementation choices, not exact hyperparameters or architecture details reported by the reference CBM/GAM paper.
+  model_family: end_to_end_concept_bottleneck_generalized_additive_regression
+scientific_config:
+  path: configs/baseline_v2.yaml
+  sha256: 07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce
+common_execution_profile:
+  path: configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml
+  resolved_sha256: 66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb
+  formal_gpu_model: H200
+project_preregistered:
+  architecture:
+    encoder_feature_size: 1024
+    feature_transform:
+      - relu
+      - global_average_pooling
+    group_order:
+      - subtlety
+      - internalStructure
+      - calcification
+      - sphericity
+      - margin
+      - lobulation
+      - spiculation
+      - texture
+    concept_heads:
+      subtlety: linear_1024_to_1_then_sigmoid
+      internalStructure: linear_1024_to_4_then_softmax
+      calcification: linear_1024_to_6_then_softmax
+      sphericity: linear_1024_to_1_then_sigmoid
+      margin: linear_1024_to_1_then_sigmoid
+      lobulation: linear_1024_to_1_then_sigmoid
+      spiculation: linear_1024_to_1_then_sigmoid
+      texture: linear_1024_to_1_then_sigmoid
+    task_input: activated_predicted_concepts_only
+    preactivation_logits_task_input: forbidden
+    ground_truth_concepts_task_input: forbidden
+    dense_feature_bypass: false
+    independent_binary_head: false
+    task_output_activation: none
+    task_output_constraint: unbounded
+    task_output_name: malignancy_raw_score
+  gam:
+    groups: 8
+    experts_per_group: 5
+    total_independent_experts: 40
+    expert_architecture:
+      hidden_sizes: [32, 16]
+      hidden_activation: relu
+      output_size: 1
+      output_activation: none
+      output_type: linear_scalar
+    continuous_group_input_size: 1
+    categorical_group_input_sizes:
+      internalStructure: 4
+      calcification: 6
+    concept_local_inputs_only: true
+    cross_concept_inputs: forbidden
+    simple_expert_average: forbidden
+    alpha:
+      scope: fold_level_global_trainable_parameter
+      sample_conditioned: false
+      logits_per_group: 5
+      logits_initialization: all_zeros
+      weights_transform: softmax
+      initial_weight_per_expert: 0.2
+      require_finite_nonzero_gradient_evidence: true
+      require_update_evidence: true
+    group_contribution: sum_alpha_softmax_weight_times_expert_output
+    raw_task_score: global_raw_bias_plus_sum_8_group_contributions
+    global_raw_bias_initialization: zero
+  loss:
+    task: mse_raw_task_score_vs_normalized_malignancy
+    continuous_concept: mse_sigmoid_prediction_vs_normalized_reader_mean
+    categorical_concept: soft_cross_entropy_vs_full_vote_distribution
+    group_reduction: arithmetic_mean_of_8_partition_mean_group_losses
+    epoch_reduction: partition_sample_sums_and_counts
+    concept_weight: 1.0
+    total: task_loss_plus_concept_loss
+  intervention:
+    training: false
+    validation: false
+    test: false
+    reserved_phase: P9
+  training:
+    stages: joint_end_to_end
+    epochs: 80
+    optimizer_and_batching: inherit_common_execution_profile
+    true_micro_batch_size: 16
+    gradient_accumulation_steps: 1
+    drop_last: false
+    train_augmentation: true
+    validation_augmentation: false
+    test_augmentation: false
+    scheduler_monitor: validation_total_gam_loss
+    scheduler_min_delta: 0.0001
+    scheduler_bad_epochs: 4
+    scheduler_factor: 0.9
+    checkpoint_objective: minimum_validation_total_gam_loss
+    checkpoint_tie_break: earlier_epoch
+    early_stopping: false
+    test_inference_exactly_once: true
+  deterministic_initialization:
+    concept_head_seed_material: Baseline-v2/P8/gam-concept-head/<group> || fold_seed
+    subnetwork_seed_material: Baseline-v2/P8/gam-subnetwork/<group>/<expert_index> || fold_seed
+    alpha_logits: all_zeros
+    global_raw_bias: zero
+    derivation: sha256_material_first_8_bytes_unsigned_big_endian_mask_63_bits
+    isolated_cpu_rng: true
+    canonical_tensor_hashes: true
+    encoder_source: P4_fold_specific_shared_initialization
+  contributions:
+    raw_group_contribution: sum_alpha_softmax_weight_times_expert_output
+    raw_score_reconstruction: global_raw_bias_plus_sum_8_group_contributions
+    normalized_reconstruction_tolerance: 1.0e-6
+    rating_point_multiplier: 4.0
+    rating_scale_bias: 1_plus_4_times_raw_bias
+    rating_reconstruction_tolerance: 1.0e-6
+  execution_gate:
+    stage_a_fold: 0
+    stage_a_formal_training: false
+    overfit_samples: 8
+    overfit_steps: 40
+    overfit_objective: last_5_mean_total_gam_loss_below_first_5_mean
+    true_batch_size: 16
+    alpha_gradient_required_per_group: true
+    alpha_update_required_per_group: true
+    peak_reserved_fraction_limit: 0.85
+    submit_all_five_formal_folds_after_stage_a_pass: true
+    intermediate_fold_0_approval_required: false
+    formal_folds: [0, 1, 2, 3, 4]
+    formal_gpu_model: H200
+    formal_epochs: 80
+  private_outputs:
+    retain_concept_logits: true
+    retain_activated_predictions: true
+    retain_targets_votes_ties_and_valid_reader_counts: true
+    retain_all_40_expert_outputs: true
+    retain_alpha_logits_and_softmax_weights: true
+    retain_alpha_gradient_evidence: true
+    retain_raw_and_rating_contributions: true
+    full_concept_metrics_phase: P9
+    cross_model_comparison_phase: P9
+    centering_intervention_curves_and_gradcam_phase: P9
