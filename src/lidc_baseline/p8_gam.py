@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import OrderedDict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -218,6 +218,14 @@ def build_deterministic_gam_components(
         "subnetwork_initialization_seeds": expert_seeds,
         "subnetwork_initialization_sha256": expert_hashes,
         "combined_subnetwork_initialization_sha256": module_state_sha256(experts),
+        "initial_alpha_logit_group_sha256": {
+            group: encoder_state_sha256(
+                OrderedDict(
+                    alpha_logits=alpha_logits[group].detach().cpu().contiguous()
+                )
+            )
+            for group in CONCEPT_GROUP_ORDER
+        },
         "initial_alpha_logits_sha256": module_state_sha256(alpha_logits),
         "initial_raw_bias_sha256": module_state_sha256(raw_parameters),
         "combined_gam_initialization_sha256": module_state_sha256(container),
@@ -402,3 +410,14 @@ def task_predictions_and_contributions(
         "normalized_reconstruction_max_abs_error": error,
         "rating_reconstruction_max_abs_error": rating_error,
     }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the P8 lifecycle command-line interface."""
+    from lidc_baseline.p8_gam_lifecycle import main as lifecycle_main
+
+    return lifecycle_main(argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
