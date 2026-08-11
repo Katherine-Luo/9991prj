@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import math
 import time
@@ -1721,6 +1722,304 @@ def verify_all(**arguments: Any) -> dict[str, Any]:
     }
 
 
+def _stage_a_structure_report(model: Any) -> dict[str, Any]:
+    """Verify that all 40 experts are independent and concept-local."""
+    parameter_ids: set[int] = set()
+    groups: OrderedDict[str, Any] = OrderedDict()
+    for group in CONCEPT_GROUP_ORDER:
+        experts = model.experts[group]
+        expected_input = int(CONCEPT_OUTPUT_SIZES[group])
+        if len(experts) != EXPERTS_PER_GROUP:
+            raise ValueError(f"P8_STAGE_A_EXPERT_COUNT_MISMATCH:{group}")
+        for expert in experts:
+            if (
+                int(expert[0].in_features) != expected_input
+                or int(expert[0].out_features) != 32
+                or int(expert[2].in_features) != 32
+                or int(expert[2].out_features) != 16
+                or int(expert[4].in_features) != 16
+                or int(expert[4].out_features) != 1
+            ):
+                raise ValueError(f"P8_STAGE_A_EXPERT_ARCHITECTURE_MISMATCH:{group}")
+            for parameter in expert.parameters():
+                identity = id(parameter)
+                if identity in parameter_ids:
+                    raise ValueError("P8_STAGE_A_EXPERT_PARAMETER_SHARING")
+                parameter_ids.add(identity)
+        groups[group] = {
+            "experts": EXPERTS_PER_GROUP,
+            "input_dimensions": [expected_input] * EXPERTS_PER_GROUP,
+            "architecture": [expected_input, 32, 16, 1],
+            "concept_local_input_only": True,
+        }
+    if len(parameter_ids) != len(CONCEPT_GROUP_ORDER) * EXPERTS_PER_GROUP * 6:
+        raise ValueError("P8_STAGE_A_EXPERT_PARAMETER_COUNT_MISMATCH")
+    return {
+        "status": "PASS",
+        "groups": groups,
+        "independent_experts": len(CONCEPT_GROUP_ORDER) * EXPERTS_PER_GROUP,
+        "shared_expert_parameters": 0,
+    }
+
+
+def overfit_check(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p8_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    samples: int,
+    steps: int,
+    output_path: Path,
+) -> dict[str, Any]:
+    """Run the non-formal eight-sample Stage A overfit sanity check."""
+    if samples != 8 or steps != 40:
+        raise ValueError("P8_STAGE_A_OVERFIT_SCOPE_MISMATCH")
+    torch = _torch()
+    device = torch.device(device_name)
+    if device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA_UNAVAILABLE")
+    (
+        scientific,
+        execution,
+        execution_hash,
+        _p8_config,
+        p8_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _load_sources(
+        scientific_config_path,
+        execution_config_path,
+        p8_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device, execution)
+    model, initialization = build_initialized_model(scientific, split, encoder_path)
+    structure = _stage_a_structure_report(model)
+    seed_training(int(initialization["fold_seed"]))
+    model.to(device)
+    optimizer = _optimizer(model, execution)
+    records = sorted(
+        build_partition_concept_records(
+            manifest, roi_index, split, "train", roi_index_path
+        ),
+        key=lambda record: record.nodule_uid,
+    )[:samples]
+    if len(records) != samples:
+        raise ValueError("P8_STAGE_A_OVERFIT_SAMPLE_COUNT_MISMATCH")
+    dataset = ConceptROIDataset.build(
+        records,
+        training=False,
+        base_seed=0,
+        fold_index=fold_index,
+        epoch_index=0,
+    )
+    batch = next(iter(_loader(dataset, batch_size=samples, num_workers=0)))
+    image = batch["image"].to(device=device, dtype=torch.float32)
+    concepts = _targets_to_device(batch["targets"], device)
+    malignancy = batch["target_normalized"].to(device=device, dtype=torch.float32)
+    losses: list[float] = []
+    model.train()
+    for _step in range(steps):
+        optimizer.zero_grad(set_to_none=True)
+        outputs = model(image)
+        total = gam_losses(
+            outputs, {"concepts": concepts, "malignancy": malignancy}
+        )["total_loss"]
+        if not torch.isfinite(total):
+            raise ValueError("P8_STAGE_A_OVERFIT_NONFINITE_LOSS")
+        total.backward()
+        optimizer.step()
+        losses.append(float(total.detach().cpu()))
+    initial = float(np.mean(losses[:5]))
+    final = float(np.mean(losses[-5:]))
+    if not math.isfinite(final) or final >= initial:
+        raise RuntimeError("P8_OVERFIT_SANITY_DID_NOT_IMPROVE")
+    report = {
+        **_provenance(
+            scientific, execution, execution_hash, p8_hash, split, initialization
+        ),
+        **_runtime_environment(device),
+        "status": "PASS",
+        "scope": "train_only_controlled_overfit_sanity",
+        "formal_run": False,
+        "test_inference": False,
+        "augmentation_enabled": False,
+        "samples": samples,
+        "steps": steps,
+        "initial_five_step_mean_total_loss": initial,
+        "final_five_step_mean_total_loss": final,
+        "relative_final_loss": final / initial,
+        "expert_structure": structure,
+    }
+    _atomic_json(output_path, report)
+    return report
+
+
+def preflight(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p8_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    output_path: Path,
+) -> dict[str, Any]:
+    """Run one true-batch-16 H200 forward/backward/Adam Stage A step."""
+    torch = _torch()
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA_UNAVAILABLE")
+    device = torch.device("cuda:0")
+    (
+        scientific,
+        execution,
+        execution_hash,
+        _p8_config,
+        p8_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _load_sources(
+        scientific_config_path,
+        execution_config_path,
+        p8_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device, execution)
+    model, initialization = build_initialized_model(scientific, split, encoder_path)
+    structure = _stage_a_structure_report(model)
+    seed_training(int(initialization["fold_seed"]))
+    model.to(device)
+    optimizer = _optimizer(model, execution)
+    records = build_partition_concept_records(
+        manifest, roi_index, split, "train", roi_index_path
+    )
+    ordered = _ordered_records(
+        records,
+        base_seed=int(scientific["reproducibility"]["base_seed"]),
+        fold_index=fold_index,
+        epoch_index=0,
+    )[:16]
+    if len(ordered) != 16:
+        raise ValueError("P8_STAGE_A_PREFLIGHT_SAMPLE_COUNT_MISMATCH")
+    dataset = ConceptROIDataset.build(
+        ordered,
+        training=True,
+        base_seed=int(scientific["reproducibility"]["base_seed"]),
+        fold_index=fold_index,
+        epoch_index=0,
+    )
+    batch = next(iter(_loader(dataset, batch_size=16, num_workers=0)))
+    image = batch["image"].to(device=device, dtype=torch.float32)
+    concepts = _targets_to_device(batch["targets"], device)
+    malignancy = batch["target_normalized"].to(device=device, dtype=torch.float32)
+    if int(image.shape[0]) != 16:
+        raise ValueError("P8_STAGE_A_PREFLIGHT_TRUE_BATCH_MISMATCH")
+    before_logits = {
+        group: model.alpha_logits[group].detach().clone()
+        for group in CONCEPT_GROUP_ORDER
+    }
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats(device)
+    optimizer.zero_grad(set_to_none=True)
+    outputs = model(image)
+    reconstruction = task_predictions_and_contributions(model, outputs)
+    losses = gam_losses(outputs, {"concepts": concepts, "malignancy": malignancy})
+    losses["total_loss"].backward()
+    gradient_l1: OrderedDict[str, float] = OrderedDict()
+    for group in CONCEPT_GROUP_ORDER:
+        gradient = model.alpha_logits[group].grad
+        if (
+            gradient is None
+            or not torch.isfinite(gradient).all()
+            or int(torch.count_nonzero(gradient).detach().cpu()) == 0
+        ):
+            raise ValueError(f"P8_STAGE_A_ALPHA_GRADIENT_INVALID:{group}")
+        gradient_l1[group] = float(gradient.detach().abs().sum().cpu())
+    optimizer.step()
+    torch.cuda.synchronize(device)
+    alpha_updated: OrderedDict[str, bool] = OrderedDict(
+        (
+            group,
+            not torch.equal(
+                before_logits[group], model.alpha_logits[group].detach()
+            ),
+        )
+        for group in CONCEPT_GROUP_ORDER
+    )
+    if not all(alpha_updated.values()):
+        raise ValueError("P8_STAGE_A_ALPHA_UPDATE_MISSING")
+    with torch.no_grad():
+        alpha_valid = all(
+            bool((outputs["alpha_weights"][group] >= 0).all())
+            and torch.allclose(
+                outputs["alpha_weights"][group].sum(),
+                torch.tensor(1.0, device=device),
+                atol=1e-7,
+                rtol=0.0,
+            )
+            for group in CONCEPT_GROUP_ORDER
+        )
+    if not alpha_valid:
+        raise ValueError("P8_STAGE_A_ALPHA_SIMPLEX_INVALID")
+    reserved = int(torch.cuda.max_memory_reserved(device))
+    total_memory = int(torch.cuda.get_device_properties(device).total_memory)
+    fraction = reserved / total_memory
+    if fraction > 0.85:
+        raise RuntimeError(f"P8_PREFLIGHT_MEMORY_LIMIT_EXCEEDED:{fraction}")
+    report = {
+        **_provenance(
+            scientific, execution, execution_hash, p8_hash, split, initialization
+        ),
+        **_runtime_environment(device),
+        "status": "PASS",
+        "formal_run": False,
+        "test_inference": False,
+        "batch_size": int(image.shape[0]),
+        "forward": True,
+        "task_concept_and_total_losses": True,
+        "backward": True,
+        "adam_step": True,
+        "expert_structure": structure,
+        "alpha_simplex_gate": "PASS",
+        "alpha_gradient_l1": gradient_l1,
+        "alpha_updated": alpha_updated,
+        "task_loss": float(losses["task_loss"].detach().cpu()),
+        "concept_loss": float(losses["concept_loss"].detach().cpu()),
+        "total_loss": float(losses["total_loss"].detach().cpu()),
+        "normalized_reconstruction_max_abs_error": reconstruction[
+            "normalized_reconstruction_max_abs_error"
+        ],
+        "rating_reconstruction_max_abs_error": reconstruction[
+            "rating_reconstruction_max_abs_error"
+        ],
+        "peak_allocated_bytes": int(torch.cuda.max_memory_allocated(device)),
+        "peak_reserved_bytes": reserved,
+        "gpu_total_bytes": total_memory,
+        "peak_reserved_fraction": fraction,
+        "maximum_allowed_fraction": 0.85,
+        "gpu_name": torch.cuda.get_device_name(device),
+        "torch_version": importlib.metadata.version("torch"),
+        "monai_version": importlib.metadata.version("monai"),
+        "cuda_runtime": torch.version.cuda,
+    }
+    _atomic_json(output_path, report)
+    return report
+
+
 def _common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--config", type=Path, default=Path("configs/baseline_v2.yaml"))
     parser.add_argument(
@@ -1747,6 +2046,27 @@ def _common_arguments(parser: argparse.ArgumentParser) -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
+    overfit = subparsers.add_parser("overfit-check")
+    _common_arguments(overfit)
+    overfit.add_argument("--fold", type=int, required=True, choices=range(5))
+    overfit.add_argument("--device", default="cuda")
+    overfit.add_argument("--samples", type=int, default=8)
+    overfit.add_argument("--steps", type=int, default=40)
+    overfit.add_argument(
+        "--output",
+        type=Path,
+        default=Path("runs/baseline_v2/gam/fold_0/stage_a/overfit_sanity.json"),
+    )
+    preflight_parser = subparsers.add_parser("preflight")
+    _common_arguments(preflight_parser)
+    preflight_parser.add_argument(
+        "--fold", type=int, required=True, choices=range(5)
+    )
+    preflight_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("runs/baseline_v2/gam/fold_0/stage_a/preflight.json"),
+    )
     train = subparsers.add_parser("train")
     _common_arguments(train)
     train.add_argument("--fold", type=int, required=True, choices=range(5))
@@ -1775,7 +2095,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         "roi_index_path": arguments.roi_index,
         "output_root": arguments.output_root,
     }
-    if arguments.command == "train":
+    if arguments.command == "overfit-check":
+        report = overfit_check(
+            **common,
+            fold_index=arguments.fold,
+            device_name=arguments.device,
+            samples=arguments.samples,
+            steps=arguments.steps,
+            output_path=arguments.output,
+        )
+    elif arguments.command == "preflight":
+        report = preflight(
+            **common,
+            fold_index=arguments.fold,
+            output_path=arguments.output,
+        )
+    elif arguments.command == "train":
         report = train_fold(
             **common,
             fold_index=arguments.fold,

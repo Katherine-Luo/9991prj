@@ -133,6 +133,19 @@ def test_zero_alpha_logits_produce_exact_uniform_weights() -> None:
         assert outputs["alpha_weights"][group].requires_grad
 
 
+def test_stage_a_structure_gate_proves_all_experts_are_independent_and_local() -> None:
+    report = p8l._stage_a_structure_report(_model())
+    assert report["status"] == "PASS"
+    assert report["independent_experts"] == 40
+    assert report["shared_expert_parameters"] == 0
+    for group in CONCEPT_GROUP_ORDER:
+        assert report["groups"][group]["experts"] == 5
+        assert report["groups"][group]["concept_local_input_only"] is True
+        assert report["groups"][group]["input_dimensions"] == [
+            CONCEPT_OUTPUT_SIZES[group]
+        ] * 5
+
+
 def test_task_path_is_group_local_and_uses_activated_predictions() -> None:
     model = _model()
     features = _features()

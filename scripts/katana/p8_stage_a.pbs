@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb:gpu_model=H200
+#PBS -l walltime=04:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+code_directory="${KATANA_P8_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+execution_config="configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+p8_execution_config="configs/experiments/baseline_v2_p8_gam_h200.yaml"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+nvidia-smi
+"$python_binary" -m lidc_baseline.p8_katana verify-stage-a \
+  --repository-root "$code_directory"
+"$python_binary" -m lidc_baseline.p8_gam overfit-check \
+  --fold 0 --device cuda --samples 8 --steps 40 \
+  --execution-config "$execution_config" \
+  --p8-config "$p8_execution_config" \
+  --output runs/baseline_v2/gam/fold_0/stage_a/overfit_sanity.json
+"$python_binary" -m lidc_baseline.p8_gam preflight \
+  --fold 0 \
+  --execution-config "$execution_config" \
+  --p8-config "$p8_execution_config" \
+  --output runs/baseline_v2/gam/fold_0/stage_a/preflight.json
