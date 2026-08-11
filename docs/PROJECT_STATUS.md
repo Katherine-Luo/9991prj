@@ -42,11 +42,11 @@ last_verified_commit: 5c80991
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无。P7 H200 Stage A已通过；五折formal一次性提交已获批准计划授权，但尚未实际提交。 |
+| 当前阻塞项 | 无。P7 H200 Stage A已通过；五折formal jobs已一次性提交，当前均在`csegpu100`排队等待H200资源。 |
 | 恢复阶段 | `P7` |
 | 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P7代码与接口封存至`5c80991`，combined/full tests=`30/245 passed`且Phase Compliance Reviewer为`PASS`；exact-whitelist KDM与remote integrity均已通过。Actual H200 Stage A job `8973913`在`k204` GPU 5以Exit 0完成，02:58:47–03:01:36、walltime 2:38、run count 1。8-sample/40-step overfit最近5步loss均值从`0.1014839470`降至`0.00539595308`（ratio=`0.0531705086`）；true batch 16 forward、task/concept/intervention、backward及Adam step均通过，dynamic states为true。Predicted/intervened normalized reconstruction最大误差=`2.98e-8/1.49e-8`，rating均为`1.192e-7`；peak reserved=`4,745,854,976 / 150,393,585,664 bytes = 3.1556%`。运行保持H200/FP32/no-AMP/BF16/TF32与deterministic warn-only，仅有预期avg/max pool warnings。仅生成private Stage A artifacts，尚未提交formal/test/OOF jobs或actual audit；P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
+| 状态依据 | P7代码与接口封存至`5c80991`，combined/full tests=`30/245 passed`且Phase Compliance Reviewer为`PASS`；KDM/remote integrity及H200 Stage A job `8973913`均已通过。Submission Phase Compliance Reviewer为`PASS`后，已使用同一`p7_fold.pbs`与`P7_FORMAL_APPROVED=1`一次性提交唯一fold 0–4：fold0=`8974425`、fold1=`8974429`、fold2=`8974427`、fold3=`8974428`、fold4=`8974426`。五个jobs均为`Q`/`csegpu100`，统一请求H200×1、8 CPU、64 GB、96h；无额外P7 job或P8作业。当前仅排队，尚无formal epoch、checkpoint、test或OOF结果；P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P7 Mixed-type CEM Regression
 
@@ -80,10 +80,13 @@ last_verified_commit: 5c80991
 - 8-sample/40-step overfit最近5步loss均值从`0.1014839470`降至`0.00539595308`，ratio=`0.0531705086`。True batch 16 forward、task loss=`0.3348413706`、concept loss=`0.5006587505`、total loss=`0.3398479521`、intervention、backward与Adam step均通过，dynamic states验证为true。
 - Predicted normalized/rating reconstruction最大误差=`2.98e-8/1.192e-7`，intervened=`1.49e-8/1.192e-7`，均≤`1e-6`。Peak allocated/reserved/total=`3,926,157,312/4,745,854,976/150,393,585,664` bytes，reserved fraction=`3.1556%`，低于85%门槛。
 - Stage A保持H200、FP32、AMP/BF16/TF32关闭及deterministic warn-only；warnings仅为预期的CUDA avg/max pool deterministic warnings。Private artifacts SHA-256：overfit=`db5da096416abdde2108b2ffbaad7d819aa022e0e1e99c2596c8c9ec39c4197c`，preflight=`e1da08a883b72827a5b9dbae6fc34f674db39fb6e7c508a3718d175f4edd2ec9`，log=`d2c3103282ee2e071b61d66fab197f266edaea188d03f2e2e2de4714407dbc1c`。Actual Stage A Phase Compliance Reviewer为`PASS`。
+- Submission Phase Compliance Reviewer为`PASS`后，已通过同一`p7_fold.pbs`和`P7_FORMAL_APPROVED=1`一次性提交五折：fold0=`8974425`、fold1=`8974429`、fold2=`8974427`、fold3=`8974428`、fold4=`8974426`。
+- 五个jobs均为`Q`、queue=`csegpu100`，统一请求H200×1、`ncpus=8`、`mem=64gb`、`walltime=96h`，除fold index外配置一致；只存在唯一fold 0–4，无额外P7 job或任何P8作业。
+- 当前证据只证明提交与排队，尚无formal epoch、best checkpoint、test exactly once、final verify或OOF结果。
 
 ### 正在进行
 
-- 按已批准计划一次性提交五个H200 formal folds；全部完成后才构建private OOF与tracked aggregate audit。
+- 只读监控五个H200 formal jobs；全部完成并验证后才构建private OOF与tracked aggregate audit。
 
 ### 尚未完成
 
@@ -101,7 +104,7 @@ last_verified_commit: 5c80991
 | P7-R2 dynamic sample-conditioned states | `PASS_STAGE_A` | Commit `65ff300`的core tests及H200 job `8973913`均验证sample-conditioned dynamic states；实现中无静态state table |
 | P7-R3 joint loss与batch-shared training intervention | `PASS_STAGE_A` | Local lifecycle及H200 true-batch-16 Stage A验证task/concept/total loss、RandInt intervention、backward和Adam；五折正式rate evidence仍待formal runs |
 | P7-R4 normalized/rating contribution reconstruction | `PASS_STAGE_A` | H200 Stage A predicted/intervened normalized最大误差=`2.98e-8/1.49e-8`，rating均=`1.192e-7`；正式五折artifact reconstruction仍待验证 |
-| H200 Stage A、五折OOF与双agent阶段门 | `STAGE_A_PASS` | Job `8973913`在H200以Exit 0完成，overfit、true batch 16、dynamic states、reconstruction、memory和precision gates均PASS；Phase Compliance `PASS`。五折formal/OOF尚未提交或执行 |
+| H200 Stage A、五折OOF与双agent阶段门 | `FORMAL_QUEUED` | Stage A PASS；submission Phase Compliance PASS。Jobs `8974425/8974429/8974427/8974428/8974426`对应fold 0–4，当前均Q/csegpu100；尚无epoch/test/OOF结果 |
 
 ### 未解决困难
 
@@ -368,7 +371,7 @@ Bug 修复后：
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
-| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | Interfaces、KDM/remote integrity及H200 Stage A job `8973913`均PASS；combined`30 passed`、完整`245 passed`、actual Stage A Phase Compliance `PASS`；五折formal/OOF/audit尚未提交或执行 | 0 | 0 |
+| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | Interfaces、KDM/remote integrity及H200 Stage A均PASS；五折formal已一次性提交，jobs `8974425/8974429/8974427/8974428/8974426`当前均Q/csegpu100，submission Phase Compliance PASS；尚无epoch/test/OOF结果 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
@@ -791,3 +794,4 @@ Bug 修复后：
 | 2026-08-12 | `LOCAL_KATANA_AUDIT_INTERFACES_VERIFIED` | P7 | Katana/audit接口已实现exact-whitelist transfer/KDM、仅overfit/preflight的H200 Stage A PBS、带`P7_FORMAL_APPROVED=1`门的五折formal PBS、CPU OOF及private/tracked audit构建验证。Exact P7 delta本地verify为9 files / `132,046` bytes，internal SHA-256=`ee90076103ad2114ca80cd8af073fd610fab4f809d1318ea601a885c283194a3`、manifest file SHA-256=`da3ce06f67849f871055c28cd5a533011d76c9f1daa84b7fc3dac77d6d1d9ecc`。Combined`30 passed`、完整`245 passed`、Phase Compliance Reviewer `PASS`，冻结文件无diff。尚未KDM同步、提交Stage A/formal jobs或生成actual OOF/audit；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | `5c80991`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `REMOTE_STAGE_A_INPUT_READY` | P7 | Exact-whitelist KDM sync已成功，Katana login-node `verify-stage-a`为`PASS`。P6 base为9 files / `168,005` bytes，internal/file SHA-256=`5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`/`eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`；P7 delta为9 files / `132,046` bytes，internal/file SHA-256=`ee90076103ad2114ca80cd8af073fd610fab4f809d1318ea601a885c283194a3`/`da3ce06f67849f871055c28cd5a533011d76c9f1daa84b7fc3dac77d6d1d9ecc`，scientific/P7 config hashes匹配。尚未qsub Stage A、formal或OOF job，未生成actual audit；P7保持`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 | Remote integrity evidence；本次状态同步commit待创建 |
 | 2026-08-12 | `STAGE_A_PASS` | P7 | H200 job `8973913`在`k204` GPU 5以Exit 0完成，02:58:47–03:01:36、walltime 2:38、run count 1。Overfit最近5步loss均值`0.1014839470→0.00539595308`；true batch 16 forward/task+concept+intervention/backward/Adam、dynamic states及precision gates均PASS。Predicted/intervened normalized reconstruction=`2.98e-8/1.49e-8`，rating均=`1.192e-7`；peak reserved=`3.1556%`。仅有预期avg/max pool warn-only warnings；Phase Compliance Reviewer `PASS`。仅存在private Stage A artifacts，五折formal/OOF尚未提交；P7保持`IN_PROGRESS`，P8保持`NOT_STARTED`。 | Job `8973913`；overfit `db5da096...c4197c`；preflight `e1da08a8...d2ec9`；log `d2c31032...dbc1c`；本次状态同步commit待创建 |
+| 2026-08-12 | `FORMAL_FOLDS_QUEUED` | P7 | Submission Phase Compliance Reviewer `PASS`后，使用同一`p7_fold.pbs`与`P7_FORMAL_APPROVED=1`一次性提交唯一fold 0–4：`8974425→0`、`8974429→1`、`8974427→2`、`8974428→3`、`8974426→4`。五个jobs均Q/csegpu100，统一请求H200×1、8 CPU、64 GB、96h；无额外P7 job或P8。当前仅排队，尚无epoch、checkpoint、test或OOF结果；P7保持`IN_PROGRESS`，P8保持`NOT_STARTED`。 | Jobs `8974425`、`8974429`、`8974427`、`8974428`、`8974426`；本次状态同步commit待创建 |
