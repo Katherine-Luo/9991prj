@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P6
 next_phase: P7
 last_updated: 2026-08-11
-last_verified_commit: 9d7d28c
+last_verified_commit: cf116bc
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 9d7d28c
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无。P6 Stage A/Katana、KDM whitelist和formal-fold接口已完成本地实现与验证，但该批次尚未提交；尚未执行KDM同步、远端integrity verify或H200 Stage A，也未提交formal jobs。 |
+| 当前阻塞项 | 无。P6 KDM同步、远端integrity verify和H200 Stage A均为`PASS`；五折formal jobs尚未提交。按已批准计划，Stage A通过后可一次性提交Fold 0–4，无需Fold-0中间批准门。 |
 | 恢复阶段 | `P6` |
 | 下一阶段 | `P7 Mixed-type CEM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | P6 Stage A/Katana功能原子commit `9d7d28c`已在本地创建、尚未推送。P6 direct+Katana tests `38 passed`，完整有效环境`211 passed`，仅有3条既有dependency warnings；Bash syntax检查`PASS`，Phase Compliance Reviewer为`PASS`。Private transfer manifest本地verify为`PASS`：7 files / `151,376` bytes，internal SHA-256 `a9319c7de65f412791e6f901ea26415b8e068e0694762da25ebbc92beb1de8f9`，manifest file SHA-256 `35a1abd6632d409c40e6b0577a01f198bde44596f287cf8a4cdb50b0d6f58d2f`。冻结V1/V2 requirements/config与H200 profile无diff。当前仅本次状态同步commit待创建；未KDM sync、未提交或执行Stage A job，未提交formal jobs。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
+| 状态依据 | Stage A接口commit `9d7d28c`与其状态同步`cf116bc`已在本地创建、尚未推送。KDM sync和remote integrity为`PASS`；H200 job `8969550`在`k219`于20:04:48启动、20:07:42结束，walltime 00:02:45、Exit 0。8-sample overfit concept loss从`0.4910895228`降至`0.0769991726`；true batch 16 concept forward/8-loss/backward/Adam、train/validation caches各16、frozen predicted 16D task forward/MSE/backward/Adam均通过，predictor与BatchNorm hashes不变。Peak reserved为`1.902%`，FP32且AMP/BF16/TF32均关闭；只有预期的avg/max-pool3d warn-only warnings。Overfit/preflight/log SHA-256分别为`8e09c877fe0d3e438c9e322b3b7a73cb75003f607d964b0f5dd175459b1778f7`、`4ad4d6b9a714d73f8f6dd3acee0342baf8dc5c2cb24a8f5b91f7f4ac013d3aec`、`23b7759acaeb9f7288de61b84f2f99caf98909de46aa6b9766b2d18cb70c3144`。Phase Compliance Reviewer为`PASS`；没有formal jobs或formal artifacts。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P6 Sequential Standard CBM Regression
 
@@ -75,15 +75,19 @@ last_verified_commit: 9d7d28c
 - 已实现P6 Fold 0 Stage A接口：8-sample concept overfit及true batch-16 concept forward/eight-group loss/backward/Adam step，并验证frozen predicted concept cache边界、true batch-16 task forward/MSE/backward/Adam step、predictor/BatchNorm hashes和peak GPU memory gate；Stage A不执行formal epochs或test。
 - 已实现P6 Katana transfer manifest build/verify、exact whitelist、KDM-only sync脚本、H200 Stage A PBS与五折formal PBS接口；formal jobs继续绑定frozen P6/H200 profiles、resume、test-once和final verifier规则。
 - Private transfer manifest本地verify为`PASS`：7 files / `151,376` bytes，internal SHA-256 `a9319c7de65f412791e6f901ea26415b8e068e0694762da25ebbc92beb1de8f9`，manifest file SHA-256 `35a1abd6632d409c40e6b0577a01f198bde44596f287cf8a4cdb50b0d6f58d2f`。
-- P6 direct+Katana tests `38 passed`，完整有效环境`211 passed`且仅有3条既有dependency warnings；Bash syntax检查与Phase Compliance Reviewer均为`PASS`。该实现批次尚未提交，尚无远程运行证据。
+- P6 direct+Katana tests `38 passed`，完整有效环境`211 passed`且仅有3条既有dependency warnings；Bash syntax检查与本地接口批次Phase Compliance Reviewer均为`PASS`。功能commit `9d7d28c`与接口状态同步`cf116bc`已创建；实际远程Stage A证据见下列记录。
+- P6 KDM sync与remote integrity均为`PASS`。H200 Stage A job `8969550`在`k219`成功完成，启动/结束时间为20:04:48/20:07:42，walltime 00:02:45，Exit 0。
+- 8-sample/40-step overfit concept loss从`0.4910895228`降至`0.0769991726`；true batch 16 concept forward、八组loss、backward及Adam step均通过。
+- Stage A生成train/validation frozen activated predicted concept caches各16个样本，并完成16D cache-only task forward、MSE、backward及Adam step；predictor semantic hash和BatchNorm state hash在task step前后完全一致。
+- Peak reserved memory为`2,860,515,328 / 150,393,585,664 bytes = 1.902%`，低于85%门槛；运行保持FP32、AMP/BF16/TF32关闭，仅记录预期的`avg_pool3d_backward_cuda`与`max_pool3d_with_indices_backward_cuda` warn-only warnings。
+- Stage A private artifacts SHA-256：overfit `8e09c877fe0d3e438c9e322b3b7a73cb75003f607d964b0f5dd175459b1778f7`，preflight `4ad4d6b9a714d73f8f6dd3acee0342baf8dc5c2cb24a8f5b91f7f4ac013d3aec`，job log `23b7759acaeb9f7288de61b84f2f99caf98909de46aa6b9766b2d18cb70c3144`；Stage A Phase Compliance Reviewer为`PASS`。
 
 ### 正在进行
 
-- 封存当前Stage A/Katana原子实现批次；随后通过KDM同步并执行唯一Fold 0 H200 Stage A。尚未执行任何远程P6计算或正式训练。
+- 按已批准的P6执行门一次性提交Fold 0–4五个H200 formal jobs；不设置中间Fold-0批准门，不修改frozen common profile。
 
 ### 尚未完成
 
-- Stage A/Katana实现批次原子commit、KDM同步、远端integrity verify与H200 Stage A实际执行。
 - 五折formal runs、OOF、脱敏audit及阶段门。
 
 ### 验收进度
@@ -91,10 +95,10 @@ last_verified_commit: 9d7d28c
 | P6 验收项 | 状态 | 证据 |
 |---|---|---|
 | P6 execution supplement、resolved config与hash | `PASS` | SHA-256 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`；专项 `4 passed`、完整 `177 passed`；Phase Compliance Reviewer `PASS` |
-| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | Core predictor/loss、sample-weighted coverage及80-epoch checkpoint/resume orchestration已由专项`32 passed`验证；Stage A和正式fold证据待完成 |
-| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | Leakage-safe cache→frozen task lifecycle、task checkpoint/resume和test-after-task-best exactly-once transaction已验证；Stage A和正式fold证据待完成 |
+| P6-R1 concept predictor与八组等权loss | `IN_PROGRESS` | 本地测试及H200 Stage A overfit/true-batch-16 concept forward/8-loss/backward/Adam均`PASS`；正式fold证据待完成 |
+| P6-R2 sequential frozen-prediction task training | `IN_PROGRESS` | H200 Stage A train/validation cache与frozen predicted 16D task step均`PASS`且predictor/BN hashes不变；正式fold证据待完成 |
 | P6-R3 normalized/rating contribution reconstruction | `IN_PROGRESS` | Unit与严格test-row reconstruction≤`1e-6`已验证；正式fold predictions重建证据待完成 |
-| H200 Stage A、五折OOF与双agent阶段门 | `IN_PROGRESS` | Stage A/Katana接口、transfer manifest与本地tests已验证；KDM/remote Stage A、formal folds、OOF和阶段级审查待完成 |
+| H200 Stage A、五折OOF与双agent阶段门 | `IN_PROGRESS` | KDM、remote integrity及job `8969550` Stage A均`PASS`；formal folds、OOF和阶段级审查待完成 |
 
 ### 未解决困难
 
@@ -360,7 +364,7 @@ Bug 修复后：
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
-| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | Stage A/Katana接口与7-file transfer manifest已本地验证；direct+Katana `38 passed`、完整`211 passed`、Bash与Phase Compliance Reviewer`PASS`。实现批次尚未提交；KDM、remote Stage A、formal folds、OOF及audit未完成 | 0 | 0 |
+| P6 | Standard CBM | `IN_PROGRESS` | `ON_TRACK` | KDM、remote integrity与H200 Stage A job `8969550`均`PASS`，Phase Compliance Reviewer`PASS`；五折formal runs、OOF及audit尚未完成 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -749,3 +753,4 @@ Bug 修复后：
 | 2026-08-11 | `LOCAL_STAGE_CACHE_VERIFIED` | P6 | Concept epoch/evaluation的sample-weighted全样本coverage、仅train/validation的frozen predicted concept cache持久化/provenance，以及cache-only task epoch/evaluation primitives已实现并验证。Direct tests `24 passed`、完整测试 `197 passed`，Phase Compliance Reviewer `PASS`。Checkpoint/resume、完整orchestration、test-once、Stage A与formal runs仍未完成；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `6f856b7`（local, unpushed） |
 | 2026-08-11 | `LOCAL_LIFECYCLE_TEST_ONCE_VERIFIED` | P6 | 两阶段80-epoch checkpoint/resume、stage-aware downstream start、train/validation cache到frozen task lifecycle、task-best后的test exactly once/recovery/final verifier，以及严格test schema/tie/extreme/contribution/provenance语义已实现并验证。P6专项`32 passed`且无warning；完整有效环境`205 passed`，仅有3条既有dependency warnings；Phase Compliance Reviewer`PASS`。Stage A、formal folds、OOF与audit仍未完成；P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `f474a04`（local, unpushed）；状态同步commit待创建 |
 | 2026-08-11 | `LOCAL_STAGE_A_INTERFACES_VERIFIED` | P6 | P6 Stage A preflight、Katana transfer/KDM/PBS与formal-fold接口已实现并通过本地验证。Direct+Katana tests `38 passed`、完整有效环境`211 passed`（3条既有dependency warnings）、Bash和Phase Compliance Reviewer均`PASS`。Private transfer manifest为7 files / `151,376` bytes，internal SHA-256 `a9319c7de65f412791e6f901ea26415b8e068e0694762da25ebbc92beb1de8f9`，file SHA-256 `35a1abd6632d409c40e6b0577a01f198bde44596f287cf8a4cdb50b0d6f58d2f`。功能commit已创建；未KDM sync、未提交/执行Stage A或formal jobs。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | `9d7d28c`（local, unpushed）；状态同步commit待创建 |
+| 2026-08-11 | `STAGE_A_PASS` | P6 | KDM与remote integrity为`PASS`；job `8969550`在`k219` H200上Exit 0完成。Overfit concept loss `0.4910895228→0.0769991726`；true batch 16 concept forward/8-loss/backward/Adam、train/validation caches各16、frozen predicted 16D task forward/MSE/backward/Adam均通过，predictor/BN hashes不变，peak reserved `1.902%`，FP32/no-AMP/BF16/TF32。仅出现预期pool3d warn-only warnings，Phase Compliance Reviewer`PASS`。按获批计划可一次提交五个formal folds；当前尚无formal jobs/artifacts。P6保持`IN_PROGRESS / ON_TRACK`，P7保持`NOT_STARTED`。 | Katana job `8969550`；overfit `8e09c877...78f7`；preflight `4ad4d6b9...3aec`；log `23b7759a...3144` |
