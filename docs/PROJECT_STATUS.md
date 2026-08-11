@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P8
 next_phase: P9
 last_updated: 2026-08-12
-last_verified_commit: 437ce85
+last_verified_commit: 0b292e7
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -46,7 +46,7 @@ last_verified_commit: 437ce85
 | 恢复阶段 | `P8` |
 | 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`；当前尚未创建P8 config、代码、测试或Katana产物，P9保持`NOT_STARTED`。 |
+| 状态依据 | P7已由completion commit `e195a94`与post-delivery status commit `437ce85`交付，启动前`HEAD=main=origin/main=437ce857b3ac2e15ecd776ad938b7948a47a25e3`。用户已批准P8端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha、Stage A通过后一次提交五个H200 folds且无Fold-0中间门。已从最新`main`创建本地分支`p8-gam`并由`064ec70`封存启动状态；P8 execution supplement、resolved config与SHA-256已由`0b292e7`封存并通过配置批次验证，模型/lifecycle、Stage A、Katana/formal/OOF仍未完成，P9保持`NOT_STARTED`。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -59,14 +59,15 @@ last_verified_commit: 437ce85
 - 用户已明确批准P8实施计划，并固定端到端联合训练、alpha logits全零初始化、Stage A通过后一次提交五折且无Fold-0中间确认门。
 - 已从交付完成的`main`创建本地分支`p8-gam`；P7代码与private artifacts不作为P8训练初始化，P8每折仍从同一P4 shared encoder initialization开始。
 - 冻结V1/V2 requirements/config、P4 splits/initializations与common H200 profile均保持不变。
+- P8 source/resolved execution supplement与SHA-256已创建并冻结；resolved SHA-256为`1569b09c83d6a785601c181d615ac656b71623d054e45705bc0a35b17ba2dc7f`。Supplement固定activated predicted concepts-only task path、8组×5个concept-local subnetworks、zero-initialized learned-softmax alpha、joint `L_GAM`、无intervention、H200 Stage A与一次性五折提交边界。
+- 配置专项测试`6 passed`、完整测试`252 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config与common H200 profile无diff。
 
 ### 正在进行
 
-- 单独封存P8启动状态；随后依次实现P8 execution supplement、GAM model/lifecycle、Katana/OOF/audit接口及直接测试。
+- 配置批次状态同步后，继续实现GAM model/lifecycle、Katana/OOF/audit接口及直接测试。
 
 ### 尚未完成
 
-- P8 source/resolved execution supplement与SHA-256。
 - End-to-end GAM模型、80-epoch lifecycle、test exactly once、final verifier及自动测试。
 - KDM exact-whitelist、H200 Stage A、五折formal runs、CPU OOF与tracked脱敏audit。
 - 完整阶段门与用户最终确认。
@@ -424,7 +425,7 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 用户已批准端到端joint CBM + learned-softmax GAM计划；本地分支`p8-gam`已创建，当前仅启动状态更新，技术实现与Stage A/formal/OOF均尚未完成 | 0 | 0 |
+| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | 用户已批准端到端joint CBM + learned-softmax GAM计划；本地分支`p8-gam`与execution supplement/resolved/hash已创建，配置专项`6 passed`、完整`252 passed`、Phase Compliance Reviewer`PASS`；模型/lifecycle及Stage A/formal/OOF仍尚未完成 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -894,3 +895,4 @@ Bug 修复后：
 | 2026-08-12 | `PHASE_COMPLETED` | P7 | 用户明确确认P7；Stage A、五折80 epochs、valid committed tests、final verifies、受控Fold 4 recovery、2,633 nodules / 868 patients OOF、0 patient leakage、贡献重建、六个脱敏audit、完整`246 passed`与阶段审查证据均已封存。P7转为`COMPLETED / ON_TRACK`，P8保持`NOT_STARTED`。完成状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称已交付。 | 用户确认；`c190710`、`fe30579`、`2c95fb1`；本次completion status commit待创建 |
 | 2026-08-12 | `DELIVERED` | P7 | Completion commit `e195a94`已fast-forward合并至`main`并推送GitHub。合并后完整测试`246 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config与common H200 profile无diff，P7 config hash一致。`HEAD=main=origin/main=e195a949d62772fd6009e61f7f6540e5893b43a9`，ahead/behind=`0/0`。P7为`COMPLETED / ON_TRACK`且已交付；P8保持`NOT_STARTED`，未制定或实施。 | `e195a94`；本次post-delivery状态同步commit待创建 |
 | 2026-08-12 | `PHASE_STARTED` | P8 | 用户批准End-to-end CBM + Learned-softmax GAM Regression实施计划；P8进入`IN_PROGRESS / ON_TRACK`。固定端到端联合训练、每组5个concept-local subnetworks、zero-initialized learned-softmax alpha，以及Stage A通过后一次提交五个H200 folds且无Fold-0中间确认。当前仅创建`p8-gam`本地分支并更新启动状态，尚未实现P8 config/model/lifecycle或提交任何Katana job；P9保持`NOT_STARTED`。 | `p8-gam`本地分支；基线`437ce85`；本次启动状态commit待创建 |
+| 2026-08-12 | `LOCAL_CONFIG_VERIFIED` | P8 | P8 execution supplement、deterministic resolved config与SHA-256已创建并验证；resolved SHA-256为`1569b09c83d6a785601c181d615ac656b71623d054e45705bc0a35b17ba2dc7f`。Supplement固定8组×5个concept-local learned-softmax subnetworks、zero alpha/global bias、activated predicted concepts-only task path、joint loss、无intervention及H200 Stage A/五折提交边界。配置专项`6 passed`、完整测试`252 passed`且仅3条既有dependency warnings，Phase Compliance Reviewer`PASS`。尚未实现P8模型/lifecycle或执行Stage A/formal/OOF；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | `0b292e7`（local, unpushed）；本次状态同步commit待创建 |
