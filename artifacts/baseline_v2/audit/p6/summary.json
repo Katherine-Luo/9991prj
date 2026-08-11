@@ -1,0 +1,92 @@
+{
+  "batchnorm_state_hash_unchanged_all_folds": true,
+  "concept_best_epoch_index_by_fold": [
+    10,
+    16,
+    38,
+    6,
+    18
+  ],
+  "concept_best_validation_loss_by_fold": [
+    0.05533502922009896,
+    0.056864608094813016,
+    0.042714681405708374,
+    0.04768075685040867,
+    0.05607881250936997
+  ],
+  "concept_predictor_semantic_hash_unchanged_all_folds": true,
+  "encoder_initialization_sha256_by_fold": [
+    "d7fa4604dfaa1ebee6d8653f70b9d3e97266dbbdbb0eed573a7b43cd8a12948e",
+    "c7a43fc72e50637ce6b918ec540301a4f59b69636f8b6f9d0810baaa89d4dd8e",
+    "ce78050e766b9d84333979f33833037407061529c449d41ecabfb672f4e31149",
+    "83d07375d8a470123f105d6d885b025da65024db48dca96aa4303dd92460c481",
+    "5d83267c5e8a3e89368d160f1a2ce46a387ca28cb2f6061c4bc55ffaca4afdf9"
+  ],
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "fold_test_counts": [
+    479,
+    502,
+    539,
+    549,
+    564
+  ],
+  "folds": 5,
+  "model": "standard_cbm",
+  "oof_nodules": 2633,
+  "oof_patients": 868,
+  "oof_predictions_sha256": "c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587",
+  "oof_unique_nodules": 2633,
+  "p6_execution_config_sha256": "792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3",
+  "patient_leakage": 0,
+  "pooled_contribution_reconstruction": {
+    "bias_scale_max_absolute_error": 1.1920928955078125e-07,
+    "contribution_scale_max_absolute_error": 0.0,
+    "normalized_max_absolute_error": 1.4132820069789886e-07,
+    "rating_scale_max_absolute_error": 5.653128027915955e-07
+  },
+  "pooled_oof_task_metrics": {
+    "normalized_mae": 0.12551688602903263,
+    "normalized_rmse": 0.16240270156550404,
+    "original_scale_mae": 0.5020675441161305,
+    "original_scale_rmse": 0.6496108062620162,
+    "pearson": 0.7075778765808272,
+    "prediction_above_1_rate": 0.0,
+    "prediction_above_5_on_original_scale_rate": 0.0,
+    "prediction_below_0_rate": 0.008735282947208508,
+    "prediction_below_1_on_original_scale_rate": 0.008735282947208508,
+    "prediction_max": 0.8949551582336426,
+    "prediction_min": -0.03538167476654053,
+    "samples": 2633,
+    "spearman": 0.6090980976923562
+  },
+  "private_run_storage": {
+    "file_count": 92,
+    "total_bytes": 1375098359
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256_by_fold": [
+    "543ec76c07f9113ba84130f2cf4caace4f217e114052066dc2eb25859be61833",
+    "d4f204e1411cecfad11b94adf6f4eb328aaad12c18f37e5fe74a38d8aedeacb7",
+    "722791eb9443b7718f63f70b5f4294e8609e3d8cbc1593cce79cd531f8bbf124",
+    "eb27e847838281af43ad6a1683ef3e0e5cacad26e8602291968f68b196e2e44f",
+    "f6ac19b39f892e1fedd432aa3d6f2efc943d519fe6d7df27e0d975682725b6bb"
+  ],
+  "status": "PASS",
+  "task_best_epoch_index_by_fold": [
+    78,
+    79,
+    77,
+    79,
+    78
+  ],
+  "task_best_validation_mse_by_fold": [
+    0.0210190602194737,
+    0.02797076313486903,
+    0.023088344276198706,
+    0.02322244418723117,
+    0.02483981925734254
+  ],
+  "test_evaluated_once_all_folds": true
+}

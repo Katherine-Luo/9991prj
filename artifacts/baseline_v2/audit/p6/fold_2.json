@@ -1,0 +1,53 @@
+{
+  "concept_best_checkpoint_sha256": "deb2c04cbaefb4c81d21ea09d6ed430c6d03a4830ebda189b974202bb5126025",
+  "concept_best_epoch_index": 38,
+  "concept_best_validation_loss": 0.042714681405708374,
+  "concept_epochs": 80,
+  "contribution_reconstruction": {
+    "bias_scale_max_absolute_error": 0.0,
+    "contribution_scale_max_absolute_error": 0.0,
+    "normalized_max_absolute_error": 1.043081283569336e-07,
+    "rating_scale_max_absolute_error": 4.172325134277344e-07
+  },
+  "encoder_initialization_sha256": "ce78050e766b9d84333979f33833037407061529c449d41ecabfb672f4e31149",
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "fold_index": 2,
+  "frozen_batchnorm_state_hash_unchanged": true,
+  "frozen_predictor_semantic_hash_unchanged": true,
+  "model": "standard_cbm",
+  "p6_execution_config_sha256": "792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3",
+  "private_run_storage": {
+    "file_count": 18,
+    "total_bytes": 275063183
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256": "722791eb9443b7718f63f70b5f4294e8609e3d8cbc1593cce79cd531f8bbf124",
+  "status": "PASS",
+  "task_best_checkpoint_sha256": "7fa0452a1cbb5b2a3a5fec70ab3c8396eac262bca3dd9d21efc9a117c5a62082",
+  "task_best_epoch_index": 77,
+  "task_best_validation_mse": 0.023088344276198706,
+  "task_epochs": 80,
+  "task_metrics": {
+    "normalized_mae": 0.12673104639656393,
+    "normalized_rmse": 0.16310701178985088,
+    "original_scale_mae": 0.5069241855862557,
+    "original_scale_rmse": 0.6524280471594035,
+    "pearson": 0.6646278167873299,
+    "prediction_above_1_rate": 0.0,
+    "prediction_above_5_on_original_scale_rate": 0.0,
+    "prediction_below_0_rate": 0.011131725417439703,
+    "prediction_below_1_on_original_scale_rate": 0.011131725417439703,
+    "prediction_max": 0.8357014656066895,
+    "prediction_min": -0.03538167476654053,
+    "samples": 539,
+    "spearman": 0.5820413405100258
+  },
+  "test_evaluated_once": true,
+  "test_evaluation_sha256": "e3dfe892e357f4e8718a4f07e128b8e9a92bd30e3799fba8843aafdb9da6e30a",
+  "test_inference_transactions": 1,
+  "test_predictions_sha256": "076cc2b35520929c2b5175353591a4ae2afcb273d327a86bff7e49f164e1dcf5",
+  "test_samples": 539,
+  "train_samples_per_epoch": 1853
+}

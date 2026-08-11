@@ -1,0 +1,53 @@
+{
+  "concept_best_checkpoint_sha256": "e466bd577d3b1bffc8930a18d8d84c534361daf80f4e8a671ddb07554405671f",
+  "concept_best_epoch_index": 16,
+  "concept_best_validation_loss": 0.056864608094813016,
+  "concept_epochs": 80,
+  "contribution_reconstruction": {
+    "bias_scale_max_absolute_error": 1.4901161193847656e-08,
+    "contribution_scale_max_absolute_error": 0.0,
+    "normalized_max_absolute_error": 1.2200325727462769e-07,
+    "rating_scale_max_absolute_error": 4.731118679046631e-07
+  },
+  "encoder_initialization_sha256": "c7a43fc72e50637ce6b918ec540301a4f59b69636f8b6f9d0810baaa89d4dd8e",
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "fold_index": 1,
+  "frozen_batchnorm_state_hash_unchanged": true,
+  "frozen_predictor_semantic_hash_unchanged": true,
+  "model": "standard_cbm",
+  "p6_execution_config_sha256": "792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3",
+  "private_run_storage": {
+    "file_count": 18,
+    "total_bytes": 275009460
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256": "d4f204e1411cecfad11b94adf6f4eb328aaad12c18f37e5fe74a38d8aedeacb7",
+  "status": "PASS",
+  "task_best_checkpoint_sha256": "2ce513a281f7c99b30bbd66d3d92ae96a4ab7d2df0c11e79a45a4a767c076831",
+  "task_best_epoch_index": 79,
+  "task_best_validation_mse": 0.02797076313486903,
+  "task_epochs": 80,
+  "task_metrics": {
+    "normalized_mae": 0.12149502936834755,
+    "normalized_rmse": 0.15598870318226066,
+    "original_scale_mae": 0.4859801174733902,
+    "original_scale_rmse": 0.6239548127290426,
+    "pearson": 0.7633043564117143,
+    "prediction_above_1_rate": 0.0,
+    "prediction_above_5_on_original_scale_rate": 0.0,
+    "prediction_below_0_rate": 0.021912350597609563,
+    "prediction_below_1_on_original_scale_rate": 0.021912350597609563,
+    "prediction_max": 0.8468789458274841,
+    "prediction_min": -0.030872870236635208,
+    "samples": 502,
+    "spearman": 0.6680635237495806
+  },
+  "test_evaluated_once": true,
+  "test_evaluation_sha256": "06be78ee9e904a7c3f9a1c46977d4d4e5b1e775dcd4b8b9347f40a13dd3a8292",
+  "test_inference_transactions": 1,
+  "test_predictions_sha256": "d29967b67aa525f228b520798de71096bc66d9ae1b1bb6aa6e7cac06113818b1",
+  "test_samples": 502,
+  "train_samples_per_epoch": 1858
+}
