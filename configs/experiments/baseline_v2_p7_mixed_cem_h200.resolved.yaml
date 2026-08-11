@@ -1,0 +1,170 @@
+common_execution_profile:
+  formal_gpu_model: H200
+  path: configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml
+  resolved_sha256: 66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb
+method_declaration:
+  label: A project-specific mixed-type extension of the original CEM.
+  official_implementation: https://github.com/mateoespinosa/cem
+  original_cem_elements:
+  - sample_conditioned_active_inactive_embeddings
+  - shared_scoring_functions
+  - concept_intervention
+  original_cem_paper: arXiv:2209.09056
+  project_extensions:
+  - unified_continuous_and_multiclass_concept_groups
+  - soft_vote_distribution_mixtures
+model: mixed_type_cem
+phase: P7
+project_preregistered:
+  architecture:
+    dense_feature_bypass: false
+    embedding_size_per_group: 16
+    encoder_feature_size: 1024
+    feature_transform:
+    - relu
+    - global_average_pooling
+    flattened_task_input_size: 128
+    group_order:
+    - subtlety
+    - internalStructure
+    - calcification
+    - sphericity
+    - margin
+    - lobulation
+    - spiculation
+    - texture
+    independent_binary_head: false
+    mixed_embedding_shape:
+    - 8
+    - 16
+    state_tables: forbidden
+    task_head:
+      input_size: 128
+      output_activation: none
+      output_size: 1
+      type: unconstrained_linear
+  contributions:
+    group_definition: dot_mixed_16d_embedding_with_task_weight_block
+    normalized_reconstruction_tolerance: 1.0e-06
+    rating_point_multiplier: 4.0
+    rating_reconstruction_tolerance: 1.0e-06
+    rating_scale_bias: 1_plus_4_times_raw_bias
+    raw_and_intervened: true
+  deterministic_initialization:
+    canonical_tensor_hashes: true
+    categorical_scorer_seed_material: Baseline-v2/P7/mixed-cem-categorical-scorer || fold_seed
+    continuous_scorer_seed_material: Baseline-v2/P7/mixed-cem-continuous-scorer || fold_seed
+    derivation: sha256_material_first_8_bytes_unsigned_big_endian_mask_63_bits
+    isolated_cpu_rng: true
+    state_generator_seed_material: Baseline-v2/P7/mixed-cem-state-generator/<group> || fold_seed
+    task_head_seed_material: Baseline-v2/P7/mixed-cem-task-head || fold_seed
+  dynamic_states:
+    activation: leaky_relu
+    categorical:
+      calcification:
+        classes: 6
+        generator: group_specific_linear_1024_to_96
+      internalStructure:
+        classes: 4
+        generator: group_specific_linear_1024_to_64
+      mixture: probability_weighted_sum_of_sample_conditioned_states
+      probability_activation: softmax
+      scorer: shared_linear_16_to_1_across_all_categorical_states
+      state_size: 16
+    continuous:
+      generator: group_specific_linear_1024_to_32
+      groups:
+      - subtlety
+      - sphericity
+      - margin
+      - lobulation
+      - spiculation
+      - texture
+      mixture: one_minus_p_times_state_0_plus_p_times_state_1
+      probability_activation: sigmoid
+      scorer: shared_linear_32_to_1
+      state_layout:
+      - state_0_16d
+      - state_1_16d
+    leaky_relu_negative_slope: 0.01
+    sample_conditioned_source: encoder_feature_h_x
+  execution_gate:
+    formal_epochs: 80
+    formal_folds:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    formal_gpu_model: H200
+    intermediate_fold_0_approval_required: false
+    overfit_samples: 8
+    overfit_steps: 40
+    peak_reserved_fraction_limit: 0.85
+    stage_a_fold: 0
+    stage_a_formal_training: false
+    submit_all_five_formal_folds_after_stage_a_pass: true
+    true_batch_size: 16
+  intervention:
+    categorical_replacement: full_vote_distribution_target
+    concept_loss_uses_unintervened_predictions: true
+    continuous_replacement: normalized_reader_mean_target
+    decision_vector_size: 8
+    formal_rate_gates:
+      overall:
+      - 0.24
+      - 0.26
+      per_group:
+      - 0.23
+      - 0.27
+      report_decision_and_sample_weighted_rates: true
+    group_probability: 0.25
+    independent_across_groups: true
+    intervene_when_value_equals: 0
+    intervention_schema_version: 1
+    mode: training_only_batch_shared_group_independent_randint
+    preserve_sample_conditioned_states: true
+    randint_dtype: int64
+    randint_high_exclusive: 4
+    randint_low_inclusive: 0
+    random_primitive: torch_randint
+    replace_mixture_weights_only: true
+    seed_material: Baseline-v2/P7/mixed-cem-intervention || base_seed || fold_index || epoch_index || batch_index || intervention_schema_version
+    shared_across_batch_samples: true
+    task_loss_uses_intervened_embeddings: true
+    validation_and_test_intervention: false
+  loss:
+    categorical_concept: soft_cross_entropy_vs_full_vote_distribution
+    concept_weight: 0.01
+    continuous_concept: mse_sigmoid_prediction_vs_normalized_reader_mean
+    epoch_reduction: partition_sample_sums_and_counts
+    group_reduction: arithmetic_mean_of_8_partition_mean_group_losses
+    task: mse_raw_task_score_vs_normalized_malignancy
+    total: task_loss_plus_0.01_times_concept_loss
+  private_outputs:
+    centering_intervention_curves_and_gradcam_phase: P9
+    full_concept_metrics_phase: P9
+    retain_activated_predictions: true
+    retain_all_mixed_embeddings: true
+    retain_all_sample_conditioned_states: true
+    retain_concept_logits: true
+    retain_raw_and_rating_contributions: true
+    retain_targets_votes_ties_and_valid_reader_counts: true
+  statement: Baseline-v2 P7 project pre-registered implementation choices, not exact hyperparameters reported by the original CEM paper or reference CBM/GAM paper.
+  training:
+    checkpoint_objective: minimum_validation_total_cem_loss
+    checkpoint_tie_break: earlier_epoch
+    epochs: 80
+    optimizer_and_batching: inherit_common_execution_profile
+    scheduler_bad_epochs: 4
+    scheduler_factor: 0.9
+    scheduler_min_delta: 0.0001
+    scheduler_monitor: validation_total_cem_loss
+    test_inference_exactly_once: true
+    train_augmentation: true
+    validation_augmentation: false
+protocol_version: Baseline-v2
+schema_version: 1
+scientific_config:
+  path: configs/baseline_v2.yaml
+  sha256: 07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce
