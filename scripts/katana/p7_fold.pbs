@@ -1,0 +1,55 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb:gpu_model=H200
+#PBS -l walltime=96:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+fold_index="${P7_FOLD_INDEX:?Set P7_FOLD_INDEX to an approved fold index}"
+case "$fold_index" in
+  0|1|2|3|4) ;;
+  *) echo "Invalid P7_FOLD_INDEX: $fold_index" >&2; exit 2;;
+esac
+if [[ "${P7_FORMAL_APPROVED:-0}" != "1" ]]; then
+  echo "P7 formal folds require the Stage A approval gate." >&2
+  exit 2
+fi
+
+code_directory="${KATANA_P7_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+execution_config="configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+p7_execution_config="configs/experiments/baseline_v2_p7_mixed_cem_h200.yaml"
+run_directory="$code_directory/runs/baseline_v2/cem/fold_$fold_index"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+nvidia-smi
+"$python_binary" -m lidc_baseline.p7_katana verify-stage-a \
+  --repository-root "$code_directory"
+
+if [[ ! -f "$run_directory/training_complete.json" ]]; then
+  if [[ -f "$run_directory/last.pt" ]]; then
+    "$python_binary" -m lidc_baseline.p7_mixed_cem train \
+      --fold "$fold_index" --device cuda --num-workers 4 \
+      --execution-config "$execution_config" \
+      --p7-config "$p7_execution_config" --resume
+  else
+    "$python_binary" -m lidc_baseline.p7_mixed_cem train \
+      --fold "$fold_index" --device cuda --num-workers 4 \
+      --execution-config "$execution_config" \
+      --p7-config "$p7_execution_config"
+  fi
+fi
+
+if [[ ! -f "$run_directory/test_evaluation.json" ]]; then
+  "$python_binary" -m lidc_baseline.p7_mixed_cem evaluate-test \
+    --fold "$fold_index" --device cuda --num-workers 4 \
+    --execution-config "$execution_config" \
+    --p7-config "$p7_execution_config"
+fi
+
+"$python_binary" -m lidc_baseline.p7_mixed_cem verify \
+  --fold "$fold_index" \
+  --execution-config "$execution_config" \
+  --p7-config "$p7_execution_config"
