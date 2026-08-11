@@ -27,7 +27,9 @@ P6_DELTA_FILES = (
     "configs/experiments/baseline_v2_p6_standard_cbm_h200.resolved.yaml",
     "configs/experiments/baseline_v2_p6_standard_cbm_h200.sha256",
     "scripts/katana/p6_fold.pbs",
+    "scripts/katana/p6_oof.pbs",
     "scripts/katana/p6_stage_a.pbs",
+    "src/lidc_baseline/p6_audit.py",
     "src/lidc_baseline/p6_katana.py",
     "src/lidc_baseline/p6_standard_cbm.py",
 )

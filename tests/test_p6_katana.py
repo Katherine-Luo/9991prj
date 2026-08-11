@@ -99,7 +99,9 @@ def test_p6_delta_contains_only_required_stage_a_and_formal_files() -> None:
         "configs/experiments/baseline_v2_p6_standard_cbm_h200.resolved.yaml",
         "configs/experiments/baseline_v2_p6_standard_cbm_h200.sha256",
         "scripts/katana/p6_fold.pbs",
+        "scripts/katana/p6_oof.pbs",
         "scripts/katana/p6_stage_a.pbs",
+        "src/lidc_baseline/p6_audit.py",
         "src/lidc_baseline/p6_katana.py",
         "src/lidc_baseline/p6_standard_cbm.py",
     }
@@ -114,6 +116,7 @@ def test_p6_katana_scripts_enforce_stage_and_hardware_gates() -> None:
         Path("scripts/katana/sync_p6_stage_a.sh"),
         Path("scripts/katana/p6_stage_a.pbs"),
         Path("scripts/katana/p6_fold.pbs"),
+        Path("scripts/katana/p6_oof.pbs"),
     )
     for path in paths:
         result = subprocess.run(
@@ -134,6 +137,10 @@ def test_p6_katana_scripts_enforce_stage_and_hardware_gates() -> None:
     assert "--resume" in formal
     assert "sequential_training_complete.json" in formal
     assert "test_evaluation.json" in formal
+    oof = paths[3].read_text(encoding="utf-8")
+    assert "p6_audit build-oof" in oof
+    assert "p6_standard_cbm train" not in oof
+    assert "evaluate-test" not in oof
     for path in paths:
         content = path.read_text(encoding="utf-8")
         assert "lidc_data" not in content

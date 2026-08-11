@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:mem=32gb
+#PBS -l walltime=02:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+code_directory="${KATANA_P6_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+
+"$python_binary" -m lidc_baseline.p6_katana verify-stage-a \
+  --repository-root "$code_directory"
+"$python_binary" -m lidc_baseline.p6_audit build-oof

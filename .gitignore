@@ -44,6 +44,8 @@ artifacts/baseline_v2/audit/*
 !artifacts/baseline_v2/audit/p4/*.csv
 !artifacts/baseline_v2/audit/p5/
 !artifacts/baseline_v2/audit/p5/*.json
+!artifacts/baseline_v2/audit/p6/
+!artifacts/baseline_v2/audit/p6/*.json
 
 runs/
 reports/baseline_v1/
