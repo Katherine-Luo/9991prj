@@ -1,0 +1,111 @@
+{
+  "best_epoch_index_by_fold": [
+    14,
+    19,
+    10,
+    15,
+    38
+  ],
+  "best_validation_mse_by_fold": [
+    0.0199759813899636,
+    0.0247182929771812,
+    0.0238741965997411,
+    0.0228595164578849,
+    0.0193156898568515
+  ],
+  "encoder_initialization_sha256_by_fold": [
+    "d7fa4604dfaa1ebee6d8653f70b9d3e97266dbbdbb0eed573a7b43cd8a12948e",
+    "c7a43fc72e50637ce6b918ec540301a4f59b69636f8b6f9d0810baaa89d4dd8e",
+    "ce78050e766b9d84333979f33833037407061529c449d41ecabfb672f4e31149",
+    "83d07375d8a470123f105d6d885b025da65024db48dca96aa4303dd92460c481",
+    "5d83267c5e8a3e89368d160f1a2ce46a387ca28cb2f6061c4bc55ffaca4afdf9"
+  ],
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "execution_profile_id": "baseline-v2-formal-h200-warn-only",
+  "fold_metric_mean": {
+    "normalized_mae": 0.12513377978371776,
+    "normalized_rmse": 0.16053127030113656,
+    "original_scale_mae": 0.500535119134871,
+    "original_scale_rmse": 0.6421250812045463,
+    "pearson": 0.7191107220075098,
+    "prediction_above_1_rate": 0.0011514226780819981,
+    "prediction_above_5_on_original_scale_rate": 0.0011514226780819981,
+    "prediction_below_0_rate": 0.01539824056866319,
+    "prediction_below_1_on_original_scale_rate": 0.01539824056866319,
+    "prediction_max": 0.9587808609008789,
+    "prediction_min": -0.0380671426653862,
+    "spearman": 0.6368136262863155
+  },
+  "fold_metric_sample_standard_deviation": {
+    "normalized_mae": 0.002761928993184641,
+    "normalized_rmse": 0.0023830036277996524,
+    "original_scale_mae": 0.011047715972738565,
+    "original_scale_rmse": 0.00953201451119861,
+    "pearson": 0.04041554827159899,
+    "prediction_above_1_rate": 0.0017598009867164244,
+    "prediction_above_5_on_original_scale_rate": 0.0017598009867164244,
+    "prediction_below_0_rate": 0.029316350247793617,
+    "prediction_below_1_on_original_scale_rate": 0.029316350247793617,
+    "prediction_max": 0.06775263816550538,
+    "prediction_min": 0.05728244367746252,
+    "spearman": 0.05562897385644057
+  },
+  "fold_test_counts": [
+    479,
+    502,
+    539,
+    549,
+    564
+  ],
+  "folds": 5,
+  "formal_gpu_model": "H200",
+  "head_initialization_seed_by_fold": [
+    6929717111600576599,
+    2890431788446300701,
+    3785271495582700310,
+    6553365883455246220,
+    3735979737371538353
+  ],
+  "head_initialization_sha256_by_fold": [
+    "3c11d594f4ebc5540d024f9f578baa9b9c17f27c890fd779645e158b1848fec9",
+    "c7e8e9260a01125bcf4eae4815937fee21f32217bd02fe1b33729297a5399975",
+    "9e1b0356c79756dcabc47b5706a693879ce793469158916d3f85d228c5122cef",
+    "7c6877e361d810824c0c3fa3f1cd5335850c14c7d008e706833be23ff2d6c4e7",
+    "db008a9c644a0229445df3ad5d3109749dfb46b1edb9bc0e221d8fa9b22be1bb"
+  ],
+  "model": "blackbox",
+  "oof_nodules": 2633,
+  "oof_patients": 868,
+  "oof_predictions_sha256": "6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8",
+  "pooled_oof_metrics": {
+    "normalized_mae": 0.1251564462553825,
+    "normalized_rmse": 0.16054718832299372,
+    "original_scale_mae": 0.50062578502153,
+    "original_scale_rmse": 0.6421887532919749,
+    "pearson": 0.7157050987783329,
+    "prediction_above_1_rate": 0.001139384732244588,
+    "prediction_above_5_on_original_scale_rate": 0.001139384732244588,
+    "prediction_below_0_rate": 0.014812001519179644,
+    "prediction_below_1_on_original_scale_rate": 0.014812001519179644,
+    "prediction_max": 1.0300079584121704,
+    "prediction_min": -0.12787137925624847,
+    "samples": 2633,
+    "spearman": 0.634502488281551
+  },
+  "private_run_storage": {
+    "file_count": 57,
+    "total_bytes": 1360388058
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256_by_fold": [
+    "543ec76c07f9113ba84130f2cf4caace4f217e114052066dc2eb25859be61833",
+    "d4f204e1411cecfad11b94adf6f4eb328aaad12c18f37e5fe74a38d8aedeacb7",
+    "722791eb9443b7718f63f70b5f4294e8609e3d8cbc1593cce79cd531f8bbf124",
+    "eb27e847838281af43ad6a1683ef3e0e5cacad26e8602291968f68b196e2e44f",
+    "f6ac19b39f892e1fedd432aa3d6f2efc943d519fe6d7df27e0d975682725b6bb"
+  ],
+  "status": "PASS",
+  "test_evaluated_once_all_folds": true
+}
