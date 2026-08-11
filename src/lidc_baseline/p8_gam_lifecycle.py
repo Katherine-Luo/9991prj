@@ -2087,17 +2087,20 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
-    common = {
+    source_common = {
         "scientific_config_path": arguments.config,
         "execution_config_path": arguments.execution_config,
         "p8_config_path": arguments.p8_config,
         "manifest_path": arguments.manifest,
         "roi_index_path": arguments.roi_index,
+    }
+    lifecycle_common = {
+        **source_common,
         "output_root": arguments.output_root,
     }
     if arguments.command == "overfit-check":
         report = overfit_check(
-            **common,
+            **source_common,
             fold_index=arguments.fold,
             device_name=arguments.device,
             samples=arguments.samples,
@@ -2106,13 +2109,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     elif arguments.command == "preflight":
         report = preflight(
-            **common,
+            **source_common,
             fold_index=arguments.fold,
             output_path=arguments.output,
         )
     elif arguments.command == "train":
         report = train_fold(
-            **common,
+            **lifecycle_common,
             fold_index=arguments.fold,
             device_name=arguments.device,
             num_workers=arguments.num_workers,
@@ -2120,7 +2123,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     elif arguments.command == "evaluate-test":
         report = evaluate_test_once(
-            **common,
+            **lifecycle_common,
             fold_index=arguments.fold,
             device_name=arguments.device,
             num_workers=arguments.num_workers,
@@ -2129,9 +2132,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if (arguments.fold is None) == (arguments.scope is None):
             raise ValueError("P8_VERIFY_REQUIRES_EXACTLY_ONE_FOLD_OR_SCOPE")
         report = (
-            verify_all(**common)
+            verify_all(**lifecycle_common)
             if arguments.scope == "all"
-            else verify_fold(**common, fold_index=arguments.fold)
+            else verify_fold(**lifecycle_common, fold_index=arguments.fold)
         )
     else:
         raise AssertionError(arguments.command)

@@ -146,6 +146,36 @@ def test_stage_a_structure_gate_proves_all_experts_are_independent_and_local() -
         ] * 5
 
 
+@pytest.mark.parametrize("command", ["overfit-check", "preflight"])
+def test_stage_a_cli_does_not_forward_lifecycle_output_root(
+    command: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    captured: dict[str, object] = {}
+
+    def stage_a_stub(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"status": "PASS", "command": command}
+
+    target = "overfit_check" if command == "overfit-check" else "preflight"
+    monkeypatch.setattr(p8l, target, stage_a_stub)
+    arguments = [
+        command,
+        "--fold",
+        "0",
+        "--output-root",
+        str(tmp_path / "must-not-be-forwarded"),
+        "--output",
+        str(tmp_path / f"{command}.json"),
+    ]
+    assert p8l.main(arguments) == 0
+    assert "output_root" not in captured
+    assert captured["fold_index"] == 0
+    assert json.loads(capsys.readouterr().out)["status"] == "PASS"
+
+
 def test_task_path_is_group_local_and_uses_activated_predictions() -> None:
     model = _model()
     features = _features()
