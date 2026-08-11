@@ -9,18 +9,18 @@ protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
 development_phase: P5
-development_phase_status: AWAITING_USER_APPROVAL
+development_phase_status: COMPLETED
 maintenance_phase: null
 active_bug_ids: []
 resume_phase: P5
 next_phase: P6
 last_updated: 2026-08-11
-last_verified_commit: 0359d61
+last_verified_commit: 6e07bb5
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3 与 P4 均已完成、获用户确认并推送；P4 最终状态交付 anchor 为 `960e366`。用户已批准 P5 Reference-aligned Black-box Regression 两阶段实施计划，P5 现为唯一开发阶段。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3 与 P4 均已完成、获用户确认并推送；P4 最终状态交付 anchor 为 `960e366`。P5 已完成技术阶段门并获用户确认，当前只待完成状态 commit、合并验证和推送；P6 保持 `NOT_STARTED`。
 
 ## 1. 阅读规则
 
@@ -39,14 +39,14 @@ last_verified_commit: 0359d61
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P5 Reference-aligned Black-box Regression` |
-| 阶段状态 | `AWAITING_USER_APPROVAL / ON_TRACK` |
+| 阶段状态 | `COMPLETED / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无技术阻塞。P5 五折正式训练、每折 minimum-validation-MSE checkpoint、test exactly once、final verify、2,633-sample OOF reconciliation、脱敏 audit、完整测试和阶段级 Phase Compliance Review 均为 `PASS`。当前仅等待用户最终确认 P5；P6 保持 `NOT_STARTED`。 |
+| 当前阻塞项 | 无技术阻塞。用户已于 2026-08-11 明确确认 P5，阶段现为 `COMPLETED / ON_TRACK`。完成状态 commit、fast-forward 合并、`main` 完整测试和 GitHub push 尚待执行；这些是交付步骤，不授权进入 P6。 |
 | 恢复阶段 | `P5` |
 | 下一阶段 | `P6 Standard CBM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-11 |
-| 状态依据 | `main` 与 `origin/main` 仍为 `960e3666e73c61a5b4114e873d6075f333acf8f0`；P5 工作仅位于本地分支且未推送，最新 verified anchors 为 OOF implementation commit `a81d06b` 与脱敏 audit evidence commit `0359d61`。五折 H200 formal runs 均完成 80 epochs、minimum-validation-MSE best checkpoint、test exactly once 与 final verifier `PASS`：Fold 0 job `8965243`（既有通过结果）以及 Stage B jobs Fold 1=`8965994`、Fold 2=`8965995`、Fold 3=`8965996`、Fold 4=`8965997`；Stage B 四 jobs 均 `Exit_status=0`。五折 best epoch indexes 为 `[14,19,10,15,38]`，validation MSE 为 `[0.0199759813899636,0.0247182929771812,0.0238741965997411,0.0228595164578849,0.0193156898568515]`。CPU OOF job `8966614` 在 `k189` 以 `Exit_status=0` 完成；OOF 精确覆盖 2,633 nodules / 868 patients，fold counts `[479,502,539,549,564]`，patient leakage 为 0。Pooled OOF original-scale MAE/RMSE=`0.5006257850/0.6421887533`，normalized MAE/RMSE=`0.1251564463/0.1605471883`，Pearson/Spearman=`0.7157050988/0.6345024883`，prediction range=`[-0.1278713793,1.0300079584]`。Private OOF 仅保留在 Katana，SHA-256 为 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`；五折 private run storage 为 `1,360,388,058` bytes。Tracked audit 为 `fold_0.json`–`fold_4.json` 和 `summary.json` 六个脱敏 JSON。最新 P5 delta transfer 为 9 files / `113,468` bytes，manifest content SHA-256 为 `5523ce78167e4c28f0ba4e1debdda49ab71be9856af6a0121e937f371d375a5d`，remote integrity 为 `PASS`。P5 audit/Katana direct tests `8 passed`、完整 tests `173 passed`；Phase Compliance Reviewer 为 `PASS`，Status Synchronization Reviewer 为 `UPDATED`。冻结 V1/V2 requirements/config 无 diff，无活动 Bug；P5 正等待用户最终确认，P6 未开始。 |
+| 状态依据 | `HEAD=6e07bb5`；本地 `p5-blackbox-regression` 相对 `origin/main=960e3666e73c61a5b4114e873d6075f333acf8f0` ahead 25 commits，尚未合并或推送。用户已于 2026-08-11 明确确认 P5；verified anchors 为 OOF implementation `a81d06b`、脱敏 audit evidence `0359d61` 和 approval-gate status `6e07bb5`。五折 H200 formal runs 均完成 80 epochs、minimum-validation-MSE best checkpoint、test exactly once 与 final verifier `PASS`：Fold 0 job `8965243`（科学执行通过，`BUG-P5-002` 修复后 existing-artifact final verify `PASS`）以及 Stage B jobs Fold 1=`8965994`、Fold 2=`8965995`、Fold 3=`8965996`、Fold 4=`8965997`（均 `Exit_status=0`）。五折 best epoch indexes 为 `[14,19,10,15,38]`，validation MSE 为 `[0.0199759813899636,0.0247182929771812,0.0238741965997411,0.0228595164578849,0.0193156898568515]`。CPU OOF job `8966614` 在 `k189` 以 `Exit_status=0` 完成；OOF 精确覆盖 2,633 nodules / 868 patients，fold counts `[479,502,539,549,564]`，patient leakage 为 0。Pooled OOF original-scale MAE/RMSE=`0.5006257850/0.6421887533`，normalized MAE/RMSE=`0.1251564463/0.1605471883`，Pearson/Spearman=`0.7157050988/0.6345024883`，prediction range=`[-0.1278713793,1.0300079584]`。Private OOF 仅保留在 Katana，SHA-256 为 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`；五折 private run storage 为 `1,360,388,058` bytes。Tracked audit 为 `fold_0.json`–`fold_4.json` 和 `summary.json` 六个脱敏 JSON。P5 audit/Katana direct tests `8 passed`、完整 tests `173 passed`；Phase Compliance Reviewer `PASS`、Status Synchronization Reviewer `UPDATED`，冻结 V1/V2 requirements/config 无 diff，无活动 Bug。P5 为 `COMPLETED / ON_TRACK`；completion status commit、fast-forward merge、`main` full test 和 push 尚待执行，P6 仍为 `NOT_STARTED`。 |
 
 ## 3. 当前阶段：P5 Reference-aligned Black-box Regression
 
@@ -78,15 +78,16 @@ last_verified_commit: 0359d61
 - CPU OOF job `8966614.kman.restech.unsw.edu.au` 已在 `k189` 以 `Exit_status=0` 完成。五折 OOF 精确覆盖 2,633 nodules / 868 patients，fold test counts 为 `[479,502,539,549,564]`，每个 nodule 恰有一次 test prediction，patient leakage 为 0。Pooled OOF original-scale MAE/RMSE 为 `0.50062578502153/0.6421887532919749`，normalized MAE/RMSE 为 `0.1251564462553825/0.16054718832299372`，Pearson/Spearman 为 `0.7157050987783329/0.634502488281551`；prediction min/max 为 `-0.12787137925624847/1.0300079584121704`，below-0/above-1 rates 为 `0.014812001519179644/0.001139384732244588`。
 - Private `oof_predictions.parquet` 仅保留在 Katana，未复制或提交至本地仓库；其 SHA-256 为 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`。Tracked evidence 仅为六个脱敏 JSON：`fold_0.json`–`fold_4.json` 和 `summary.json`。五折 private run storage 合计 `1,360,388,058` bytes。
 - OOF/audit implementation、CPU-only PBS 与 transfer whitelist 已由本地 commit `a81d06b`（`feat: add P5 five-fold OOF audit`）封存，六个脱敏 aggregate audit JSON 已由本地 commit `0359d61`（`data: add P5 deidentified OOF audit`）封存；两者均尚未推送。最新 P5 delta 为 9 files / `113,468` bytes，manifest content SHA-256 为 `5523ce78167e4c28f0ba4e1debdda49ab71be9856af6a0121e937f371d375a5d`，remote integrity 为 `PASS`。P5 audit/Katana direct tests 为 `8 passed`，完整 tests 为 `173 passed`；阶段级 Phase Compliance Reviewer 为 `PASS`，冻结 V1/V2 requirements/config 无 diff。
+- Approval-gate status 已由本地 commit `6e07bb5`（`docs: record P5 five-fold approval gate`）封存；用户于 2026-08-11 明确确认 P5。P5 生命周期现为 `COMPLETED`、健康状态为 `ON_TRACK`，P6 继续保持 `NOT_STARTED`。
 
 ### 正在进行
 
-- P5 全部技术阶段门和双 agent 审查已通过；当前仅等待用户最终确认 P5。P6 继续保持 `NOT_STARTED`，不得提前制定或实现。
+- P5 开发与阶段确认均已完成；当前仅执行确认后的 completion status sealing 与 Git 交付，不开展新的 P5 功能或 P6 开发。
 
 ### 尚未完成
 
-- 用户尚未最终确认 P5，因此阶段尚未标记 `COMPLETED`，本地原子 commits 尚未合并或推送。
-- P5 用户确认后仍需单独封存完成状态、fast-forward 合并至 `main`、运行合并后验证并推送 GitHub；在此之前 P6 保持 `NOT_STARTED`。
+- 本次 completion 状态文档尚需单独原子 commit。
+- 随后仍需将本地 P5 分支 fast-forward 合并至 `main`、在 `main` 上运行完整测试与冻结协议检查、推送 GitHub，并验证本地/远程 SHA 一致；在交付完成前 P6 保持 `NOT_STARTED`。
 
 ### 验收进度
 
@@ -100,7 +101,7 @@ last_verified_commit: 0359d61
 | Fold 0 train-only overfit 与 H200 batch-16 preflight | `PASS` | Job `8964634` 在 `k205` H200 上因旧 strict profile Exit 1；warn-only job `8965003` 已在 `k220` GPU 2 以 Exit 0 完成。8 samples/40 steps overfit MSE 从 `0.1297724843` 降至 `0.0642339364`；true batch 16 forward/MSE/backward/Adam 均通过；peak reserved `2,860,515,328 / 150,393,585,664 bytes = 1.9020%`，低于 85% 门槛。运行发出预期的 AvgPool3d 与 MaxPool3d warn-only warnings |
 | Fold 0 formal 80 epochs、best checkpoint、一次性 test 与 final verify | `PASS` | job `8965243.kman.restech.unsw.edu.au` 在 `k205` H200 GPU 7 完成 80 epochs；每 epoch 使用全部 1,882 train nodules。Best epoch index `14`、validation MSE `0.01997598138996362`；best checkpoint固定后 test exactly once 共479 samples。Test original-scale MAE/RMSE=`0.4985995429127931/0.6436540272338708`，normalized MAE/RMSE=`0.12464988572819828/0.1609135068084677`，Pearson/Spearman=`0.7273738908734001/0.6499290631630589`，prediction min/max=`-0.011651983484625816/0.971398651599884`。Verifier-only fix `2eaa273` 后只对既有 artifacts 运行 remote final verify，返回 `PASS`；未重训或重复 test，private artifact hashes/mtimes 不变 |
 | Folds 1–4、五折 OOF 与 checkpoint/test invariants | `PASS` | Stage B jobs `8965994`–`8965997` 均 80 epochs、test exactly once、final verifier `PASS`、Exit 0。五折 best epochs `[14,19,10,15,38]`，validation MSE `[0.0199759813899636,0.0247182929771812,0.0238741965997411,0.0228595164578849,0.0193156898568515]`；OOF 2,633/2,633 且 0 leakage。Pooled original-scale MAE/RMSE=`0.5006257850/0.6421887533`，Pearson/Spearman=`0.7157050988/0.6345024883` |
-| 冻结协议保护、测试、双 agent 审查与阶段治理 | `PASS_AWAITING_USER_APPROVAL` | 冻结 V1/V2 requirements/config 无 diff；P5 audit/Katana direct tests `8 passed`、完整 tests `173 passed`。最新 remote delta 为 9 files / `113,468` bytes、manifest hash `5523ce78167e4c28f0ba4e1debdda49ab71be9856af6a0121e937f371d375a5d`，integrity `PASS`。Phase Compliance Reviewer `PASS`，Status Synchronization Reviewer `UPDATED`；P5 等待用户最终确认，P6 未开始 |
+| 冻结协议保护、测试、双 agent 审查与阶段治理 | `PASS_USER_APPROVED_DELIVERY_PENDING` | 冻结 V1/V2 requirements/config 无 diff；P5 audit/Katana direct tests `8 passed`、完整 tests `173 passed`。最新 remote delta 为 9 files / `113,468` bytes、manifest hash `5523ce78167e4c28f0ba4e1debdda49ab71be9856af6a0121e937f371d375a5d`，integrity `PASS`。Phase Compliance Reviewer `PASS`，Status Synchronization Reviewer `UPDATED`，用户于 2026-08-11 明确确认；completion status commit、merge、main test 与 push 待执行，P6 未开始 |
 
 ### 未解决困难
 
@@ -291,7 +292,7 @@ Bug 修复后：
 | V2M | Baseline-v2 Protocol Migration | `COMPLETED` | `ON_TRACK` | V2M-R1–V2M-R5、86 项测试、双 agent 审查和用户确认均为 `PASS`；已推送 | 0 | 0 |
 | P3 | Consensus mask 与 ROI | `COMPLETED` | `ON_TRACK` | P3-R1–P3-R3、冻结协议保护、full 2,633 ROI verify、32 项 P3 tests、118 项完整 tests、aggregate audit、阶段级双 agent 审查和用户最终确认均为 `PASS`；已由 `dc8c356` 合并并推送，P3 完成时 P4 尚未开始 | 0 | 0 |
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
-| P5 | Black-box DenseNet regression | `AWAITING_USER_APPROVAL` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、完整 `173 passed` 与阶段级双 agent 审查均为 `PASS`；仅等待用户最终确认，尚未合并或推送，P6 未开始 | 0 | 0 |
+| P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、完整 `173 passed`、阶段级双 agent 审查及用户 2026-08-11 确认均为 `PASS`；completion status commit、merge、main test 与 push 待执行，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P5 全部五折、阶段验收、用户确认与交付前禁止开始 | 0 | 0 |
 | P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
@@ -302,7 +303,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前无活动 Bug。P5 为 `NORMAL_DEVELOPMENT / AWAITING_USER_APPROVAL / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试与双 agent 审查均为 `PASS`。当前仅等待用户最终确认，P6–P8 均保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
+当前无活动 Bug。P5 为 `NORMAL_DEVELOPMENT / COMPLETED / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试、双 agent 审查与用户确认均为 `PASS`。当前仅余 P5 Git 交付步骤，P6–P8 均保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
 
 ### Bug 状态
 
@@ -590,6 +591,26 @@ Bug 修复后：
 - 阶段门结论：`PASS`
 - 交付状态：P4 已 fast-forward 合并至 `main` 并推送 GitHub。交付时 `main`、`HEAD` 与 `origin/main` 均为 `ec7bd8e89528ae4adeea4699217fc481f402e0c7`；合并后完整测试为 `135 passed`，`p4_prepare verify` 与 post-delivery Phase Compliance Reviewer 均为 `PASS`。P5 保持 `NOT_STARTED`，须另行制定并批准实施计划。
 
+### P5 完成记录
+
+- 完成日期：2026-08-11
+- 生命周期：`COMPLETED`
+- 健康状态：`ON_TRACK`
+- 用户确认：用户于 2026-08-11 明确批准 P5 五折 Black-box regression 科学执行、OOF reconciliation、审计和阶段门结果。
+- 已完成内容：在 P4 固定的 patient-grouped splits 与 shared DenseNet-121 encoder initializations 上，以 frozen H200 warn-only execution profile 完成 Black-box unconstrained linear malignancy regression。训练固定 Adam、`lr=1e-4`、true batch 16、80 epochs、FP32/no-AMP/no-BF16/no-TF32、train-only deterministic augmentation 与 validation-MSE checkpoint rule；没有 concept inputs、mask input 或 independent binary head。
+- Stage A 与五折执行证据：H200 Stage A job `8965003` 完成 overfit 和 true-batch-16 forward/MSE/backward/Adam preflight。Formal Fold 0 job `8965243` 完成科学训练、best checkpoint 和 test exactly once；其 PBS final verifier false failure 由 `BUG-P5-002` 修复后仅对 existing artifacts 重新验证为 `PASS`，未重训或重复 test。Stage B jobs Fold 1=`8965994`、Fold 2=`8965995`、Fold 3=`8965996`、Fold 4=`8965997` 均完成 80 epochs、minimum-validation-MSE checkpoint、test exactly once 与 final verifier，且 `Exit_status=0`。
+- Checkpoint 证据：五折 best epoch indexes 为 `[14,19,10,15,38]`，对应 validation MSE 为 `[0.0199759813899636,0.0247182929771812,0.0238741965997411,0.0228595164578849,0.0193156898568515]`；每折均使用 P4 指定 encoder initialization 与 deterministic fold-specific linear-head seed/hash，test 不参与 checkpoint selection。
+- OOF 与 pooled metrics：CPU-only job `8966614` 在 `k189` 以 `Exit_status=0` 完成。OOF 精确覆盖 2,633 nodules / 868 patients，fold counts `[479,502,539,549,564]`，每个 nodule 恰有一次 test prediction，patient leakage 为 0。Pooled original-scale MAE/RMSE=`0.50062578502153/0.6421887532919749`，normalized MAE/RMSE=`0.1251564462553825/0.16054718832299372`，Pearson/Spearman=`0.7157050987783329/0.634502488281551`，prediction min/max=`-0.12787137925624847/1.0300079584121704`，below-0/above-1 rates=`0.014812001519179644/0.001139384732244588`。
+- Private 与 tracked 产物：private `oof_predictions.parquet` 仅保留在 Katana，SHA-256 为 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`；五折 private run storage 为 `1,360,388,058` bytes。仓库仅保存 `artifacts/baseline_v2/audit/p5/fold_0.json`–`fold_4.json` 与 `summary.json` 六个脱敏 audit JSON，不保存 private predictions、checkpoints 或 patient/nodule identifiers。
+- 验收标准与证据：P5 audit/Katana direct tests `8 passed`、完整 tests `173 passed`；五折 final verifier、OOF set equality、patient isolation、execution/config/encoder/head hashes、unconstrained output 与 one-time-test invariants 均为 `PASS`。Phase Compliance Reviewer 为 `PASS`，Status Synchronization Reviewer 为 `UPDATED`，冻结 V1/V2 requirements/config 无 diff。
+- 已解决 Bug：`BUG-P5-001`（PyTorch CUDA 3D pooling backward 缺少 strict deterministic implementation；独立 warn-only execution profile 修复）与 `BUG-P5-002`（JSON/CSV validation-MSE round-trip exact-equality false failure；`math.isclose` verifier-only 修复）。两项均重新验收通过，没有改变数据、模型、loss、optimizer、batch、augmentation、checkpoint 或 evaluation protocol。
+- 关键 commits：OOF implementation `a81d06b`、脱敏 audit evidence `0359d61`、approval-gate status `6e07bb5`；均位于本地 P5 分支，尚未推送。
+- 明确未纳入内容：P6 Standard CBM、P7 CEM、P8 GAM、P9 bootstrap/Youden-J/intervention/Grad-CAM 与 P10 最终报告均未实现；P6 保持 `NOT_STARTED`。
+- 遗留困难：`DIF-P10-001` 继续为 `OPEN`，不影响 P5 完成；P5 已提供 `1,360,388,058` bytes 的五折 Black-box private run 测量证据，P10 前仍需估算其余模型和解释产物总工作集。
+- 阶段门结论：`PASS`
+- 完成状态 commit：本次 completion sealing 状态 commit 待创建。
+- 交付状态：P5 尚未 fast-forward 合并至 `main`，尚未在 `main` 运行合并后完整测试，也尚未推送 GitHub；不得提前声称已交付。
+
 ### 阶段完成记录模板
 
 每个阶段门通过时，在本节追加一条永久记录：
@@ -653,3 +674,4 @@ Bug 修复后：
 | 2026-08-11 | `BUG_RESOLVED` / `FOLD0_GATE_PASS` / `STAGE_B_AWAITING_APPROVAL` / `P5_RESUMED` | P5 | 用户批准的 verifier-only commit `2eaa273` 使用 `rel_tol=1e-12, abs_tol=1e-12` 修复 JSON/CSV float round-trip false failure，并加入 tiny-difference positive 与 real-mismatch negative tests。P5 direct/full tests 为 `33 passed` / `172 passed`，Phase Compliance Reviewer 为 `PASS`；KDM transfer 与 remote integrity 为 `PASS`。只对既有 Fold 0 artifacts 重新运行 final verifier并返回 `PASS`，未重训、未重复 test，artifact hashes/mtimes 不变。`BUG-P5-002` 关闭，P5 恢复 `NORMAL_DEVELOPMENT / IN_PROGRESS / ON_TRACK`；当前等待用户一次性批准 Stage B folds 1–4，P6 保持 `NOT_STARTED`。 | `2eaa273`（本地未推送）；existing-artifact remote verify `PASS` |
 | 2026-08-11 | `STAGE_B_APPROVED` / `FOLDS_1_4_QUEUED` | P5 | 用户明确批准一次性提交 Stage B folds 1–4。Fold 1=`8965994`、Fold 2=`8965995`、Fold 3=`8965996`、Fold 4=`8965997`，均以 `P5_STAGE_B_APPROVED=1` 提交至 `csegpu48`，显式请求 H200×1、8 CPU、46 GB RAM、48 小时 walltime，当前均为 `Q`。Phase Compliance Reviewer 为 `PASS`；只读检查确认用户远程 jobs 仅有这四个、无重复提交。Fold 0 未修改，P6 保持 `NOT_STARTED`；不得将排队状态表述为训练完成。 | Katana jobs `8965994`–`8965997`；用户批准 |
 | 2026-08-11 | `PHASE_AWAITING_APPROVAL` / `FIVE_FOLD_OOF_PASS` | P5 | Stage B jobs `8965994`–`8965997` 均完成 80 epochs、minimum-validation-MSE checkpoint、test exactly once 与 final verify，且 `Exit_status=0`。CPU OOF job `8966614` 在 `k189` Exit 0；OOF 精确覆盖 2,633 nodules / 868 patients，fold counts `[479,502,539,549,564]`，patient leakage 为 0。六个 tracked P5 audit JSON 已通过脱敏检查；private OOF 仅保留在 Katana，SHA-256 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`。Direct `8 passed`、full `173 passed`、Phase Compliance Reviewer `PASS`、Status Synchronization Reviewer `UPDATED`；P5 转为 `AWAITING_USER_APPROVAL / ON_TRACK`，仅等待用户最终确认，P6 保持 `NOT_STARTED`，尚未合并或推送。 | `a81d06b`、`0359d61`（本地未推送）；Katana jobs `8965994`–`8965997`、`8966614` |
+| 2026-08-11 | `PHASE_COMPLETED` | P5 | 用户明确确认 P5；五折 Black-box H200 formal runs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633 nodules / 868 patients OOF、0 patient leakage、六个脱敏 audit、完整 `173 passed` 与双 agent 审查均已封存。P5 转为 `COMPLETED / ON_TRACK`，P6 保持 `NOT_STARTED`。Completion status commit、fast-forward merge、`main` 完整测试和 GitHub push 尚待执行，不得声称已交付。 | 用户确认；`a81d06b`、`0359d61`、`6e07bb5`；本次 completion status commit 待创建 |
