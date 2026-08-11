@@ -42,6 +42,7 @@ from lidc_baseline.p6_standard_cbm import (
     _validate_test_claim,
     _validate_metrics_file,
     stage_resume_requested,
+    stage_a_preflight_steps,
     validate_sequential_completion,
     validate_p6_execution_config,
     validate_cache_provenance,
@@ -365,6 +366,57 @@ def _tiny_concept_predictor() -> object:
             }
 
     return Model()
+
+
+def test_stage_a_preflight_exercises_true_batch_16_and_frozen_task_boundary(
+    tmp_path: object,
+) -> None:
+    import torch
+    from lidc_baseline.p5_blackbox import validate_execution_config
+
+    execution, _digest = validate_execution_config(
+        "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+    )
+    train = [
+        _concept_record(tmp_path, f"train-{index:02d}", 0.1 + index * 0.04)
+        for index in range(16)
+    ]
+    validation = [
+        _concept_record(tmp_path, f"validation-{index:02d}", 0.12 + index * 0.04)
+        for index in range(16)
+    ]
+    report = stage_a_preflight_steps(
+        _tiny_concept_predictor(),
+        train,
+        validation,
+        execution,
+        fold_seed=20260808,
+        base_seed=20260808,
+        fold_index=0,
+        device=torch.device("cpu"),
+    )
+    assert report["batch_size"] == 16
+    assert report["concept_forward"] is True
+    assert report["concept_eight_group_loss"] is True
+    assert report["concept_backward"] is True
+    assert report["concept_adam_step"] is True
+    assert set(report["concept_group_losses"]) == set(CONCEPT_GROUP_ORDER)
+    assert report["train_cache_samples"] == 16
+    assert report["validation_cache_samples"] == 16
+    assert report["canonical_task_input_dimension"] == 16
+    assert report["task_features"] == "frozen_predicted_activated_concepts"
+    assert report["task_forward"] is True
+    assert report["task_backward"] is True
+    assert report["task_adam_step"] is True
+    assert report["predictor_unchanged_during_task_step"] is True
+    assert (
+        report["predictor_semantic_sha256_before_task"]
+        == report["predictor_semantic_sha256_after_task"]
+    )
+    assert (
+        report["batchnorm_state_sha256_before_task"]
+        == report["batchnorm_state_sha256_after_task"]
+    )
 
 
 def _cache_provenance() -> dict[str, object]:

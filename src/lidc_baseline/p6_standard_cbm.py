@@ -2810,6 +2810,336 @@ def _evaluate_test_once_locked(
     )
 
 
+def stage_a_preflight_steps(
+    concept_model: Any,
+    train_records: Sequence[ConceptRecord],
+    validation_records: Sequence[ConceptRecord],
+    execution_config: Mapping[str, Any],
+    *,
+    fold_seed: int,
+    base_seed: int,
+    fold_index: int,
+    device: Any,
+) -> dict[str, Any]:
+    """Exercise both P6 stages at true batch 16 without a formal run."""
+    torch = _torch()
+    batch_size = int(
+        execution_config["project_preregistered"]["batching"]["micro_batch_size"]
+    )
+    if batch_size != 16:
+        raise ValueError("P6_STAGE_A_TRUE_BATCH_SIZE_MISMATCH")
+    if len(train_records) < batch_size or len(validation_records) < batch_size:
+        raise ValueError("P6_STAGE_A_INSUFFICIENT_RECORDS")
+    ordered_train = _ordered_concept_records(
+        train_records, base_seed, fold_index, 0
+    )[:batch_size]
+    ordered_validation = sorted(
+        validation_records, key=lambda record: record.nodule_uid
+    )[:batch_size]
+    dataset = ConceptROIDataset.build(
+        ordered_train,
+        training=True,
+        base_seed=base_seed,
+        fold_index=fold_index,
+        epoch_index=0,
+    )
+    batch = next(
+        iter(_loader(dataset, batch_size=batch_size, num_workers=0))
+    )
+    image = batch["image"].to(device=device, dtype=torch.float32)
+    targets = _targets_to_device(batch["targets"], device)
+    if tuple(image.shape) != (16, 1, 64, 64, 64):
+        raise ValueError("P6_STAGE_A_CONCEPT_BATCH_INTERFACE_MISMATCH")
+    concept_optimizer = _optimizer(concept_model, execution_config)
+    concept_model.train()
+    concept_optimizer.zero_grad(set_to_none=True)
+    outputs = concept_model(image)
+    loss, group_losses = concept_loss(outputs, targets)
+    if not torch.isfinite(loss):
+        raise ValueError("P6_STAGE_A_CONCEPT_LOSS_NONFINITE")
+    loss.backward()
+    concept_optimizer.step()
+
+    frozen_before_task = freeze_concept_predictor(concept_model)
+    batchnorm_before_task = batchnorm_state_sha256(concept_model)
+    train_cache = predict_concept_cache_frame(
+        concept_model,
+        ordered_train,
+        device,
+        partition="train",
+        batch_size=batch_size,
+        num_workers=0,
+    )
+    validation_cache = predict_concept_cache_frame(
+        concept_model,
+        ordered_validation,
+        device,
+        partition="validation",
+        batch_size=batch_size,
+        num_workers=0,
+    )
+    train_uids = [record.nodule_uid for record in ordered_train]
+    validation_uids = [record.nodule_uid for record in ordered_validation]
+    train_task_records = task_cache_records(train_cache, train_uids)
+    validation_task_records = task_cache_records(
+        validation_cache, validation_uids
+    )
+    task_head, task_initialization = build_deterministic_task_head(fold_seed)
+    task_head.to(device)
+    task_stage_optimizer = task_optimizer(task_head, execution_config)
+    task_report = train_task_one_epoch(
+        task_head,
+        train_task_records,
+        task_stage_optimizer,
+        device,
+        base_seed=base_seed,
+        fold_index=fold_index,
+        epoch_index=0,
+        batch_size=batch_size,
+        num_workers=0,
+    )
+    validation_task_report = evaluate_task_records(
+        task_head,
+        validation_task_records,
+        device,
+        batch_size=batch_size,
+        num_workers=0,
+    )
+    frozen_after_task = module_state_sha256(concept_model)
+    batchnorm_after_task = batchnorm_state_sha256(concept_model)
+    if (
+        frozen_after_task != frozen_before_task
+        or batchnorm_after_task != batchnorm_before_task
+    ):
+        raise ValueError("P6_STAGE_A_PREDICTOR_CHANGED_DURING_TASK_STEP")
+    return {
+        "batch_size": batch_size,
+        "concept_forward": True,
+        "concept_eight_group_loss": True,
+        "concept_backward": True,
+        "concept_adam_step": True,
+        "concept_loss": float(loss.detach().cpu()),
+        "concept_group_losses": {
+            group: float(value.detach().cpu())
+            for group, value in group_losses.items()
+        },
+        "train_cache_smoke": True,
+        "validation_cache_smoke": True,
+        "train_cache_samples": len(train_cache),
+        "validation_cache_samples": len(validation_cache),
+        "canonical_task_input_dimension": 16,
+        "task_features": "frozen_predicted_activated_concepts",
+        "task_forward": True,
+        "task_mse": float(task_report["mse"]),
+        "task_validation_mse": float(validation_task_report["mse"]),
+        "task_backward": True,
+        "task_adam_step": True,
+        "predictor_semantic_sha256_before_task": frozen_before_task,
+        "predictor_semantic_sha256_after_task": frozen_after_task,
+        "batchnorm_state_sha256_before_task": batchnorm_before_task,
+        "batchnorm_state_sha256_after_task": batchnorm_after_task,
+        "predictor_unchanged_during_task_step": True,
+        **task_initialization,
+    }
+
+
+def overfit_check(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    samples: int,
+    steps: int,
+    output_path: Path,
+) -> dict[str, Any]:
+    """Run a controlled eight-group concept overfit without formal artifacts."""
+    torch = _torch()
+    if samples < 2 or steps < 1:
+        raise ValueError("P6_INVALID_OVERFIT_CHECK_SIZE")
+    device = torch.device(device_name)
+    if device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA_UNAVAILABLE")
+    (
+        scientific,
+        execution,
+        execution_hash,
+        _p6_config,
+        p6_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _load_p6_sources(
+        scientific_config_path,
+        execution_config_path,
+        p6_execution_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device, execution)
+    model, initialization = build_initialized_concept_predictor(
+        scientific, split, encoder_path
+    )
+    seed_training(int(initialization["fold_seed"]))
+    model.to(device)
+    optimizer = _optimizer(model, execution)
+    records = sorted(
+        build_partition_concept_records(
+            manifest, roi_index, split, "train", roi_index_path
+        ),
+        key=lambda record: record.nodule_uid,
+    )[:samples]
+    dataset = ConceptROIDataset.build(
+        records,
+        training=False,
+        base_seed=0,
+        fold_index=fold_index,
+        epoch_index=0,
+    )
+    batch = next(iter(_loader(dataset, batch_size=samples, num_workers=0)))
+    image = batch["image"].to(device=device, dtype=torch.float32)
+    targets = _targets_to_device(batch["targets"], device)
+    model.eval()
+    with torch.no_grad():
+        initial_loss, _ = concept_loss(model(image), targets)
+        initial_value = float(initial_loss.cpu())
+    model.train()
+    for _ in range(steps):
+        optimizer.zero_grad(set_to_none=True)
+        loss, _ = concept_loss(model(image), targets)
+        loss.backward()
+        optimizer.step()
+    model.eval()
+    with torch.no_grad():
+        final_loss, _ = concept_loss(model(image), targets)
+        final_value = float(final_loss.cpu())
+    if not math.isfinite(final_value) or final_value >= initial_value:
+        raise RuntimeError("P6_OVERFIT_SANITY_DID_NOT_IMPROVE")
+    report = {
+        **_p6_provenance(
+            scientific,
+            execution,
+            execution_hash,
+            p6_hash,
+            split,
+            initialization,
+            stage="stage_a_overfit",
+        ),
+        "status": "PASS",
+        "scope": "train_only_eight_group_concept_overfit_sanity",
+        "formal_run": False,
+        "augmentation_enabled": False,
+        "samples": samples,
+        "steps": steps,
+        "initial_concept_loss": initial_value,
+        "final_concept_loss": final_value,
+        "relative_final_concept_loss": final_value / initial_value,
+        **_runtime_environment(device),
+    }
+    _atomic_json(output_path, report)
+    return report
+
+
+def preflight(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    output_path: Path,
+) -> dict[str, Any]:
+    """Run the true-batch-16 H200 P6 Stage A operations without formal epochs."""
+    torch = _torch()
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA_UNAVAILABLE")
+    device = torch.device("cuda:0")
+    (
+        scientific,
+        execution,
+        execution_hash,
+        _p6_config,
+        p6_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _load_p6_sources(
+        scientific_config_path,
+        execution_config_path,
+        p6_execution_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device, execution)
+    model, initialization = build_initialized_concept_predictor(
+        scientific, split, encoder_path
+    )
+    seed_training(int(initialization["fold_seed"]))
+    model.to(device)
+    train_records = build_partition_concept_records(
+        manifest, roi_index, split, "train", roi_index_path
+    )
+    validation_records = build_partition_concept_records(
+        manifest, roi_index, split, "validation", roi_index_path
+    )
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats(device)
+    steps = stage_a_preflight_steps(
+        model,
+        train_records,
+        validation_records,
+        execution,
+        fold_seed=int(initialization["fold_seed"]),
+        base_seed=int(scientific["reproducibility"]["base_seed"]),
+        fold_index=fold_index,
+        device=device,
+    )
+    torch.cuda.synchronize(device)
+    reserved = int(torch.cuda.max_memory_reserved(device))
+    total = int(torch.cuda.get_device_properties(device).total_memory)
+    fraction = reserved / total
+    limit = float(
+        execution["project_preregistered"]["preflight"][
+            "maximum_peak_reserved_fraction"
+        ]
+    )
+    if fraction > limit:
+        raise RuntimeError(f"P6_PREFLIGHT_MEMORY_LIMIT_EXCEEDED:{fraction}")
+    report = {
+        **_p6_provenance(
+            scientific,
+            execution,
+            execution_hash,
+            p6_hash,
+            split,
+            initialization,
+            stage="stage_a_preflight",
+        ),
+        "status": "PASS",
+        "formal_run": False,
+        **steps,
+        "peak_reserved_bytes": reserved,
+        "gpu_total_bytes": total,
+        "peak_reserved_fraction": fraction,
+        "maximum_allowed_fraction": limit,
+        "deterministic_warning_policy": "warn_only",
+        "expected_cuda_pooling_warnings_may_continue": True,
+        **_runtime_environment(device),
+    }
+    _atomic_json(output_path, report)
+    return report
+
+
 def verify_fold(
     *,
     scientific_config_path: Path,
@@ -2951,6 +3281,29 @@ def _common_arguments(parser: argparse.ArgumentParser) -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    overfit_parser = commands.add_parser("overfit-check")
+    _common_arguments(overfit_parser)
+    overfit_parser.add_argument("--fold", type=int, choices=range(5), required=True)
+    overfit_parser.add_argument("--device", default="cuda")
+    overfit_parser.add_argument("--samples", type=int, default=8)
+    overfit_parser.add_argument("--steps", type=int, default=40)
+    overfit_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(
+            "runs/baseline_v2/standard_cbm/fold_0/stage_a/overfit_sanity.json"
+        ),
+    )
+    preflight_parser = commands.add_parser("preflight")
+    _common_arguments(preflight_parser)
+    preflight_parser.add_argument("--fold", type=int, choices=range(5), required=True)
+    preflight_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(
+            "runs/baseline_v2/standard_cbm/fold_0/stage_a/preflight.json"
+        ),
+    )
     train_parser = commands.add_parser("train")
     _common_arguments(train_parser)
     train_parser.add_argument("--fold", type=int, choices=range(5), required=True)
@@ -2981,7 +3334,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         "roi_index_path": args.roi_index,
         "output_root": args.output_root,
     }
-    if args.command == "train":
+    if args.command == "overfit-check":
+        stage_a_common = dict(common)
+        stage_a_common.pop("output_root")
+        result = overfit_check(
+            **stage_a_common,
+            fold_index=args.fold,
+            device_name=args.device,
+            samples=args.samples,
+            steps=args.steps,
+            output_path=args.output,
+        )
+    elif args.command == "preflight":
+        stage_a_common = dict(common)
+        stage_a_common.pop("output_root")
+        result = preflight(
+            **stage_a_common,
+            fold_index=args.fold,
+            output_path=args.output,
+        )
+    elif args.command == "train":
         result = train_fold(
             **common,
             fold_index=args.fold,
