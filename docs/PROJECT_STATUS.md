@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P6
-development_phase_status: COMPLETED
+development_phase: P7
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P6
-next_phase: P7
+resume_phase: P7
+next_phase: P8
 last_updated: 2026-08-12
-last_verified_commit: 6876234
+last_verified_commit: d2def18
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5 与 P6 均已完成、获用户确认并推送；P6 最终交付 anchor 为 `6876234`。P7 保持 `NOT_STARTED`，在另行制定并批准实施计划前不得开发。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5 与 P6 均已完成、获用户确认并推送；P6 最终交付 anchor 为 `6876234`，post-delivery状态anchor为`d2def18`。用户已批准P7 Mixed-type CEM实施计划，P7现为唯一允许开发的阶段；P8保持`NOT_STARTED`。
 
 ## 1. 阅读规则
 
@@ -38,98 +38,68 @@ last_verified_commit: 6876234
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P6 Sequential Standard CBM Regression` |
-| 阶段状态 | `COMPLETED / ON_TRACK` |
+| 当前开发阶段 | `P7 Mixed-type CEM Regression` |
+| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无 |
-| 当前阻塞项 | 无。P6已完成、合并、验证并推送；P7尚未制定或批准实施计划。 |
-| 恢复阶段 | `P6` |
-| 下一阶段 | `P7 Mixed-type CEM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
+| 当前阻塞项 | 无。P7按已批准计划开始本地开发；尚未执行Stage A或formal folds。 |
+| 恢复阶段 | `P7` |
+| 下一阶段 | `P8 CBM + GAM`（保持 `NOT_STARTED / NOT_APPLICABLE`） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | 用户已于2026-08-12明确确认P6。Formal jobs `8969575`–`8969579`均`Exit 0`，每折concept/task各80 epochs、test exactly once、predictor/BatchNorm状态不变且final verify `PASS`。9-file remote integrity为`PASS`；CPU OOF job `8971400`在`k185`以`Exit 0`完成，walltime 50秒。Private OOF SHA-256为`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`，精确覆盖2,633 unique nodules / 868 patients、0 patient leakage，fold counts为`479/502/539/549/564`。Pooled task original-scale MAE/RMSE=`0.5020675441161305/0.6496108062620162`，normalized MAE=`0.12551688602903263`，Pearson/Spearman=`0.7075778765808272/0.6090980976923562`。Normalized/rating reconstruction最大误差为`1.4132820069789886e-07/5.653128027915955e-07`，均≤`1e-6`；private storage为`1,375,098,359` bytes / 92 files。OOF/audit专项`9 passed`、完整测试`215 passed`，privacy/frozen-protocol/diff checks、completion-sealing Phase Compliance Reviewer与Status Synchronization Reviewer均为`PASS/UPDATED`。6个tracked audit JSON由`bed615f`封存，approval-gate为`f9410c0`，completion/delivery commit为`6876234`。P6已fast-forward合并至`main`并首次推送；合并后完整测试为`215 passed`且仅有3条既有dependency warnings，冻结V1/V2 requirements/config与H200/P6 profiles无diff。`git fetch`后`HEAD=main=origin/main=6876234c0a480ba5e7f231464044484889ddcc99`，ahead/behind=`0/0`。P6为`COMPLETED / ON_TRACK`且已交付，P7保持`NOT_STARTED`。 |
+| 状态依据 | P6已由`6876234`完成并交付，post-delivery状态commit `d2def18`已推送；开发前`HEAD=main=origin/main=d2def184bc3d39ccef4a9f4186a59109dc3d39cf`且ahead/behind=`0/0`。用户已明确批准P7 Mixed-type CEM实施计划，并固定共享动态state scorers、batch-shared group-independent RandInt mask与Stage A后一次提交五折。当前分支为`p7-mixed-cem`，尚无P7模型、config、Stage A或formal artifacts；冻结V1/V2 requirements/config、P4 inputs及H200 common profile未修改。P7为`IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。 |
 
-## 3. 当前阶段：P6 Sequential Standard CBM Regression
+## 3. 当前阶段：P7 Mixed-type CEM Regression
 
 ### 阶段目标
 
-在 P4 固定 patient-level splits、共享 DenseNet-121 encoder initialization 和 P5 已验证的 common H200 warn-only execution profile上，实现两阶段 sequential Standard CBM：先训练八组 concept predictor，再使用 frozen activated predicted concepts 训练 unconstrained linear malignancy regression head。
+在P4固定patient-level splits与shared DenseNet-121 encoder initialization、P5–P6已验证的common H200 warn-only execution profile上，实现项目特定的mixed-type CEM：由每个sample的`h(x)`动态生成八组16维states，以continuous/categorical mixture weights形成8×16 concept representation，并使用无feature bypass的unconstrained linear regression task head。
 
-### 已完成
+### 已完成前置与P7启动
 
-- P5 已完成、确认并推送；P6 的数据、ROI、splits、shared encoder initialization、H200 execution profile和训练公平性规则均可复用。
-- 用户已批准 P6 最终实施计划与四项实现澄清。
-- 已从已交付 `main` 创建本地分支 `p6-standard-cbm`。
-- P6 execution supplement、deterministic resolved config 与 SHA-256 已生成；resolved SHA-256 为 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`。
-- Execution supplement 已固定 independent linear concept heads、activated canonical 16D task input、train/validation-only pre-task cache、frozen predicted concepts、test-after-task-best transaction、deterministic head seed domains、两阶段各 80 epochs及 H200 common profile引用。
-- 配置专项测试 `4 passed`、完整测试 `177 passed`，Phase Compliance Reviewer 为 `PASS`；冻结 V1/V2 requirements/config 未修改。
-- Core primitives commit `5aedec3`已实现并验证八个独立linear concept heads、sigmoid/softmax activated canonical 16D vector、八组等权loss、partial-batch sample-weighted aggregation、fold-specific deterministic head initialization、manifest/split/ROI partition records与dataset、predictor freeze/BatchNorm state hashing、predicted-cache schema guard以及normalized/rating-scale contribution reconstruction。
-- Core primitives direct tests `16 passed`、完整测试 `189 passed`，最终Phase Compliance Reviewer为`PASS`；冻结requirements/config无diff。
-- Stage/cache boundaries commit `6f856b7`已实现concept train/evaluation epoch primitives，按完整partition sample sums/counts聚合八组loss并验证每个UID恰好覆盖一次。
-- 已实现仅允许frozen concept-best predictor为train/validation生成无增强activated-prediction caches的持久化与provenance验证；test partition在task-best固定前仍被禁止，partial/tampered/UID-set或source-hash不一致均阻断。
-- 已实现task cache records/dataset及cache-only task train/evaluation epoch primitives；Stage 2只读取validated frozen predicted activated concepts，不能访问image、encoder feature或ground-truth concepts。
-- Stage/cache direct tests `24 passed`、完整测试 `197 passed`，Phase Compliance Reviewer为`PASS`；冻结requirements/config无diff。
-- 已实现concept/task两阶段各80-epoch training lifecycle、minimum validation objective checkpoint selection、earlier-epoch tie-break、epoch-boundary checkpoint/resume与stage-aware downstream start；已完成的上游stage可安全复用，pristine downstream stage不会被错误要求resume。
-- 已实现concept-best封存后生成并验证train/validation frozen predicted concept caches，再以cache-only输入训练task head；`train` orchestration不读取test partition，也不在task-best固定前生成test concepts。
-- 已实现task-best后的test exactly once transaction、interrupted transaction recovery、claim/metrics reconstruction与final verifier；test rows严格验证activated concept schema、categorical ties、extreme eligibility/labels、八组contributions、bias及全套provenance。
-- Lifecycle/test-once专项`32 passed`且无warning；完整有效环境`205 passed`，仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config与H200 profile无diff。
-- 已实现P6 Fold 0 Stage A接口：8-sample concept overfit及true batch-16 concept forward/eight-group loss/backward/Adam step，并验证frozen predicted concept cache边界、true batch-16 task forward/MSE/backward/Adam step、predictor/BatchNorm hashes和peak GPU memory gate；Stage A不执行formal epochs或test。
-- 已实现P6 Katana transfer manifest build/verify、exact whitelist、KDM-only sync脚本、H200 Stage A PBS与五折formal PBS接口；formal jobs继续绑定frozen P6/H200 profiles、resume、test-once和final verifier规则。
-- Private transfer manifest本地verify为`PASS`：7 files / `151,376` bytes，internal SHA-256 `a9319c7de65f412791e6f901ea26415b8e068e0694762da25ebbc92beb1de8f9`，manifest file SHA-256 `35a1abd6632d409c40e6b0577a01f198bde44596f287cf8a4cdb50b0d6f58d2f`。
-- P6 direct+Katana tests `38 passed`，完整有效环境`211 passed`且仅有3条既有dependency warnings；Bash syntax检查与本地接口批次Phase Compliance Reviewer均为`PASS`。功能commit `9d7d28c`与接口状态同步`cf116bc`已创建；实际远程Stage A证据见下列记录。
-- P6 KDM sync与remote integrity均为`PASS`。H200 Stage A job `8969550`在`k219`成功完成，启动/结束时间为20:04:48/20:07:42，walltime 00:02:45，Exit 0。
-- 8-sample/40-step overfit concept loss从`0.4910895228`降至`0.0769991726`；true batch 16 concept forward、八组loss、backward及Adam step均通过。
-- Stage A生成train/validation frozen activated predicted concept caches各16个样本，并完成16D cache-only task forward、MSE、backward及Adam step；predictor semantic hash和BatchNorm state hash在task step前后完全一致。
-- Peak reserved memory为`2,860,515,328 / 150,393,585,664 bytes = 1.902%`，低于85%门槛；运行保持FP32、AMP/BF16/TF32关闭，仅记录预期的`avg_pool3d_backward_cuda`与`max_pool3d_with_indices_backward_cuda` warn-only warnings。
-- Stage A private artifacts SHA-256：overfit `8e09c877fe0d3e438c9e322b3b7a73cb75003f607d964b0f5dd175459b1778f7`，preflight `4ad4d6b9a714d73f8f6dd3acee0342baf8dc5c2cb24a8f5b91f7f4ac013d3aec`，job log `23b7759acaeb9f7288de61b84f2f99caf98909de46aa6b9766b2d18cb70c3144`；Stage A Phase Compliance Reviewer为`PASS`。
-- Remote integrity再次为`PASS`后，已使用同一`p6_fold.pbs`与`P6_FORMAL_APPROVED=1`一次性提交五折：fold 0=`8969575`、fold 1=`8969576`、fold 2=`8969577`、fold 3=`8969578`、fold 4=`8969579`。
-- 五个jobs均按相同frozen P6/H200 execution profile完成并为`Exit 0`；每折concept stage与task stage各完成80 epochs，test exactly once且final verifier均为`PASS`，test counts依次为`479/502/539/549/564`，必需private artifacts齐全。
-- 五折完成后已删除只读heartbeat automation `monitor-p6-standard-cbm-folds`；没有取消、修改或重复提交任何formal job，也没有启动P7。
-- OOF/audit功能commit `f1d29e9`已封存private raw OOF materialization、P6 task/integrity tracked audit、manifest独立patient mapping与leakage guard、CPU-only PBS以及Katana 9-file exact whitelist；该commit已随P6交付进入`main`并推送。
-- OOF/audit专项测试`9 passed`、完整测试`215 passed`，Phase Compliance Reviewer为`PASS`。更新后的private transfer manifest本地verify为`PASS`：9 files / `168,005` bytes，internal SHA-256 `5943c428af24b260e611ef240bd8dc9d2d418b4389e7a9fa6725902c0166f21f`，manifest file SHA-256 `eded9ae75fa3272311c9ded95ee3ae762bf03c2adb4675e8251d21e3511f58db`。
-- 9-file KDM同步与remote integrity verification均为`PASS`。CPU OOF job `8971400`在`k185`以`Exit 0`完成，walltime 50秒；private OOF SHA-256为`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`。
-- OOF精确覆盖2,633 unique nodules / 868 patients，patient leakage为0，fold test counts为`479/502/539/549/564`。五折concept/task均为80 epochs、test exactly once，concept predictor semantic hash与BatchNorm state hash在所有fold保持不变。
-- Pooled OOF task metrics：original-scale MAE/RMSE=`0.5020675441161305/0.6496108062620162`，normalized MAE=`0.12551688602903263`，Pearson/Spearman=`0.7075778765808272/0.6090980976923562`。
-- Pooled contribution reconstruction最大误差：normalized=`1.4132820069789886e-07`、rating=`5.653128027915955e-07`，均小于`1e-6`；private P6 storage为`1,375,098,359` bytes / 92 files。
-- Actual evidence Phase Compliance Reviewer为`PASS`；OOF/audit专项`9 passed`、完整测试`215 passed`，privacy、frozen protocol/config与diff checks均为`PASS`。6个tracked audit JSON（`fold_0.json`–`fold_4.json`与`summary.json`）已由commit `bed615f`封存并随P6交付推送，仅记录P6 task/integrity evidence，不提前执行或报告P9 concept metrics与Black-box comparison。
-- 用户于2026-08-12明确确认P6五折科学执行、OOF reconciliation、完整性证据和阶段门结果；P6生命周期已转为`COMPLETED`，P7继续保持`NOT_STARTED`。
-- Completion-sealing Phase Compliance Reviewer为`PASS`；本次Status Synchronization Reviewer为`UPDATED`，确认完成状态、永久记录、提交边界与P7未开始事实同步。
-- Completion/delivery commit `6876234`已fast-forward合并至`main`并推送。合并后完整测试为`215 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config与H200/P6 profiles无diff。`git fetch`后`HEAD`、`main`与`origin/main`均为`6876234c0a480ba5e7f231464044484889ddcc99`，ahead/behind=`0/0`。
+- P6已完成、确认、合并并推送；P7的2,633个ROI、五折split、P4 shared encoder initializations、common H200 profile与训练公平性规则均可复用。
+- 用户已批准P7最终实施计划，并固定共享continuous/categorical scorers、batch-shared且group-independent的`p=0.25`训练干预、Stage A通过后一次提交五个H200 formal folds。
+- 已从最新交付`main`创建本地分支`p7-mixed-cem`；P8保持`NOT_STARTED`。
 
 ### 正在进行
 
-- P6开发与GitHub交付均已完成；当前仅同步post-delivery状态，不开展P7开发。
+- 冻结P7 source/resolved execution supplement及SHA-256，并实现dynamic states、mixed-type probabilities、joint loss、batch-shared RandInt、contributions与确定性初始化。
+- 后续按批准顺序实现lifecycle、test-once、Katana Stage A、五折formal execution和private OOF/tracked aggregate audit。
 
 ### 尚未完成
 
-- P7实施计划与开发均未开始；须另行制定计划并获得用户明确批准后才能进入`IN_PROGRESS`。
+- P7 execution supplement、模型/loss/intervention、checkpoint/resume/test-once、Katana/audit接口与自动测试。
+- H200 Stage A、五折各80 epochs、test exactly once、final verifies及2,633/868 OOF reconciliation。
+- P7阶段级双agent审查、`AWAITING_USER_APPROVAL`门、用户最终确认、合并和推送。
+- P8计划与开发未开始。
 
 ### 验收进度
 
-| P6 验收项 | 状态 | 证据 |
+| P7 验收项 | 状态 | 证据 |
 |---|---|---|
-| P6 execution supplement、resolved config与hash | `PASS` | SHA-256 `792f544aef33d30f122054ba40bdf8f185cea71e516614545ba3f85879ed3bc3`；专项 `4 passed`、完整 `177 passed`；Phase Compliance Reviewer `PASS` |
-| P6-R1 concept predictor与八组等权loss | `PASS` | H200 Stage A及五折formal concept stages各80 epochs完成；五折jobs均`Exit 0`且final verify `PASS`，OOF精确覆盖2,633/868 |
-| P6-R2 sequential frozen-prediction task training | `PASS` | 五折formal task stages各80 epochs、test exactly once；predictor/BN状态所有fold不变，OOF 0 patient leakage |
-| P6-R3 normalized/rating contribution reconstruction | `PASS` | Pooled OOF normalized/rating最大误差=`1.4132820069789886e-07/5.653128027915955e-07`，均≤`1e-6` |
-| H200 Stage A、五折OOF、双agent阶段门与交付 | `PASS_DELIVERED` | Stage A、五折formal、CPU OOF job `8971400`、专项`9 passed`、合并后完整`215 passed`、privacy/frozen checks、阶段门与completion-sealing Phase Compliance Reviewers均为`PASS`；Status Synchronization Reviewer为`UPDATED`，tracked evidence由`bed615f`封存，用户已于2026-08-12明确确认；completion `6876234`已合并并推送，P7未开始 |
+| P7 execution supplement、resolved config与hash | `PENDING` | 尚未创建 |
+| P7-R1 mixed-type扩展声明 | `IN_PROGRESS` | 已获用户批准；README/config/result artifacts尚未落盘 |
+| P7-R2 dynamic sample-conditioned states | `PENDING` | 尚未实现或测试 |
+| P7-R3 joint loss与batch-shared training intervention | `PENDING` | 尚未实现或测试 |
+| P7-R4 normalized/rating contribution reconstruction | `PENDING` | 尚未实现或测试 |
+| H200 Stage A、五折OOF与双agent阶段门 | `PENDING` | 尚未执行 |
 
 ### 未解决困难
 
-- 当前无 P6 特有开放困难；`DIF-P10-001`继续开放但不阻止P6。
+- 当前无P7特有开放困难；`DIF-P10-001`继续开放但不阻止本地开发，P7完成后补充private storage实测。
 
-## 4. 下一阶段：P7 Mixed-type CEM
+## 4. 下一阶段：P8 CBM + GAM
 
 ### 阶段目标
 
-仅在 P6 完成、用户确认并推送后另行制定；当前不实现或详细规划。
+仅在P7完成全部技术验收、用户确认并推送后另行制定；当前不实现或详细规划。
 
 ### 进入条件
 
-- P6 必须通过全部技术验收、双agent审查、用户确认、合并与GitHub推送。
+- P7必须通过全部技术验收、双agent审查、用户确认、合并与GitHub推送。
 
 ### 第一批任务
 
-- 尚未制定或批准；P7保持`NOT_STARTED`。
+- 尚未制定或批准；P8保持`NOT_STARTED`。
 
 <!-- NORMAL_READING_END -->
 
@@ -378,7 +348,7 @@ Bug 修复后：
 | P4 | Patient-level split 与共享初始化 | `COMPLETED` | `ON_TRACK` | P4-R1–P4-R3、实际 KDM sync、L40S CUDA smoke、tracked audit、P4 `17 passed`、合并前后完整 `135 passed`、阶段级双 agent 审查、completion-sealing/post-delivery Phase Compliance Reviewers 和用户确认均为 `PASS`；evidence、approval-gate、delivery anchors 分别为 `9d24035`、`e0634e7`、`ec7bd8e`，已合并并推送，P5 未开始 | 0 | 0 |
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
-| P7 | Mixed-type CEM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
+| P7 | Mixed-type CEM | `IN_PROGRESS` | `ON_TRACK` | 实施计划已批准；本地启动状态已审查，Stage A与formal folds尚未执行 | 0 | 0 |
 | P8 | CBM + GAM | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
@@ -387,7 +357,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前无活动 Bug。P5 为 `COMPLETED / ON_TRACK`；五折 formal runs、one-time tests、final verifies、OOF reconciliation、测试、双 agent 审查、用户确认、Git 交付与 post-delivery 状态同步均为 `PASS`。P6 当前为 `NORMAL_DEVELOPMENT / COMPLETED / ON_TRACK`，P7–P8 保持 `NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001` 与 `BUG-P3-002` 均已解决。
+当前无活动 Bug。P5 与P6均为`COMPLETED / ON_TRACK`并已交付；P7当前为`NORMAL_DEVELOPMENT / IN_PROGRESS / ON_TRACK`，P8保持`NOT_STARTED`。`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
@@ -794,3 +764,4 @@ Bug 修复后：
 | 2026-08-12 | `PHASE_AWAITING_APPROVAL` / `FIVE_FOLD_OOF_PASS` | P6 | 9-file remote integrity为`PASS`；CPU OOF job `8971400`在`k185`以Exit 0完成，walltime 50秒。OOF精确覆盖2,633 unique nodules / 868 patients、0 leakage，fold counts=`479/502/539/549/564`，private OOF SHA-256=`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`。Pooled task original MAE/RMSE=`0.5020675441161305/0.6496108062620162`，normalized MAE=`0.12551688602903263`，Pearson/Spearman=`0.7075778765808272/0.6090980976923562`；normalized/rating reconstruction最大误差=`1.4132820069789886e-07/5.653128027915955e-07`。专项`9 passed`、完整`215 passed`、privacy/frozen checks与Phase Compliance Reviewer均`PASS`。6个tracked audit JSON已由`bed615f`本地封存且尚未推送，仅本次状态commit与用户最终确认待完成；P6保持`AWAITING_USER_APPROVAL / ON_TRACK`，不得进入P7。 | Katana job `8971400`；`bed615f`（local, unpushed）；状态commit待创建 |
 | 2026-08-12 | `PHASE_COMPLETED` | P6 | 用户明确确认 P6；Stage A、五折 concept/task 各80 epochs、test exactly once、final verifies、2,633 nodules / 868 patients OOF、0 patient leakage、贡献重建、六个脱敏 audit、完整 `215 passed` 与双 agent 阶段门证据均已封存。Completion-sealing Phase Compliance Reviewer为`PASS`、Status Synchronization Reviewer为`UPDATED`。P6 转为 `COMPLETED / ON_TRACK`，P7 保持 `NOT_STARTED`。完成状态 commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称已经交付。 | 用户确认；`f1d29e9`、`bed615f`、`f9410c0`；本次 completion status commit 待创建 |
 | 2026-08-12 | `DELIVERED` | P6 | Completion commit `6876234`已fast-forward合并至`main`并首次推送GitHub。合并后完整测试`215 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config与H200/P6 profiles无diff。`git fetch`后`HEAD=main=origin/main=6876234c0a480ba5e7f231464044484889ddcc99`，ahead/behind=`0/0`。P6为`COMPLETED / ON_TRACK`且已交付；P7保持`NOT_STARTED`，未制定或实施。 | `6876234` |
+| 2026-08-12 | `PHASE_STARTED` | P7 | 用户批准Mixed-type CEM Regression实施计划；P7进入`IN_PROGRESS / ON_TRACK`，使用P4 shared encoder initialization、统一H200 profile与batch-shared group-independent `p=0.25`训练干预。当前仅启动本地开发，Stage A与formal folds尚未执行；P8保持`NOT_STARTED`。 | `p7-mixed-cem`本地分支；基线`d2def18` |
