@@ -27,8 +27,10 @@ P5_DELTA_FILES = (
     "configs/experiments/baseline_v2_reference_training_h200_warn_only.resolved.yaml",
     "configs/experiments/baseline_v2_reference_training_h200_warn_only.sha256",
     "scripts/katana/p5_fold.pbs",
+    "scripts/katana/p5_oof.pbs",
     "scripts/katana/p5_stage_a.pbs",
     "src/lidc_baseline/p5_blackbox.py",
+    "src/lidc_baseline/p5_audit.py",
     "src/lidc_baseline/p5_katana.py",
 )
 

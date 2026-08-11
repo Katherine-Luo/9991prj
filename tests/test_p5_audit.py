@@ -6,7 +6,12 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from lidc_baseline.p5_audit import METRIC_KEYS, build_fold_audit
+from lidc_baseline.p5_audit import (
+    EXPECTED_FOLD_TEST_COUNTS,
+    METRIC_KEYS,
+    build_fold_audit,
+    build_oof_audit,
+)
 
 
 def _provenance() -> dict[str, object]:
@@ -173,3 +178,96 @@ def test_fold_audit_rejects_stage_a_provenance_mismatch(
             output_path=tmp_path / "audit.json",
             require_stage_a=True,
         )
+
+
+def test_oof_audit_materializes_private_predictions_and_deidentified_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    run_root = tmp_path / "runs"
+    patient_counts = (171, 180, 169, 174, 174)
+    private_nodules: list[str] = []
+    private_patients: list[str] = []
+    for fold, (nodule_count, patient_count) in enumerate(zip(EXPECTED_FOLD_TEST_COUNTS, patient_counts, strict=True)):
+        fold_dir = run_root / f"fold_{fold}"
+        fold_dir.mkdir(parents=True)
+        rows = []
+        for index in range(nodule_count):
+            nodule = f"private-nodule-{fold}-{index}"
+            patient = f"private-patient-{fold}-{index % patient_count}"
+            target = float((index % 5) / 4)
+            score = target + 0.01
+            private_nodules.append(nodule)
+            private_patients.append(patient)
+            rows.append(
+                {
+                    "nodule_uid": nodule,
+                    "patient_key": patient,
+                    "target_normalized": target,
+                    "target_1_to_5": 1.0 + 4.0 * target,
+                    "malignancy_raw_score": score,
+                    "malignancy_score_normalized": score,
+                    "malignancy_score_1_to_5": 1.0 + 4.0 * score,
+                    "extreme_binary_eligible": target in (0.0, 1.0),
+                    "extreme_binary_label": 0.0 if target == 0.0 else 1.0 if target == 1.0 else None,
+                    "fold_index": fold,
+                    "model": "blackbox",
+                }
+            )
+        pd.DataFrame(rows).to_parquet(fold_dir / "test_predictions.parquet", index=False)
+    manifest = tmp_path / "manifest.parquet"
+    pd.DataFrame(
+        {
+            "nodule_uid": private_nodules,
+            "patient_id": private_patients,
+        }
+    ).to_parquet(manifest, index=False)
+    verified = {
+        "status": "PASS",
+        "oof_nodules": 2633,
+        "oof_patients": 868,
+        "fold_test_counts": list(EXPECTED_FOLD_TEST_COUNTS),
+        "folds": [],
+    }
+    monkeypatch.setattr("lidc_baseline.p5_audit.verify_all", lambda **_kwargs: verified)
+
+    def fake_fold_audit(**kwargs: object) -> dict[str, object]:
+        fold = int(kwargs["fold_index"])
+        report = {
+            **_provenance(),
+            "fold_index": fold,
+            "split_sha256": f"split-{fold}",
+            "encoder_initialization_sha256": f"encoder-{fold}",
+            "head_initialization_seed": 100 + fold,
+            "head_initialization_sha256": f"head-{fold}",
+            "best_epoch_index": fold,
+            "best_validation_mse": 0.02 + fold / 1000,
+            "metrics": {key: EXPECTED_FOLD_TEST_COUNTS[fold] if key == "samples" else 0.25 for key in METRIC_KEYS},
+            "private_run_storage": {"file_count": 10, "total_bytes": 1000},
+        }
+        output_path = Path(kwargs["output_path"])
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(report), encoding="utf-8")
+        return report
+
+    monkeypatch.setattr("lidc_baseline.p5_audit.build_fold_audit", fake_fold_audit)
+    audit_root = tmp_path / "audit"
+    oof_path = run_root / "oof_predictions.parquet"
+    report = build_oof_audit(
+        scientific_config_path=tmp_path / "config.yaml",
+        execution_config_path=tmp_path / "execution.yaml",
+        manifest_path=manifest,
+        roi_index_path=tmp_path / "roi.parquet",
+        run_root=run_root,
+        audit_root=audit_root,
+        oof_predictions_path=oof_path,
+    )
+    assert report["status"] == "PASS"
+    assert report["oof_nodules"] == 2633
+    assert report["oof_patients"] == 868
+    assert report["fold_test_counts"] == list(EXPECTED_FOLD_TEST_COUNTS)
+    assert report["pooled_oof_metrics"]["original_scale_mae"] == pytest.approx(0.04)
+    assert pd.read_parquet(oof_path)["nodule_uid"].is_monotonic_increasing
+    text = (audit_root / "summary.json").read_text(encoding="utf-8")
+    for forbidden in (private_nodules[0], private_patients[0], str(tmp_path)):
+        assert forbidden not in text

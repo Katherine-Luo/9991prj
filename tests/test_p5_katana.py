@@ -92,8 +92,10 @@ def test_p5_delta_is_code_only_and_contains_required_stage_a_files() -> None:
         "configs/experiments/baseline_v2_reference_training_h200_warn_only.resolved.yaml",
         "configs/experiments/baseline_v2_reference_training_h200_warn_only.sha256",
         "scripts/katana/p5_fold.pbs",
+        "scripts/katana/p5_oof.pbs",
         "scripts/katana/p5_stage_a.pbs",
         "src/lidc_baseline/p5_blackbox.py",
+        "src/lidc_baseline/p5_audit.py",
         "src/lidc_baseline/p5_katana.py",
     }
     forbidden = ("lidc_data", "DICOM", "XML", "runs/", "reports/", ".git", "rois/")
@@ -105,6 +107,7 @@ def test_p5_katana_scripts_are_valid_and_enforce_stage_gates() -> None:
         Path("scripts/katana/sync_p5_stage_a.sh"),
         Path("scripts/katana/p5_stage_a.pbs"),
         Path("scripts/katana/p5_fold.pbs"),
+        Path("scripts/katana/p5_oof.pbs"),
     )
     for path in paths:
         result = subprocess.run(["bash", "-n", str(path)], check=False, capture_output=True, text=True)
@@ -123,6 +126,12 @@ def test_p5_katana_scripts_are_valid_and_enforce_stage_gates() -> None:
     assert "--resume" in formal
     assert "training_complete.json" in formal
     assert "test_evaluation.json" in formal
+    oof = paths[3].read_text(encoding="utf-8")
+    assert "ngpus" not in oof
+    assert "lidc_baseline.p5_audit" in oof
+    assert "--scope all" in oof
+    assert "p5_blackbox train" not in oof
+    assert "evaluate-test" not in oof
     for path in paths:
         content = path.read_text(encoding="utf-8")
         assert "lidc_data" not in content

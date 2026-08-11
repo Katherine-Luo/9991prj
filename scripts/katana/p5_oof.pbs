@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N lidc_p5_oof
+#PBS -l select=1:ncpus=8:mem=16gb
+#PBS -l walltime=01:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+repository="/srv/scratch/z5448417/lidc-baseline-v2"
+environment="/srv/scratch/z5448417/conda/envs/lidc-baseline-v1"
+execution_config="configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+
+cd "$repository"
+export PYTHONPATH="$repository/src${PYTHONPATH:+:$PYTHONPATH}"
+"$environment/bin/python" -m lidc_baseline.p5_katana verify-stage-a \
+  --repository-root "$repository" \
+  --execution-config "$execution_config"
+"$environment/bin/python" -m lidc_baseline.p5_audit \
+  --scope all \
+  --config configs/baseline_v2.yaml \
+  --execution-config "$execution_config" \
+  --manifest artifacts/baseline_v2/manifests/nodules.parquet \
+  --roi-index artifacts/baseline_v2/manifests/roi_index.parquet \
+  --run-root runs/baseline_v2/blackbox \
+  --audit-root artifacts/baseline_v2/audit/p5 \
+  --oof-predictions runs/baseline_v2/blackbox/oof_predictions.parquet

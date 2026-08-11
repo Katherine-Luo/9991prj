@@ -4,22 +4,29 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from lidc_baseline.audit import write_json
 from lidc_baseline.p3_roi import assert_deidentified_audit
 from lidc_baseline.p5_blackbox import (
     EXECUTION_CONFIG_DEFAULT,
+    regression_metrics,
     run_directory,
+    verify_all,
     verify_fold,
 )
+from lidc_baseline.p4_prepare import sha256_file
 
 
 SCHEMA_VERSION = 1
+EXPECTED_FOLD_TEST_COUNTS = (479, 502, 539, 549, 564)
 METRIC_KEYS = (
     "samples",
     "normalized_mae",
@@ -121,6 +128,25 @@ def _private_run_storage(run: Path) -> dict[str, int]:
         "file_count": len(files),
         "total_bytes": sum(path.stat().st_size for path in files),
     }
+
+
+def _atomic_parquet(path: Path, frame: pd.DataFrame) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    os.close(descriptor)
+    try:
+        temporary = Path(temporary_name)
+        frame.to_parquet(temporary, index=False)
+        with temporary.open("rb") as stream:
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary_name):
+            os.unlink(temporary_name)
 
 
 def _forbidden_source_values(manifest_path: Path) -> set[str]:
@@ -260,6 +286,117 @@ def build_fold_audit(
     return report
 
 
+def build_oof_audit(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    run_root: Path,
+    audit_root: Path,
+    oof_predictions_path: Path,
+) -> dict[str, Any]:
+    """Verify all formal folds and materialize private pooled OOF predictions."""
+    verified = verify_all(
+        scientific_config_path=scientific_config_path,
+        execution_config_path=execution_config_path,
+        manifest_path=manifest_path,
+        roi_index_path=roi_index_path,
+        output_root=run_root,
+    )
+    if verified.get("status") != "PASS":
+        raise ValueError("P5_OOF_VERIFY_NOT_PASS")
+    if tuple(verified.get("fold_test_counts", ())) != EXPECTED_FOLD_TEST_COUNTS:
+        raise ValueError("P5_OOF_FOLD_COUNTS_MISMATCH")
+
+    fold_reports = [
+        build_fold_audit(
+            scientific_config_path=scientific_config_path,
+            execution_config_path=execution_config_path,
+            manifest_path=manifest_path,
+            roi_index_path=roi_index_path,
+            run_root=run_root,
+            fold_index=fold,
+            output_path=audit_root / f"fold_{fold}.json",
+            require_stage_a=fold == 0,
+        )
+        for fold in range(5)
+    ]
+    frames = [
+        pd.read_parquet(run_directory(fold, run_root) / "test_predictions.parquet")
+        for fold in range(5)
+    ]
+    pooled = pd.concat(frames, ignore_index=True).sort_values("nodule_uid", kind="stable").reset_index(drop=True)
+    if len(pooled) != 2633 or pooled["nodule_uid"].astype(str).nunique() != 2633:
+        raise ValueError("P5_OOF_NODULE_SET_MISMATCH")
+    if pooled["patient_key"].astype(str).nunique() != 868:
+        raise ValueError("P5_OOF_PATIENT_SET_MISMATCH")
+    if int(pooled.groupby("patient_key")["fold_index"].nunique().max()) != 1:
+        raise ValueError("P5_OOF_PATIENT_LEAKAGE")
+    observed_counts = tuple(
+        int(value)
+        for value in pooled["fold_index"].astype(int).value_counts().reindex(range(5), fill_value=0).tolist()
+    )
+    if observed_counts != EXPECTED_FOLD_TEST_COUNTS:
+        raise ValueError("P5_OOF_FOLD_COUNTS_MISMATCH")
+    if pooled["model"].astype(str).nunique() != 1 or str(pooled["model"].iloc[0]) != "blackbox":
+        raise ValueError("P5_OOF_MODEL_MISMATCH")
+    if any(token in column.lower() for column in pooled.columns for token in ("probability", "logit", "concept", "mask")):
+        raise ValueError("P5_OOF_FORBIDDEN_COLUMN")
+
+    metrics = regression_metrics(pooled.to_dict("records"))
+    _atomic_parquet(oof_predictions_path, pooled)
+    fold_metric_values = {
+        key: np.asarray([float(report["metrics"][key]) for report in fold_reports], dtype=np.float64)
+        for key in METRIC_KEYS
+        if key != "samples"
+    }
+    report: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "status": "PASS",
+        "protocol_version": fold_reports[0]["protocol_version"],
+        "model": "blackbox",
+        "folds": 5,
+        "oof_nodules": 2633,
+        "oof_patients": 868,
+        "fold_test_counts": list(EXPECTED_FOLD_TEST_COUNTS),
+        "test_evaluated_once_all_folds": True,
+        "pooled_oof_metrics": {key: metrics[key] for key in METRIC_KEYS},
+        "fold_metric_mean": {key: float(values.mean()) for key, values in fold_metric_values.items()},
+        "fold_metric_sample_standard_deviation": {
+            key: float(values.std(ddof=1)) for key, values in fold_metric_values.items()
+        },
+        "scientific_config_sha256": fold_reports[0]["scientific_config_sha256"],
+        "execution_config_sha256": fold_reports[0]["execution_config_sha256"],
+        "execution_profile_id": fold_reports[0]["execution_profile_id"],
+        "formal_gpu_model": fold_reports[0]["formal_gpu_model"],
+        "split_sha256_by_fold": [report["split_sha256"] for report in fold_reports],
+        "encoder_initialization_sha256_by_fold": [
+            report["encoder_initialization_sha256"] for report in fold_reports
+        ],
+        "head_initialization_seed_by_fold": [
+            int(report["head_initialization_seed"]) for report in fold_reports
+        ],
+        "head_initialization_sha256_by_fold": [
+            report["head_initialization_sha256"] for report in fold_reports
+        ],
+        "best_epoch_index_by_fold": [int(report["best_epoch_index"]) for report in fold_reports],
+        "best_validation_mse_by_fold": [
+            float(report["best_validation_mse"]) for report in fold_reports
+        ],
+        "oof_predictions_sha256": sha256_file(oof_predictions_path),
+        "private_run_storage": {
+            "file_count": sum(int(report["private_run_storage"]["file_count"]) for report in fold_reports),
+            "total_bytes": sum(int(report["private_run_storage"]["total_bytes"]) for report in fold_reports),
+        },
+    }
+    audit_root.mkdir(parents=True, exist_ok=True)
+    output_path = audit_root / "summary.json"
+    write_json(output_path, report)
+    assert_deidentified_audit(output_path, _forbidden_source_values(manifest_path))
+    return report
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/baseline_v2.yaml"))
@@ -267,14 +404,34 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--manifest", type=Path, default=Path("artifacts/baseline_v2/manifests/nodules.parquet"))
     parser.add_argument("--roi-index", type=Path, default=Path("artifacts/baseline_v2/manifests/roi_index.parquet"))
     parser.add_argument("--run-root", type=Path, default=Path("runs/baseline_v2/blackbox"))
-    parser.add_argument("--fold", type=int, required=True, choices=range(5))
+    scope = parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("--fold", type=int, choices=range(5))
+    scope.add_argument("--scope", choices=("all",))
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--audit-root", type=Path, default=Path("artifacts/baseline_v2/audit/p5"))
+    parser.add_argument(
+        "--oof-predictions",
+        type=Path,
+        default=Path("runs/baseline_v2/blackbox/oof_predictions.parquet"),
+    )
     parser.add_argument("--require-stage-a", action="store_true")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
+    if arguments.scope == "all":
+        report = build_oof_audit(
+            scientific_config_path=arguments.config,
+            execution_config_path=arguments.execution_config,
+            manifest_path=arguments.manifest,
+            roi_index_path=arguments.roi_index,
+            run_root=arguments.run_root,
+            audit_root=arguments.audit_root,
+            oof_predictions_path=arguments.oof_predictions,
+        )
+        print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+        return 0
     output = arguments.output or Path(f"artifacts/baseline_v2/audit/p5/fold_{arguments.fold}.json")
     report = build_fold_audit(
         scientific_config_path=arguments.config,
