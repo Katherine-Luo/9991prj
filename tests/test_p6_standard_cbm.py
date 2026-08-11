@@ -35,6 +35,14 @@ from lidc_baseline.p6_standard_cbm import (
     task_predictions_and_contributions,
     train_concept_one_epoch,
     train_task_one_epoch,
+    run_training_stage,
+    verify_training_stage,
+    _test_prediction_rows,
+    _validate_test_predictions,
+    _validate_test_claim,
+    _validate_metrics_file,
+    stage_resume_requested,
+    validate_sequential_completion,
     validate_p6_execution_config,
     validate_cache_provenance,
     verify_train_validation_caches,
@@ -309,19 +317,22 @@ def test_task_cache_accepts_only_activated_frozen_predictions() -> None:
 def _concept_record(tmp_path: object, uid: str, target: float) -> ConceptRecord:
     path = tmp_path / f"{uid}.npz"
     np.savez(path, image=np.full((1, 64, 64, 64), target, dtype=np.float32))
+    target_1_to_5 = 1.0 + 4.0 * target
+    extreme = target_1_to_5 <= 2.0 or target_1_to_5 >= 4.0
+    label = 0 if target_1_to_5 <= 2.0 else (1 if target_1_to_5 >= 4.0 else None)
     return ConceptRecord(
         nodule_uid=uid,
         patient_key=f"patient-{uid}",
         roi_path=path,
         target_normalized=target,
-        target_1_to_5=1.0 + 4.0 * target,
-        extreme_binary_eligible=False,
-        extreme_binary_label=None,
+        target_1_to_5=target_1_to_5,
+        extreme_binary_eligible=extreme,
+        extreme_binary_label=label,
         continuous_targets=(target,) * 6,
         internal_structure_target=(0.4, 0.3, 0.2, 0.1),
         calcification_target=(0.3, 0.2, 0.2, 0.1, 0.1, 0.1),
         valid_reader_counts=(2,) * 8,
-        categorical_ties=(False, True),
+        categorical_ties=(False, False),
     )
 
 
@@ -459,7 +470,7 @@ def test_cache_generation_requires_frozen_predictor_and_delays_test(
         partition="test",
         batch_size=2,
         num_workers=0,
-        allow_test_after_task_best=True,
+        task_best_checkpoint_sha256="a" * 64,
     )
     assert set(test["partition"]) == {"test"}
 
@@ -690,3 +701,679 @@ def test_task_stage_reads_predicted_cache_only_and_cannot_change_predictor(
         for group in optimizer.param_groups
         for parameter in group["params"]
     }
+
+
+def test_checkpointed_stage_resumes_at_epoch_boundary_and_selects_earliest_minimum(
+    tmp_path: object,
+) -> None:
+    import torch
+    from lidc_baseline.config import load_config
+    from lidc_baseline.p5_blackbox import _optimizer, _scheduler
+
+    execution = load_config(
+        "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+    )
+    provenance = {
+        "schema_version": 1,
+        "fold_index": 0,
+        "stage": "task",
+        "config": "a" * 64,
+    }
+    output = tmp_path / "task_stage"
+    first_module = torch.nn.Linear(1, 1)
+    first_optimizer = _optimizer(first_module, execution)
+    first_scheduler = _scheduler(first_optimizer, execution)
+    current = {"epoch": -1}
+
+    def callbacks(module: object, optimizer: object) -> tuple[object, object]:
+        def train(epoch: int) -> dict[str, object]:
+            current["epoch"] = epoch
+            optimizer.zero_grad(set_to_none=True)
+            loss = module(torch.ones((3, 1))).square().mean()
+            loss.backward()
+            optimizer.step()
+            return {
+                "mse": float(loss.detach()),
+                "sample_count": 3,
+                "nodule_set_sha256": "b" * 64,
+            }
+
+        def validate() -> dict[str, object]:
+            epoch = current["epoch"]
+            objective = 0.5 - 0.1 * min(epoch, 3)
+            return {
+                "mse": objective,
+                "sample_count": 2,
+                "nodule_set_sha256": "c" * 64,
+            }
+
+        return train, validate
+
+    first_train, first_validate = callbacks(first_module, first_optimizer)
+    interrupted = run_training_stage(
+        stage_name="task",
+        module=first_module,
+        optimizer=first_optimizer,
+        scheduler=first_scheduler,
+        provenance=provenance,
+        output_directory=output,
+        epochs=80,
+        objective_key="mse",
+        expected_train_samples=3,
+        train_epoch=first_train,
+        validate_epoch=first_validate,
+        device=torch.device("cpu"),
+        resume=False,
+        _stop_after_epoch_for_test=2,
+    )
+    assert interrupted["epoch_index"] == 2
+
+    resumed_module = torch.nn.Linear(1, 1)
+    resumed_optimizer = _optimizer(resumed_module, execution)
+    resumed_scheduler = _scheduler(resumed_optimizer, execution)
+    resumed_train, resumed_validate = callbacks(resumed_module, resumed_optimizer)
+    completion = run_training_stage(
+        stage_name="task",
+        module=resumed_module,
+        optimizer=resumed_optimizer,
+        scheduler=resumed_scheduler,
+        provenance=provenance,
+        output_directory=output,
+        epochs=80,
+        objective_key="mse",
+        expected_train_samples=3,
+        train_epoch=resumed_train,
+        validate_epoch=resumed_validate,
+        device=torch.device("cpu"),
+        resume=True,
+    )
+    assert completion["best_epoch_index"] == 3
+    assert completion["best_validation_objective"] == pytest.approx(0.2)
+    verified = verify_training_stage(
+        stage_name="task",
+        output_directory=output,
+        expected_provenance=provenance,
+        expected_epochs=80,
+        objective_key="mse",
+        expected_train_samples=3,
+    )
+    assert verified == completion
+    with pytest.raises(ValueError, match="FORMAL_RUNTIME_POLICY_MISMATCH"):
+        verify_training_stage(
+            stage_name="task",
+            output_directory=output,
+            expected_provenance=provenance,
+            expected_epochs=80,
+            objective_key="mse",
+            expected_train_samples=3,
+            require_h200_runtime=True,
+        )
+
+
+def test_resume_is_stage_aware_for_pristine_downstream_stage(tmp_path: object) -> None:
+    concept = tmp_path / "concept_stage"
+    task = tmp_path / "task_stage"
+    concept.mkdir()
+    task.mkdir()
+    (concept / "last.pt").write_bytes(b"checkpoint")
+    assert stage_resume_requested(True, concept) is True
+    assert stage_resume_requested(True, task) is False
+    (concept / "training_complete.json").write_text("{}", encoding="utf-8")
+    assert stage_resume_requested(True, concept) is False
+    (task / "history.csv").write_text("partial", encoding="utf-8")
+    with pytest.raises(FileExistsError, match="PARTIAL_STATE_WITHOUT_LAST"):
+        stage_resume_requested(True, task)
+
+
+def test_stage_verifier_rejects_real_best_objective_mismatch(tmp_path: object) -> None:
+    import torch
+    from lidc_baseline.p5_blackbox import _atomic_csv, _atomic_json, _atomic_torch_save
+
+    provenance = {"schema_version": 1, "fold_index": 0, "stage": "task"}
+    output = tmp_path / "stage"
+    output.mkdir()
+    rows = [
+        {
+            "epoch_index": index,
+            "validation_mse": 0.2 if index == 4 else 0.3 + index / 1000,
+            "train_sample_count": 3,
+        }
+        for index in range(80)
+    ]
+    _atomic_csv(output / "history.csv", rows, list(rows[0]))
+    module = torch.nn.Linear(1, 1)
+    payload = {
+        "schema_version": 1,
+        "provenance": provenance,
+        "epoch_index": 5,
+        "validation_objective": 0.19,
+        "best_epoch_index": 5,
+        "best_validation_objective": 0.19,
+        "module_state_dict": module.state_dict(),
+    }
+    _atomic_torch_save(output / "best.pt", payload)
+    _atomic_torch_save(output / "last.pt", payload)
+    _atomic_json(output / "runtime.json", {"status": "runtime"})
+    from lidc_baseline.p4_prepare import sha256_file
+
+    _atomic_json(
+        output / "training_complete.json",
+        {
+            **provenance,
+            "status": "STAGE_TRAINING_COMPLETE",
+            "stage": "task",
+            "epochs_completed": 80,
+            "objective_key": "mse",
+            "best_epoch_index": 5,
+            "best_validation_objective": 0.19,
+            "best_checkpoint_sha256": sha256_file(output / "best.pt"),
+            "last_checkpoint_sha256": sha256_file(output / "last.pt"),
+            "history_sha256": sha256_file(output / "history.csv"),
+            "runtime_sha256": sha256_file(output / "runtime.json"),
+            "test_evaluated": False,
+        },
+    )
+    with pytest.raises(ValueError, match="BEST_OBJECTIVE_MISMATCH"):
+        verify_training_stage(
+            stage_name="task",
+            output_directory=output,
+            expected_provenance=provenance,
+            expected_epochs=80,
+            objective_key="mse",
+            expected_train_samples=3,
+        )
+
+
+def test_test_prediction_rows_keep_concepts_and_exact_contributions(tmp_path: object) -> None:
+    import torch
+
+    model = _tiny_concept_predictor()
+    freeze_concept_predictor(model)
+    records = [
+        _concept_record(tmp_path, "a", 0.2),
+        _concept_record(tmp_path, "b", 0.8),
+    ]
+    concept_frame = predict_concept_cache_frame(
+        model,
+        records,
+        torch.device("cpu"),
+        partition="test",
+        batch_size=2,
+        num_workers=0,
+        task_best_checkpoint_sha256="a" * 64,
+    )
+    head, _metadata = build_deterministic_task_head(20260808)
+    provenance = {"fold_index": 0, "split_sha256": "a" * 64}
+    predictions = _test_prediction_rows(
+        concept_frame, head, torch.device("cpu"), provenance
+    )
+    _validate_test_predictions(predictions, ["a", "b"], provenance)
+    assert "subtlety_raw_contribution" in predictions
+    assert "internalStructure_rating_point_contribution" in predictions
+    tampered = predictions.copy()
+    tampered.loc[0, "subtlety_raw_contribution"] += 1e-3
+    with pytest.raises(ValueError, match="NORMALIZED_RECONSTRUCTION_FAILED"):
+        _validate_test_predictions(tampered, ["a", "b"], provenance)
+    missing_logits = predictions.drop(columns=["subtlety_logits"])
+    with pytest.raises(ValueError, match="SCHEMA_MISSING"):
+        _validate_test_predictions(missing_logits, ["a", "b"], provenance)
+    missing_extreme = predictions.drop(columns=["extreme_binary_eligible"])
+    with pytest.raises(ValueError, match="SCHEMA_MISSING"):
+        _validate_test_predictions(missing_extreme, ["a", "b"], provenance)
+    bad_shape = predictions.copy()
+    bad_shape.loc[0, "calcification_logits"] = json.dumps([0.0, 1.0])
+    with pytest.raises(ValueError, match="CONCEPT_SHAPE_MISMATCH"):
+        _validate_test_predictions(bad_shape, ["a", "b"], provenance)
+    wrong_scale = predictions.copy()
+    wrong_scale.loc[0, "malignancy_score_1_to_5"] += 1e-3
+    with pytest.raises(ValueError, match="SCORE_SCALE_CONVERSION_FAILED"):
+        _validate_test_predictions(wrong_scale, ["a", "b"], provenance)
+    wrong_contribution_scale = predictions.copy()
+    wrong_contribution_scale.loc[0, "subtlety_rating_point_contribution"] += 1e-3
+    with pytest.raises(ValueError, match="RATING_RECONSTRUCTION_FAILED|CONTRIBUTION_SCALE"):
+        _validate_test_predictions(wrong_contribution_scale, ["a", "b"], provenance)
+    wrong_tie = predictions.copy()
+    wrong_tie.loc[0, "internalStructure_modal_tie"] = True
+    with pytest.raises(ValueError, match="CATEGORICAL_TIE_SEMANTIC_MISMATCH"):
+        _validate_test_predictions(wrong_tie, ["a", "b"], provenance)
+    wrong_extreme = predictions.copy()
+    wrong_extreme.loc[0, "extreme_binary_eligible"] = False
+    wrong_extreme.loc[0, "extreme_binary_label"] = np.nan
+    with pytest.raises(ValueError, match="EXTREME_LOW_LABEL_MISMATCH"):
+        _validate_test_predictions(wrong_extreme, ["a", "b"], provenance)
+    nonbinary_low = predictions.copy().astype({"extreme_binary_label": "object"})
+    nonbinary_low.loc[0, "extreme_binary_label"] = 0.9
+    with pytest.raises(ValueError, match="EXTREME_LOW_LABEL_MISMATCH"):
+        _validate_test_predictions(nonbinary_low, ["a", "b"], provenance)
+    nonbinary_high = predictions.copy().astype({"extreme_binary_label": "object"})
+    nonbinary_high.loc[1, "extreme_binary_label"] = 1.9
+    with pytest.raises(ValueError, match="EXTREME_HIGH_LABEL_MISMATCH"):
+        _validate_test_predictions(nonbinary_high, ["a", "b"], provenance)
+    boolean_low = predictions.copy().astype({"extreme_binary_label": "object"})
+    boolean_low.loc[0, "extreme_binary_label"] = False
+    with pytest.raises(ValueError, match="EXTREME_LOW_LABEL_MISMATCH"):
+        _validate_test_predictions(boolean_low, ["a", "b"], provenance)
+    infinite_high = predictions.copy().astype({"extreme_binary_label": "object"})
+    infinite_high.loc[1, "extreme_binary_label"] = np.inf
+    with pytest.raises(ValueError, match="EXTREME_HIGH_LABEL_MISMATCH"):
+        _validate_test_predictions(infinite_high, ["a", "b"], provenance)
+
+
+def test_claim_and_metrics_are_reconstructed_not_trusted(
+    tmp_path: object,
+) -> None:
+    from lidc_baseline.p5_blackbox import _atomic_json, regression_metrics
+
+    provenance = {"fold_index": 0, "split_sha256": "a" * 64}
+    claim_path = tmp_path / "test_claim.json"
+    _atomic_json(
+        claim_path,
+        {
+            "schema_version": 1,
+            **provenance,
+            "status": "TEST_INFERENCE_CLAIMED",
+            "expected_test_samples": 2,
+        },
+    )
+    _claim, claim_hash = _validate_test_claim(claim_path, provenance, 2)
+    assert len(claim_hash) == 64
+    tampered = json.loads(claim_path.read_text(encoding="utf-8"))
+    tampered["expected_test_samples"] = 3
+    _atomic_json(claim_path, tampered)
+    with pytest.raises(ValueError, match="CLAIM_PROVENANCE_MISMATCH"):
+        _validate_test_claim(claim_path, provenance, 2)
+
+    predictions = pd.DataFrame(
+        {
+            "target_normalized": [0.2, 0.8, 0.5],
+            "malignancy_raw_score": [0.3, 0.7, 0.4],
+        }
+    )
+    metrics_path = tmp_path / "metrics.json"
+    metrics = regression_metrics(predictions.to_dict(orient="records"))
+    _atomic_json(metrics_path, metrics)
+    assert _validate_metrics_file(metrics_path, predictions) == metrics
+    metrics["normalized_mae"] += 1e-3
+    _atomic_json(metrics_path, metrics)
+    with pytest.raises(ValueError, match="TEST_METRIC_MISMATCH"):
+        _validate_metrics_file(metrics_path, predictions)
+
+
+def test_sequential_completion_binds_full_provenance_and_frozen_state() -> None:
+    digest = "a" * 64
+    provenance = {
+        "scientific_config_sha256": digest,
+        "execution_config_sha256": digest,
+        "split_sha256": digest,
+        "fold_index": 0,
+        "model": "standard_cbm",
+        "stage": "sequential",
+    }
+    payload = {
+        **provenance,
+        "status": "SEQUENTIAL_TRAINING_COMPLETE_TEST_NOT_EVALUATED",
+        "concept_completion_sha256": digest,
+        "cache_manifest_sha256": digest,
+        "task_completion_sha256": digest,
+        "frozen_predictor_semantic_sha256_before_task": digest,
+        "frozen_predictor_semantic_sha256_after_task": digest,
+        "frozen_batchnorm_state_sha256_before_task": digest,
+        "frozen_batchnorm_state_sha256_after_task": digest,
+        "cache_partitions": ["train", "validation"],
+        "test_concepts_generated": False,
+        "test_evaluated": False,
+    }
+    validate_sequential_completion(
+        payload,
+        provenance,
+        concept_completion_sha256=digest,
+        cache_manifest_sha256=digest,
+        task_completion_sha256=digest,
+        predictor_semantic_sha256=digest,
+        batchnorm_state_sha256_value=digest,
+    )
+    changed = dict(payload)
+    changed["split_sha256"] = "b" * 64
+    with pytest.raises(ValueError, match="SEQUENTIAL_TRAINING_PROVENANCE_MISMATCH"):
+        validate_sequential_completion(
+            changed,
+            provenance,
+            concept_completion_sha256=digest,
+            cache_manifest_sha256=digest,
+            task_completion_sha256=digest,
+            predictor_semantic_sha256=digest,
+            batchnorm_state_sha256_value=digest,
+        )
+
+
+def test_fold_orchestration_resumes_each_stage_and_reuses_completed_seal(
+    tmp_path: object,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+    import lidc_baseline.p6_standard_cbm as p6
+
+    digest = "a" * 64
+    scientific = {
+        "protocol": {"version": "Baseline-v2"},
+        "reproducibility": {"base_seed": 20260808},
+    }
+    execution = {
+        "reference_reported": {"epochs": 80},
+        "project_preregistered": {
+            "batching": {"micro_batch_size": 16},
+            "reproducibility": {
+                "torch_use_deterministic_algorithms": True,
+                "warn_only": True,
+            },
+        },
+        "execution_profile": {
+            "profile_id": "test-h200",
+            "formal_gpu_model": "H200",
+        },
+    }
+    split = {
+        "split_sha256": digest,
+        "fold_index": 0,
+        "partitions": {
+            "train": {"nodule_uids": ["train"], "summary": {"nodules": 1}},
+            "validation": {"nodule_uids": ["validation"], "summary": {"nodules": 1}},
+            "test": {"nodule_uids": ["test"], "summary": {"nodules": 1}},
+        },
+    }
+    initialization = {
+        "fold_seed": 20260808,
+        "encoder_initialization_sha256": digest,
+        "encoder_artifact_file_sha256": digest,
+        "concept_head_initialization_seeds": {group: 1 for group in CONCEPT_GROUP_ORDER},
+        "concept_head_initialization_sha256": OrderedDict(
+            (group, digest) for group in CONCEPT_GROUP_ORDER
+        ),
+        "combined_concept_head_initialization_sha256": digest,
+        "concept_head_seed_derivation": "test",
+    }
+
+    class Predictor(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(0.0))
+
+    monkeypatch.setattr(
+        p6,
+        "_load_p6_sources",
+        lambda *_args, **_kwargs: (
+            scientific,
+            execution,
+            digest,
+            {},
+            digest,
+            split,
+            pd.DataFrame(),
+            pd.DataFrame(),
+            tmp_path / "encoder.pt",
+        ),
+    )
+    monkeypatch.setattr(p6, "require_formal_gpu_for_cuda", lambda *_args: None)
+    monkeypatch.setattr(p6, "configure_fp32_determinism", lambda *_args: None)
+    monkeypatch.setattr(
+        p6,
+        "build_initialized_concept_predictor",
+        lambda *_args: (Predictor(), copy.deepcopy(initialization)),
+    )
+    monkeypatch.setattr(p6, "_optimizer", lambda *_args: object())
+    monkeypatch.setattr(p6, "_scheduler", lambda *_args: object())
+    monkeypatch.setattr(
+        p6, "build_partition_concept_records", lambda *_args: [object()]
+    )
+    monkeypatch.setattr(
+        p6,
+        "_load_concept_best",
+        lambda **_kwargs: (
+            (lambda model: (freeze_concept_predictor(model), model)[1])(Predictor()),
+            copy.deepcopy(initialization),
+        ),
+    )
+    monkeypatch.setattr(
+        p6, "_cache_provenance_from_run", lambda **_kwargs: _cache_provenance()
+    )
+    cache_frame = pd.DataFrame(
+        {
+            "nodule_uid": ["train"],
+            "feature_source": ["frozen_predicted_activated_concepts"],
+            "feature_dimension": [16],
+            "canonical_activated_concepts": [json.dumps([0.5] * 16)],
+            "target_normalized": [0.2],
+        }
+    )
+    monkeypatch.setattr(
+        p6, "predict_concept_cache_frame", lambda *_args, **_kwargs: cache_frame
+    )
+
+    def write_caches(directory: object, *_args: object, **_kwargs: object) -> dict[str, object]:
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "train.parquet").write_bytes(b"train")
+        (directory / "validation.parquet").write_bytes(b"validation")
+        (directory / "cache_manifest.json").write_text("{}", encoding="utf-8")
+        return {"allowed_partitions": ["train", "validation"]}
+
+    monkeypatch.setattr(p6, "write_train_validation_caches", write_caches)
+    monkeypatch.setattr(
+        p6,
+        "verify_train_validation_caches",
+        lambda *_args, **_kwargs: (
+            {"train": cache_frame, "validation": cache_frame},
+            {"allowed_partitions": ["train", "validation"]},
+        ),
+    )
+    monkeypatch.setattr(
+        p6,
+        "task_cache_records",
+        lambda *_args, **_kwargs: [TaskCacheRecord("train", tuple([0.5] * 16), 0.2)],
+    )
+    monkeypatch.setattr(p6, "task_optimizer", lambda *_args: object())
+
+    calls: list[tuple[str, bool]] = []
+    call_counts = {"concept": 0, "task": 0}
+
+    def fake_stage(**kwargs: object) -> dict[str, object]:
+        stage = str(kwargs["stage_name"])
+        resume = bool(kwargs["resume"])
+        calls.append((stage, resume))
+        call_counts[stage] += 1
+        directory = kwargs["output_directory"]
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "last.pt").write_bytes(f"{stage}-last".encode())
+        if (stage == "concept" and call_counts[stage] == 1) or (
+            stage == "task" and call_counts[stage] == 1
+        ):
+            return {
+                "status": "INTERRUPTED_AT_EPOCH_BOUNDARY_FOR_TEST",
+                "stage": stage,
+                "epoch_index": 0,
+            }
+        (directory / "best.pt").write_bytes(f"{stage}-best".encode())
+        (directory / "training_complete.json").write_text("{}", encoding="utf-8")
+        return {"status": "STAGE_TRAINING_COMPLETE", "epochs_completed": 80}
+
+    monkeypatch.setattr(p6, "run_training_stage", fake_stage)
+    output_root = tmp_path / "runs"
+    arguments = {
+        "scientific_config_path": tmp_path / "scientific.yaml",
+        "execution_config_path": tmp_path / "execution.yaml",
+        "p6_execution_config_path": tmp_path / "p6.yaml",
+        "manifest_path": tmp_path / "manifest.parquet",
+        "roi_index_path": tmp_path / "roi.parquet",
+        "fold_index": 0,
+        "device_name": "cpu",
+        "num_workers": 0,
+        "output_root": output_root,
+    }
+    first = p6._train_fold_locked(**arguments, resume=False, _stop_concept_after_epoch_for_test=None, _stop_task_after_epoch_for_test=None)
+    assert first["stage"] == "concept"
+    second = p6._train_fold_locked(**arguments, resume=True, _stop_concept_after_epoch_for_test=None, _stop_task_after_epoch_for_test=None)
+    assert second["stage"] == "task"
+    third = p6._train_fold_locked(**arguments, resume=True, _stop_concept_after_epoch_for_test=None, _stop_task_after_epoch_for_test=None)
+    assert third["status"] == "SEQUENTIAL_TRAINING_COMPLETE_TEST_NOT_EVALUATED"
+    assert calls == [
+        ("concept", False),
+        ("concept", True),
+        ("task", False),
+        ("concept", False),
+        ("task", True),
+    ]
+    before = list(calls)
+    monkeypatch.setattr(
+        p6,
+        "_prepare_trained_context",
+        lambda **_kwargs: {
+            "sequential": json.loads(
+                (
+                    output_root
+                    / "fold_0"
+                    / "sequential_training_complete.json"
+                ).read_text(encoding="utf-8")
+            )
+        },
+    )
+    reused = p6._train_fold_locked(**arguments, resume=True, _stop_concept_after_epoch_for_test=None, _stop_task_after_epoch_for_test=None)
+    assert reused["status"] == "SEQUENTIAL_TRAINING_COMPLETE_TEST_NOT_EVALUATED"
+    assert calls == before
+
+
+def test_test_transaction_runs_inference_once_recovers_and_blocks_claim_only(
+    tmp_path: object,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+    import lidc_baseline.p6_standard_cbm as p6
+    from lidc_baseline.p5_blackbox import _atomic_json
+
+    records = [
+        _concept_record(tmp_path, "a", 0.2),
+        _concept_record(tmp_path, "b", 0.5),
+        _concept_record(tmp_path, "c", 0.9),
+    ]
+    concept_model = _tiny_concept_predictor()
+    freeze_concept_predictor(concept_model)
+    concept_frame = predict_concept_cache_frame(
+        concept_model,
+        records,
+        torch.device("cpu"),
+        partition="test",
+        batch_size=2,
+        num_workers=0,
+        task_best_checkpoint_sha256="a" * 64,
+    )
+    task_head, task_metadata = build_deterministic_task_head(20260808)
+    digest = "a" * 64
+    output = tmp_path / "runs" / "fold_0"
+    output.mkdir(parents=True)
+    context = {
+        "scientific": {
+            "protocol": {"version": "Baseline-v2"},
+            "reproducibility": {"base_seed": 20260808},
+        },
+        "execution": {"project_preregistered": {"batching": {"micro_batch_size": 16}}},
+        "execution_hash": digest,
+        "p6_hash": digest,
+        "split": {
+            "split_sha256": digest,
+            "fold_index": 0,
+            "partitions": {
+                "test": {
+                    "nodule_uids": [record.nodule_uid for record in records],
+                    "summary": {"nodules": 3},
+                }
+            },
+        },
+        "initialization": {
+            "fold_seed": 20260808,
+            "encoder_initialization_sha256": digest,
+            "encoder_artifact_file_sha256": digest,
+            "concept_head_initialization_sha256": OrderedDict(
+                (group, digest) for group in CONCEPT_GROUP_ORDER
+            ),
+            "combined_concept_head_initialization_sha256": digest,
+        },
+        "cache_provenance": {
+            "concept_best_checkpoint_sha256": digest,
+            "predictor_semantic_sha256": digest,
+            "source_manifest_sha256": digest,
+            "source_roi_index_sha256": digest,
+        },
+        "task_provenance": {
+            **task_metadata,
+        },
+        "output": output,
+        "concept_model": concept_model,
+        "task_head": task_head,
+        "manifest": pd.DataFrame(),
+        "roi_index": pd.DataFrame(),
+    }
+    (output / "concept_cache").mkdir()
+    (output / "concept_cache" / "cache_manifest.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    (output / "task_stage").mkdir()
+    (output / "task_stage" / "best.pt").write_bytes(b"task-best")
+    monkeypatch.setattr(p6, "_prepare_trained_context", lambda **_kwargs: context)
+    monkeypatch.setattr(p6, "build_partition_concept_records", lambda *_args: records)
+    inference_calls = {"count": 0}
+
+    def predict(*_args: object, **_kwargs: object) -> pd.DataFrame:
+        inference_calls["count"] += 1
+        return concept_frame
+
+    monkeypatch.setattr(p6, "predict_concept_cache_frame", predict)
+    arguments = {
+        "scientific_config_path": tmp_path / "scientific.yaml",
+        "execution_config_path": tmp_path / "execution.yaml",
+        "p6_execution_config_path": tmp_path / "p6.yaml",
+        "manifest_path": tmp_path / "manifest.parquet",
+        "roi_index_path": tmp_path / "roi.parquet",
+        "fold_index": 0,
+        "device_name": "cpu",
+        "num_workers": 0,
+        "output_root": tmp_path / "runs",
+    }
+    first = p6._evaluate_test_once_locked(**arguments)
+    assert first["status"] == "TEST_EVALUATED_EXACTLY_ONCE"
+    assert inference_calls["count"] == 1
+    second = p6._evaluate_test_once_locked(**arguments)
+    assert second == first
+    assert inference_calls["count"] == 1
+
+    (output / "test_evaluation.json").unlink()
+    (output / "metrics.json").unlink()
+    recovered = p6._evaluate_test_once_locked(**arguments)
+    assert recovered["status"] == "TEST_EVALUATED_EXACTLY_ONCE"
+    assert inference_calls["count"] == 1
+
+    claim_only_output = tmp_path / "claim-only" / "fold_0"
+    claim_only_output.mkdir(parents=True)
+    claim_context = dict(context)
+    claim_context["output"] = claim_only_output
+    (claim_only_output / "concept_cache").mkdir()
+    (claim_only_output / "concept_cache" / "cache_manifest.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    (claim_only_output / "task_stage").mkdir()
+    (claim_only_output / "task_stage" / "best.pt").write_bytes(b"task-best")
+    provenance = p6._test_prediction_provenance(claim_context)
+    _atomic_json(
+        claim_only_output / "test_claim.json",
+        {
+            "schema_version": 1,
+            **provenance,
+            "status": "TEST_INFERENCE_CLAIMED",
+            "expected_test_samples": 3,
+        },
+    )
+    monkeypatch.setattr(
+        p6, "_prepare_trained_context", lambda **_kwargs: claim_context
+    )
+    claim_arguments = dict(arguments)
+    claim_arguments["output_root"] = tmp_path / "claim-only"
+    with pytest.raises(RuntimeError, match="CLAIM_EXISTS_WITHOUT_PREDICTIONS"):
+        p6._evaluate_test_once_locked(**claim_arguments)
+    assert inference_calls["count"] == 1

@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import argparse
+import csv
 import hashlib
 import json
+import math
+import os
+import tempfile
+import time
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -25,13 +31,28 @@ from lidc_baseline.p4_prepare import (
     validate_encoder_artifact,
 )
 from lidc_baseline.p5_blackbox import (
+    _atomic_csv,
     _atomic_json,
     _atomic_parquet,
+    _atomic_torch_save,
     _loader,
     _optimizer,
+    _prepare_sources,
+    _runtime_environment,
+    _scheduler,
     apply_training_augmentation,
     augmentation_parameters,
+    capture_rng_state,
+    checkpoint_improves,
+    configure_fp32_determinism,
     epoch_uid_order,
+    exclusive_fold_lifecycle_lock,
+    regression_metrics,
+    require_formal_gpu_for_cuda,
+    restore_rng_state,
+    seed_training,
+    serialized_float_consistent,
+    validate_execution_config,
 )
 
 
@@ -761,14 +782,26 @@ def predict_concept_cache_frame(
     partition: str,
     batch_size: int,
     num_workers: int,
-    allow_test_after_task_best: bool = False,
+    task_best_checkpoint_sha256: str | None = None,
 ) -> pd.DataFrame:
     """Generate no-augmentation frozen predictor outputs for one partition."""
     torch = _torch()
     if partition not in ("train", "validation", "test"):
         raise ValueError(f"P6_INVALID_CACHE_PARTITION:{partition}")
-    if partition == "test" and not allow_test_after_task_best:
-        raise PermissionError("P6_TEST_CONCEPT_GENERATION_BEFORE_TASK_BEST_FORBIDDEN")
+    if partition == "test":
+        if (
+            task_best_checkpoint_sha256 is None
+            or len(task_best_checkpoint_sha256) != 64
+            or any(
+                character not in "0123456789abcdef"
+                for character in task_best_checkpoint_sha256
+            )
+        ):
+            raise PermissionError(
+                "P6_TEST_CONCEPT_GENERATION_BEFORE_TASK_BEST_FORBIDDEN"
+            )
+    elif task_best_checkpoint_sha256 is not None:
+        raise ValueError("P6_TASK_BEST_PROOF_ONLY_VALID_FOR_TEST_PARTITION")
     if (
         any(module.training for module in model.modules())
         or any(parameter.requires_grad for parameter in model.parameters())
@@ -1180,3 +1213,1802 @@ def task_optimizer(task_head: Any, execution_config: Mapping[str, Any]) -> Any:
     if optimized != expected:
         raise ValueError("P6_TASK_OPTIMIZER_PARAMETER_SCOPE_MISMATCH")
     return optimizer
+
+
+def _p6_provenance(
+    scientific_config: Mapping[str, Any],
+    execution_config: Mapping[str, Any],
+    execution_config_sha256: str,
+    p6_execution_config_sha256: str,
+    split: Mapping[str, Any],
+    initialization: Mapping[str, Any],
+    *,
+    stage: str,
+) -> dict[str, Any]:
+    from lidc_baseline.p5_blackbox import reproducibility_provenance
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "protocol_version": scientific_config["protocol"]["version"],
+        "scientific_config_sha256": compute_config_sha256(scientific_config),
+        "execution_config_sha256": execution_config_sha256,
+        "p6_execution_config_sha256": p6_execution_config_sha256,
+        "split_sha256": split["split_sha256"],
+        "fold_index": int(split["fold_index"]),
+        "model": MODEL_NAME,
+        "stage": stage,
+        "execution_profile_id": execution_config["execution_profile"]["profile_id"],
+        "formal_gpu_model": execution_config["execution_profile"]["formal_gpu_model"],
+        **reproducibility_provenance(execution_config),
+        **dict(initialization),
+    }
+
+
+def _load_p6_sources(
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    str,
+    dict[str, Any],
+    str,
+    dict[str, Any],
+    pd.DataFrame,
+    pd.DataFrame,
+    Path,
+]:
+    (
+        scientific,
+        execution,
+        execution_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _prepare_sources(
+        scientific_config_path,
+        execution_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    p6_config, p6_hash = validate_p6_execution_config(p6_execution_config_path)
+    if p6_config["scientific_config"] != {
+        "path": str(scientific_config_path),
+        "sha256": compute_config_sha256(scientific),
+    }:
+        raise ValueError("P6_SUPPLEMENT_SCIENTIFIC_CONFIG_MISMATCH")
+    common = p6_config["common_execution_profile"]
+    if (
+        common["path"] != str(execution_config_path)
+        or common["resolved_sha256"] != execution_hash
+        or common["formal_gpu_model"]
+        != execution["execution_profile"]["formal_gpu_model"]
+    ):
+        raise ValueError("P6_SUPPLEMENT_COMMON_EXECUTION_MISMATCH")
+    return (
+        scientific,
+        execution,
+        execution_hash,
+        p6_config,
+        p6_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    )
+
+
+def run_directory(
+    fold_index: int,
+    root: str | Path = "runs/baseline_v2/standard_cbm",
+) -> Path:
+    return Path(root) / f"fold_{fold_index}"
+
+
+def _stage_checkpoint_payload(
+    module: Any,
+    optimizer: Any,
+    scheduler: Any,
+    *,
+    epoch_index: int,
+    validation_objective: float,
+    best_epoch_index: int,
+    best_validation_objective: float,
+    provenance: Mapping[str, Any],
+    history: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "provenance": dict(provenance),
+        "epoch_index": int(epoch_index),
+        "validation_objective": float(validation_objective),
+        "best_epoch_index": int(best_epoch_index),
+        "best_validation_objective": float(best_validation_objective),
+        "module_state_dict": module.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "scheduler_state_dict": scheduler.state_dict(),
+        "rng_state": capture_rng_state(),
+        "history": [dict(row) for row in history],
+    }
+
+
+def _load_stage_checkpoint(
+    path: Path,
+    expected_provenance: Mapping[str, Any],
+) -> dict[str, Any]:
+    torch = _torch()
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    if payload.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("P6_STAGE_CHECKPOINT_SCHEMA_MISMATCH")
+    if payload.get("provenance") != dict(expected_provenance):
+        raise ValueError("P6_STAGE_CHECKPOINT_PROVENANCE_MISMATCH")
+    return payload
+
+
+def _flatten_epoch_report(prefix: str, report: Mapping[str, Any]) -> dict[str, Any]:
+    flattened: dict[str, Any] = {}
+    for key, value in report.items():
+        if isinstance(value, Mapping):
+            for nested_key, nested_value in value.items():
+                flattened[f"{prefix}_{nested_key}_loss"] = nested_value
+        else:
+            flattened[f"{prefix}_{key}"] = value
+    return flattened
+
+
+def run_training_stage(
+    *,
+    stage_name: str,
+    module: Any,
+    optimizer: Any,
+    scheduler: Any,
+    provenance: Mapping[str, Any],
+    output_directory: Path,
+    epochs: int,
+    objective_key: str,
+    expected_train_samples: int,
+    train_epoch: Any,
+    validate_epoch: Any,
+    device: Any,
+    resume: bool,
+    _stop_after_epoch_for_test: int | None = None,
+) -> dict[str, Any]:
+    """Run one exact checkpointed stage with epoch-boundary deterministic resume."""
+    torch = _torch()
+    if epochs != 80:
+        raise ValueError("P6_STAGE_EPOCH_BUDGET_MISMATCH")
+    output_directory.mkdir(parents=True, exist_ok=True)
+    last_path = output_directory / "last.pt"
+    best_path = output_directory / "best.pt"
+    history_path = output_directory / "history.csv"
+    complete_path = output_directory / "training_complete.json"
+    if complete_path.exists():
+        return verify_training_stage(
+            stage_name=stage_name,
+            output_directory=output_directory,
+            expected_provenance=provenance,
+            expected_epochs=epochs,
+            objective_key=objective_key,
+            expected_train_samples=expected_train_samples,
+        )
+    history: list[dict[str, Any]] = []
+    start_epoch = 0
+    best_epoch = -1
+    best_objective = math.inf
+    if resume:
+        if not last_path.is_file():
+            raise FileNotFoundError(f"P6_{stage_name.upper()}_RESUME_CHECKPOINT_MISSING")
+        payload = _load_stage_checkpoint(last_path, provenance)
+        module.load_state_dict(payload["module_state_dict"], strict=True)
+        optimizer.load_state_dict(payload["optimizer_state_dict"])
+        scheduler.load_state_dict(payload["scheduler_state_dict"])
+        restore_rng_state(payload["rng_state"])
+        history = [dict(row) for row in payload["history"]]
+        start_epoch = int(payload["epoch_index"]) + 1
+        best_epoch = int(payload["best_epoch_index"])
+        best_objective = float(payload["best_validation_objective"])
+        if len(history) != start_epoch:
+            raise ValueError(f"P6_{stage_name.upper()}_RESUME_HISTORY_MISMATCH")
+    elif any(path.exists() for path in (last_path, best_path, history_path)):
+        raise FileExistsError(f"P6_{stage_name.upper()}_RUN_EXISTS_USE_RESUME")
+    started = time.monotonic()
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+    for epoch_index in range(start_epoch, epochs):
+        epoch_started = time.monotonic()
+        learning_rate_start = float(optimizer.param_groups[0]["lr"])
+        train_report = train_epoch(epoch_index)
+        validation_report = validate_epoch()
+        validation_objective = float(validation_report[objective_key])
+        if not math.isfinite(validation_objective):
+            raise ValueError(f"P6_{stage_name.upper()}_NONFINITE_VALIDATION_OBJECTIVE")
+        improved = checkpoint_improves(validation_objective, best_objective)
+        if improved:
+            best_epoch = epoch_index
+            best_objective = validation_objective
+        decayed = scheduler.step(validation_objective)
+        row = {
+            "epoch_index": epoch_index,
+            "learning_rate_start": learning_rate_start,
+            "learning_rate_end": float(optimizer.param_groups[0]["lr"]),
+            "scheduler_decayed": bool(decayed),
+            "scheduler_best": scheduler.best,
+            "scheduler_bad_epoch_counter": scheduler.bad_epoch_counter,
+            **_flatten_epoch_report("train", train_report),
+            **_flatten_epoch_report("validation", validation_report),
+            "epoch_seconds": time.monotonic() - epoch_started,
+        }
+        history.append(row)
+        if int(train_report["sample_count"]) != expected_train_samples:
+            raise ValueError(f"P6_{stage_name.upper()}_TRAIN_COVERAGE_MISMATCH")
+        if improved:
+            _atomic_torch_save(
+                best_path,
+                _stage_checkpoint_payload(
+                    module,
+                    optimizer,
+                    scheduler,
+                    epoch_index=epoch_index,
+                    validation_objective=validation_objective,
+                    best_epoch_index=best_epoch,
+                    best_validation_objective=best_objective,
+                    provenance=provenance,
+                    history=history,
+                ),
+            )
+        _atomic_csv(history_path, history, list(row))
+        _atomic_torch_save(
+            last_path,
+            _stage_checkpoint_payload(
+                module,
+                optimizer,
+                scheduler,
+                epoch_index=epoch_index,
+                validation_objective=validation_objective,
+                best_epoch_index=best_epoch,
+                best_validation_objective=best_objective,
+                provenance=provenance,
+                history=history,
+            ),
+        )
+        print(
+            canonical_json_bytes(
+                {
+                    "event": "P6_STAGE_EPOCH_COMPLETE",
+                    "stage": stage_name,
+                    "fold_index": provenance["fold_index"],
+                    **row,
+                }
+            ).decode("utf-8").strip(),
+            flush=True,
+        )
+        if _stop_after_epoch_for_test == epoch_index:
+            return {
+                "status": "INTERRUPTED_AT_EPOCH_BOUNDARY_FOR_TEST",
+                "stage": stage_name,
+                "epoch_index": epoch_index,
+                "last_checkpoint_sha256": sha256_file(last_path),
+            }
+    if len(history) != epochs or not best_path.is_file():
+        raise ValueError(f"P6_{stage_name.upper()}_TRAINING_INCOMPLETE")
+    runtime = {
+        **dict(provenance),
+        **_runtime_environment(device),
+        "stage": stage_name,
+        "epochs_total": epochs,
+        "wall_seconds_this_invocation": time.monotonic() - started,
+        "peak_allocated_bytes": (
+            int(torch.cuda.max_memory_allocated(device)) if device.type == "cuda" else None
+        ),
+        "peak_reserved_bytes": (
+            int(torch.cuda.max_memory_reserved(device)) if device.type == "cuda" else None
+        ),
+    }
+    _atomic_json(output_directory / "runtime.json", runtime)
+    completion = {
+        **dict(provenance),
+        "status": "STAGE_TRAINING_COMPLETE",
+        "stage": stage_name,
+        "epochs_completed": epochs,
+        "objective_key": objective_key,
+        "best_epoch_index": best_epoch,
+        "best_validation_objective": best_objective,
+        "best_checkpoint_sha256": sha256_file(best_path),
+        "last_checkpoint_sha256": sha256_file(last_path),
+        "history_sha256": sha256_file(history_path),
+        "runtime_sha256": sha256_file(output_directory / "runtime.json"),
+        "test_evaluated": False,
+    }
+    _atomic_json(complete_path, completion)
+    return completion
+
+
+def stage_resume_requested(resume: bool, output_directory: Path) -> bool:
+    """Resume only a stage that has its own valid epoch-boundary checkpoint."""
+    complete = output_directory / "training_complete.json"
+    last = output_directory / "last.pt"
+    if complete.is_file():
+        return False
+    if not resume:
+        return False
+    if last.is_file():
+        return True
+    partial = tuple(
+        path.exists()
+        for path in (
+            output_directory / "best.pt",
+            output_directory / "history.csv",
+            output_directory / "runtime.json",
+        )
+    )
+    if any(partial):
+        raise FileExistsError("P6_STAGE_PARTIAL_STATE_WITHOUT_LAST_CHECKPOINT")
+    return False
+
+
+def verify_training_stage(
+    *,
+    stage_name: str,
+    output_directory: Path,
+    expected_provenance: Mapping[str, Any],
+    expected_epochs: int,
+    objective_key: str,
+    expected_train_samples: int,
+    require_h200_runtime: bool = False,
+    expected_train_nodule_set_sha256: str | None = None,
+    expected_validation_samples: int | None = None,
+    expected_validation_nodule_set_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Reconstruct checkpoint selection and epoch coverage from saved artifacts."""
+    complete_path = output_directory / "training_complete.json"
+    if not complete_path.is_file():
+        raise FileNotFoundError(f"P6_{stage_name.upper()}_COMPLETION_MISSING")
+    completion = json.loads(complete_path.read_text(encoding="utf-8"))
+    if any(completion.get(key) != value for key, value in expected_provenance.items()):
+        raise ValueError(f"P6_{stage_name.upper()}_COMPLETION_PROVENANCE_MISMATCH")
+    if (
+        completion.get("status") != "STAGE_TRAINING_COMPLETE"
+        or completion.get("stage") != stage_name
+        or completion.get("epochs_completed") != expected_epochs
+        or completion.get("objective_key") != objective_key
+        or completion.get("test_evaluated") is not False
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_COMPLETION_SCHEMA_MISMATCH")
+    history_path = output_directory / "history.csv"
+    with history_path.open(encoding="utf-8", newline="") as stream:
+        history = list(csv.DictReader(stream))
+    if len(history) != expected_epochs:
+        raise ValueError(f"P6_{stage_name.upper()}_HISTORY_LENGTH_MISMATCH")
+    objective_column = f"validation_{objective_key}"
+    objectives = [float(row[objective_column]) for row in history]
+    expected_best_epoch = int(np.argmin(np.asarray(objectives, dtype=np.float64)))
+    expected_best = objectives[expected_best_epoch]
+    if int(completion["best_epoch_index"]) != expected_best_epoch or not serialized_float_consistent(
+        float(completion["best_validation_objective"]), expected_best
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_BEST_OBJECTIVE_MISMATCH")
+    if any(int(row["train_sample_count"]) != expected_train_samples for row in history):
+        raise ValueError(f"P6_{stage_name.upper()}_TRAIN_COVERAGE_MISMATCH")
+    if expected_train_nodule_set_sha256 is not None and any(
+        row["train_nodule_set_sha256"] != expected_train_nodule_set_sha256
+        for row in history
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_TRAIN_UID_SET_HASH_MISMATCH")
+    if expected_validation_samples is not None and any(
+        int(row["validation_sample_count"]) != expected_validation_samples
+        for row in history
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_VALIDATION_COVERAGE_MISMATCH")
+    if expected_validation_nodule_set_sha256 is not None and any(
+        row["validation_nodule_set_sha256"]
+        != expected_validation_nodule_set_sha256
+        for row in history
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_VALIDATION_UID_SET_HASH_MISMATCH")
+    best_path = output_directory / "best.pt"
+    last_path = output_directory / "last.pt"
+    runtime_path = output_directory / "runtime.json"
+    for path, field in (
+        (best_path, "best_checkpoint_sha256"),
+        (last_path, "last_checkpoint_sha256"),
+        (history_path, "history_sha256"),
+        (runtime_path, "runtime_sha256"),
+    ):
+        if sha256_file(path) != completion[field]:
+            raise ValueError(f"P6_{stage_name.upper()}_ARTIFACT_HASH_MISMATCH:{field}")
+    best = _load_stage_checkpoint(best_path, expected_provenance)
+    if (
+        int(best["epoch_index"]) != expected_best_epoch
+        or not serialized_float_consistent(
+            float(best["validation_objective"]), expected_best
+        )
+        or int(best["best_epoch_index"]) != expected_best_epoch
+        or not serialized_float_consistent(
+            float(best["best_validation_objective"]), expected_best
+        )
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_BEST_CHECKPOINT_MISMATCH")
+    last = _load_stage_checkpoint(last_path, expected_provenance)
+    if (
+        int(last["epoch_index"]) != expected_epochs - 1
+        or len(last.get("history", [])) != expected_epochs
+        or int(last["best_epoch_index"]) != expected_best_epoch
+        or not serialized_float_consistent(
+            float(last["best_validation_objective"]), expected_best
+        )
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_LAST_CHECKPOINT_MISMATCH")
+    runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+    if any(runtime.get(key) != value for key, value in expected_provenance.items()):
+        raise ValueError(f"P6_{stage_name.upper()}_RUNTIME_PROVENANCE_MISMATCH")
+    if require_h200_runtime and (
+        runtime.get("device_type") != "cuda"
+        or "H200" not in str(runtime.get("gpu_name", "")).upper()
+        or runtime.get("fp32") is not True
+        or runtime.get("amp_enabled") is not False
+        or runtime.get("bfloat16_enabled") is not False
+        or runtime.get("cuda_matmul_tf32_enabled") is not False
+        or runtime.get("cudnn_tf32_enabled") is not False
+        or runtime.get("torch_use_deterministic_algorithms") is not True
+        or runtime.get("deterministic_algorithms_warn_only") is not True
+        or runtime.get("epochs_total") != expected_epochs
+    ):
+        raise ValueError(f"P6_{stage_name.upper()}_FORMAL_RUNTIME_POLICY_MISMATCH")
+    return completion
+
+
+def _cache_provenance_from_run(
+    *,
+    scientific_config: Mapping[str, Any],
+    execution_config_sha256: str,
+    p6_execution_config_sha256: str,
+    split: Mapping[str, Any],
+    initialization: Mapping[str, Any],
+    concept_best_checkpoint_path: Path,
+    predictor: Any,
+    manifest_path: Path,
+    roi_index_path: Path,
+) -> dict[str, Any]:
+    return validate_cache_provenance(
+        {
+            "scientific_config_sha256": compute_config_sha256(scientific_config),
+            "execution_config_sha256": execution_config_sha256,
+            "p6_execution_config_sha256": p6_execution_config_sha256,
+            "split_sha256": split["split_sha256"],
+            "fold_index": int(split["fold_index"]),
+            "encoder_initialization_sha256": initialization[
+                "encoder_initialization_sha256"
+            ],
+            "encoder_artifact_file_sha256": initialization[
+                "encoder_artifact_file_sha256"
+            ],
+            "concept_head_initialization_sha256": initialization[
+                "concept_head_initialization_sha256"
+            ],
+            "combined_concept_head_initialization_sha256": initialization[
+                "combined_concept_head_initialization_sha256"
+            ],
+            "concept_best_checkpoint_sha256": sha256_file(
+                concept_best_checkpoint_path
+            ),
+            "predictor_semantic_sha256": module_state_sha256(predictor),
+            "batchnorm_state_sha256": batchnorm_state_sha256(predictor),
+            "source_manifest_sha256": sha256_file(manifest_path),
+            "source_roi_index_sha256": sha256_file(roi_index_path),
+        }
+    )
+
+
+def _load_concept_best(
+    *,
+    scientific: Mapping[str, Any],
+    split: Mapping[str, Any],
+    encoder_path: Path,
+    concept_best_path: Path,
+    provenance: Mapping[str, Any],
+) -> tuple[Any, dict[str, Any]]:
+    model, initialization = build_initialized_concept_predictor(
+        scientific, split, encoder_path
+    )
+    payload = _load_stage_checkpoint(concept_best_path, provenance)
+    model.load_state_dict(payload["module_state_dict"], strict=True)
+    freeze_concept_predictor(model)
+    return model, initialization
+
+
+def train_fold(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    num_workers: int,
+    output_root: Path,
+    resume: bool,
+    _stop_concept_after_epoch_for_test: int | None = None,
+    _stop_task_after_epoch_for_test: int | None = None,
+) -> dict[str, Any]:
+    output = run_directory(fold_index, output_root)
+    with exclusive_fold_lifecycle_lock(output / ".p6_lifecycle.lock"):
+        return _train_fold_locked(
+            scientific_config_path=scientific_config_path,
+            execution_config_path=execution_config_path,
+            p6_execution_config_path=p6_execution_config_path,
+            manifest_path=manifest_path,
+            roi_index_path=roi_index_path,
+            fold_index=fold_index,
+            device_name=device_name,
+            num_workers=num_workers,
+            output_root=output_root,
+            resume=resume,
+            _stop_concept_after_epoch_for_test=_stop_concept_after_epoch_for_test,
+            _stop_task_after_epoch_for_test=_stop_task_after_epoch_for_test,
+        )
+
+
+def _train_fold_locked(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    num_workers: int,
+    output_root: Path,
+    resume: bool,
+    _stop_concept_after_epoch_for_test: int | None,
+    _stop_task_after_epoch_for_test: int | None,
+) -> dict[str, Any]:
+    torch = _torch()
+    device = torch.device(device_name)
+    if device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA_UNAVAILABLE")
+    (
+        scientific,
+        execution,
+        execution_hash,
+        _p6_config,
+        p6_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _load_p6_sources(
+        scientific_config_path,
+        execution_config_path,
+        p6_execution_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device, execution)
+    concept_model, initialization = build_initialized_concept_predictor(
+        scientific, split, encoder_path
+    )
+    seed_training(int(initialization["fold_seed"]))
+    concept_model.to(device)
+    concept_optimizer = _optimizer(concept_model, execution)
+    concept_scheduler = _scheduler(concept_optimizer, execution)
+    concept_provenance = _p6_provenance(
+        scientific,
+        execution,
+        execution_hash,
+        p6_hash,
+        split,
+        initialization,
+        stage="concept",
+    )
+    train_records = build_partition_concept_records(
+        manifest, roi_index, split, "train", roi_index_path
+    )
+    validation_records = build_partition_concept_records(
+        manifest, roi_index, split, "validation", roi_index_path
+    )
+    output = run_directory(fold_index, output_root)
+    output.mkdir(parents=True, exist_ok=True)
+    if (output / "sequential_training_complete.json").exists():
+        context = _prepare_trained_context(
+            scientific_config_path=scientific_config_path,
+            execution_config_path=execution_config_path,
+            p6_execution_config_path=p6_execution_config_path,
+            manifest_path=manifest_path,
+            roi_index_path=roi_index_path,
+            fold_index=fold_index,
+            output_root=output_root,
+            device=device,
+        )
+        return context["sequential"]
+    batch_size = int(
+        execution["project_preregistered"]["batching"]["micro_batch_size"]
+    )
+    epochs = int(execution["reference_reported"]["epochs"])
+    concept_completion = run_training_stage(
+        stage_name="concept",
+        module=concept_model,
+        optimizer=concept_optimizer,
+        scheduler=concept_scheduler,
+        provenance=concept_provenance,
+        output_directory=output / "concept_stage",
+        epochs=epochs,
+        objective_key="concept_loss",
+        expected_train_samples=len(train_records),
+        train_epoch=lambda epoch: train_concept_one_epoch(
+            concept_model,
+            train_records,
+            concept_optimizer,
+            device,
+            base_seed=int(scientific["reproducibility"]["base_seed"]),
+            fold_index=fold_index,
+            epoch_index=epoch,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        ),
+        validate_epoch=lambda: evaluate_concept_records(
+            concept_model,
+            validation_records,
+            device,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        ),
+        device=device,
+        resume=stage_resume_requested(resume, output / "concept_stage"),
+        _stop_after_epoch_for_test=_stop_concept_after_epoch_for_test,
+    )
+    if concept_completion.get("status") != "STAGE_TRAINING_COMPLETE":
+        return concept_completion
+    concept_best_path = output / "concept_stage" / "best.pt"
+    concept_model, _rebuilt_initialization = _load_concept_best(
+        scientific=scientific,
+        split=split,
+        encoder_path=encoder_path,
+        concept_best_path=concept_best_path,
+        provenance=concept_provenance,
+    )
+    concept_model.to(device)
+    frozen_predictor_hash = module_state_sha256(concept_model)
+    frozen_bn_hash = batchnorm_state_sha256(concept_model)
+    cache_provenance = _cache_provenance_from_run(
+        scientific_config=scientific,
+        execution_config_sha256=execution_hash,
+        p6_execution_config_sha256=p6_hash,
+        split=split,
+        initialization=initialization,
+        concept_best_checkpoint_path=concept_best_path,
+        predictor=concept_model,
+        manifest_path=manifest_path,
+        roi_index_path=roi_index_path,
+    )
+    cache_directory = output / "concept_cache"
+    expected_cache_uids = {
+        "train": list(map(str, split["partitions"]["train"]["nodule_uids"])),
+        "validation": list(
+            map(str, split["partitions"]["validation"]["nodule_uids"])
+        ),
+    }
+    cache_paths = (
+        cache_directory / "train.parquet",
+        cache_directory / "validation.parquet",
+        cache_directory / "cache_manifest.json",
+    )
+    if all(path.is_file() for path in cache_paths):
+        cache_frames, cache_manifest = verify_train_validation_caches(
+            cache_directory, expected_cache_uids, cache_provenance
+        )
+    elif any(path.exists() for path in cache_paths):
+        raise FileExistsError("P6_PARTIAL_CACHE_BUNDLE_REQUIRES_AUDIT")
+    else:
+        cache_frames = {
+            "train": predict_concept_cache_frame(
+                concept_model,
+                train_records,
+                device,
+                partition="train",
+                batch_size=batch_size,
+                num_workers=num_workers,
+            ),
+            "validation": predict_concept_cache_frame(
+                concept_model,
+                validation_records,
+                device,
+                partition="validation",
+                batch_size=batch_size,
+                num_workers=num_workers,
+            ),
+        }
+        cache_manifest = write_train_validation_caches(
+            cache_directory,
+            cache_frames,
+            expected_cache_uids,
+            cache_provenance,
+        )
+    train_task_records = task_cache_records(
+        cache_frames["train"], expected_cache_uids["train"]
+    )
+    validation_task_records = task_cache_records(
+        cache_frames["validation"], expected_cache_uids["validation"]
+    )
+    task_head, task_initialization = build_deterministic_task_head(
+        int(initialization["fold_seed"])
+    )
+    task_initialization.update(
+        {
+            "fold_seed": initialization["fold_seed"],
+            "encoder_initialization_sha256": initialization[
+                "encoder_initialization_sha256"
+            ],
+            "concept_head_initialization_sha256": initialization[
+                "concept_head_initialization_sha256"
+            ],
+            "combined_concept_head_initialization_sha256": initialization[
+                "combined_concept_head_initialization_sha256"
+            ],
+            "concept_best_checkpoint_sha256": sha256_file(concept_best_path),
+            "frozen_predictor_semantic_sha256": frozen_predictor_hash,
+            "frozen_batchnorm_state_sha256": frozen_bn_hash,
+            "cache_manifest_sha256": sha256_file(
+                cache_directory / "cache_manifest.json"
+            ),
+        }
+    )
+    task_provenance = _p6_provenance(
+        scientific,
+        execution,
+        execution_hash,
+        p6_hash,
+        split,
+        task_initialization,
+        stage="task",
+    )
+    task_head.to(device)
+    task_stage_optimizer = task_optimizer(task_head, execution)
+    task_scheduler = _scheduler(task_stage_optimizer, execution)
+    task_completion = run_training_stage(
+        stage_name="task",
+        module=task_head,
+        optimizer=task_stage_optimizer,
+        scheduler=task_scheduler,
+        provenance=task_provenance,
+        output_directory=output / "task_stage",
+        epochs=epochs,
+        objective_key="mse",
+        expected_train_samples=len(train_task_records),
+        train_epoch=lambda epoch: train_task_one_epoch(
+            task_head,
+            train_task_records,
+            task_stage_optimizer,
+            device,
+            base_seed=int(scientific["reproducibility"]["base_seed"]),
+            fold_index=fold_index,
+            epoch_index=epoch,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        ),
+        validate_epoch=lambda: evaluate_task_records(
+            task_head,
+            validation_task_records,
+            device,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        ),
+        device=device,
+        resume=stage_resume_requested(resume, output / "task_stage"),
+        _stop_after_epoch_for_test=_stop_task_after_epoch_for_test,
+    )
+    if task_completion.get("status") != "STAGE_TRAINING_COMPLETE":
+        return task_completion
+    if (
+        module_state_sha256(concept_model) != frozen_predictor_hash
+        or batchnorm_state_sha256(concept_model) != frozen_bn_hash
+    ):
+        raise ValueError("P6_CONCEPT_PREDICTOR_CHANGED_DURING_TASK_STAGE")
+    sequential = {
+        **_p6_provenance(
+            scientific,
+            execution,
+            execution_hash,
+            p6_hash,
+            split,
+            task_initialization,
+            stage="sequential",
+        ),
+        "status": "SEQUENTIAL_TRAINING_COMPLETE_TEST_NOT_EVALUATED",
+        "concept_completion_sha256": sha256_file(
+            output / "concept_stage" / "training_complete.json"
+        ),
+        "cache_manifest_sha256": sha256_file(
+            cache_directory / "cache_manifest.json"
+        ),
+        "task_completion_sha256": sha256_file(
+            output / "task_stage" / "training_complete.json"
+        ),
+        "frozen_predictor_semantic_sha256_before_task": frozen_predictor_hash,
+        "frozen_predictor_semantic_sha256_after_task": module_state_sha256(
+            concept_model
+        ),
+        "frozen_batchnorm_state_sha256_before_task": frozen_bn_hash,
+        "frozen_batchnorm_state_sha256_after_task": batchnorm_state_sha256(
+            concept_model
+        ),
+        "cache_partitions": cache_manifest["allowed_partitions"],
+        "test_concepts_generated": False,
+        "test_evaluated": False,
+    }
+    _atomic_json(output / "sequential_training_complete.json", sequential)
+    return sequential
+
+
+def _prepare_trained_context(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    output_root: Path,
+    device: Any,
+) -> dict[str, Any]:
+    (
+        scientific,
+        execution,
+        execution_hash,
+        _p6_config,
+        p6_hash,
+        split,
+        manifest,
+        roi_index,
+        encoder_path,
+    ) = _load_p6_sources(
+        scientific_config_path,
+        execution_config_path,
+        p6_execution_config_path,
+        manifest_path,
+        roi_index_path,
+        fold_index,
+    )
+    require_formal_gpu_for_cuda(device, execution)
+    configure_fp32_determinism(device, execution)
+    initial_model, initialization = build_initialized_concept_predictor(
+        scientific, split, encoder_path
+    )
+    concept_provenance = _p6_provenance(
+        scientific,
+        execution,
+        execution_hash,
+        p6_hash,
+        split,
+        initialization,
+        stage="concept",
+    )
+    output = run_directory(fold_index, output_root)
+    concept_completion = verify_training_stage(
+        stage_name="concept",
+        output_directory=output / "concept_stage",
+        expected_provenance=concept_provenance,
+        expected_epochs=int(execution["reference_reported"]["epochs"]),
+        objective_key="concept_loss",
+        expected_train_samples=int(
+            split["partitions"]["train"]["summary"]["nodules"]
+        ),
+        require_h200_runtime=True,
+        expected_train_nodule_set_sha256=_uid_set_sha256(
+            split["partitions"]["train"]["nodule_uids"]
+        ),
+        expected_validation_samples=int(
+            split["partitions"]["validation"]["summary"]["nodules"]
+        ),
+        expected_validation_nodule_set_sha256=_uid_set_sha256(
+            split["partitions"]["validation"]["nodule_uids"]
+        ),
+    )
+    del initial_model
+    concept_best_path = output / "concept_stage" / "best.pt"
+    concept_model, _rebuilt = _load_concept_best(
+        scientific=scientific,
+        split=split,
+        encoder_path=encoder_path,
+        concept_best_path=concept_best_path,
+        provenance=concept_provenance,
+    )
+    concept_model.to(device)
+    cache_provenance = _cache_provenance_from_run(
+        scientific_config=scientific,
+        execution_config_sha256=execution_hash,
+        p6_execution_config_sha256=p6_hash,
+        split=split,
+        initialization=initialization,
+        concept_best_checkpoint_path=concept_best_path,
+        predictor=concept_model,
+        manifest_path=manifest_path,
+        roi_index_path=roi_index_path,
+    )
+    expected_cache_uids = {
+        "train": list(map(str, split["partitions"]["train"]["nodule_uids"])),
+        "validation": list(
+            map(str, split["partitions"]["validation"]["nodule_uids"])
+        ),
+    }
+    cache_directory = output / "concept_cache"
+    cache_frames, cache_manifest = verify_train_validation_caches(
+        cache_directory, expected_cache_uids, cache_provenance
+    )
+    task_head, task_initialization = build_deterministic_task_head(
+        int(initialization["fold_seed"])
+    )
+    task_initialization.update(
+        {
+            "fold_seed": initialization["fold_seed"],
+            "encoder_initialization_sha256": initialization[
+                "encoder_initialization_sha256"
+            ],
+            "concept_head_initialization_sha256": initialization[
+                "concept_head_initialization_sha256"
+            ],
+            "combined_concept_head_initialization_sha256": initialization[
+                "combined_concept_head_initialization_sha256"
+            ],
+            "concept_best_checkpoint_sha256": sha256_file(concept_best_path),
+            "frozen_predictor_semantic_sha256": module_state_sha256(
+                concept_model
+            ),
+            "frozen_batchnorm_state_sha256": batchnorm_state_sha256(
+                concept_model
+            ),
+            "cache_manifest_sha256": sha256_file(
+                cache_directory / "cache_manifest.json"
+            ),
+        }
+    )
+    task_provenance = _p6_provenance(
+        scientific,
+        execution,
+        execution_hash,
+        p6_hash,
+        split,
+        task_initialization,
+        stage="task",
+    )
+    task_completion = verify_training_stage(
+        stage_name="task",
+        output_directory=output / "task_stage",
+        expected_provenance=task_provenance,
+        expected_epochs=int(execution["reference_reported"]["epochs"]),
+        objective_key="mse",
+        expected_train_samples=int(
+            split["partitions"]["train"]["summary"]["nodules"]
+        ),
+        require_h200_runtime=True,
+        expected_train_nodule_set_sha256=_uid_set_sha256(
+            split["partitions"]["train"]["nodule_uids"]
+        ),
+        expected_validation_samples=int(
+            split["partitions"]["validation"]["summary"]["nodules"]
+        ),
+        expected_validation_nodule_set_sha256=_uid_set_sha256(
+            split["partitions"]["validation"]["nodule_uids"]
+        ),
+    )
+    task_best = _load_stage_checkpoint(output / "task_stage" / "best.pt", task_provenance)
+    task_head.load_state_dict(task_best["module_state_dict"], strict=True)
+    task_head.eval()
+    task_head.to(device)
+    sequential_path = output / "sequential_training_complete.json"
+    if not sequential_path.is_file():
+        raise FileNotFoundError("P6_SEQUENTIAL_TRAINING_COMPLETION_MISSING")
+    sequential = json.loads(sequential_path.read_text(encoding="utf-8"))
+    predictor_hash = module_state_sha256(concept_model)
+    bn_hash = batchnorm_state_sha256(concept_model)
+    sequential_provenance = _p6_provenance(
+        scientific,
+        execution,
+        execution_hash,
+        p6_hash,
+        split,
+        task_initialization,
+        stage="sequential",
+    )
+    validate_sequential_completion(
+        sequential,
+        sequential_provenance,
+        concept_completion_sha256=sha256_file(
+            output / "concept_stage" / "training_complete.json"
+        ),
+        cache_manifest_sha256=sha256_file(
+            cache_directory / "cache_manifest.json"
+        ),
+        task_completion_sha256=sha256_file(
+            output / "task_stage" / "training_complete.json"
+        ),
+        predictor_semantic_sha256=predictor_hash,
+        batchnorm_state_sha256_value=bn_hash,
+    )
+    return {
+        "scientific": scientific,
+        "execution": execution,
+        "execution_hash": execution_hash,
+        "p6_hash": p6_hash,
+        "split": split,
+        "manifest": manifest,
+        "roi_index": roi_index,
+        "encoder_path": encoder_path,
+        "initialization": initialization,
+        "concept_provenance": concept_provenance,
+        "concept_completion": concept_completion,
+        "concept_model": concept_model,
+        "cache_provenance": cache_provenance,
+        "cache_frames": cache_frames,
+        "cache_manifest": cache_manifest,
+        "task_provenance": task_provenance,
+        "task_completion": task_completion,
+        "task_head": task_head,
+        "task_best": task_best,
+        "sequential": sequential,
+        "output": output,
+    }
+
+
+def validate_sequential_completion(
+    sequential: Mapping[str, Any],
+    expected_provenance: Mapping[str, Any],
+    *,
+    concept_completion_sha256: str,
+    cache_manifest_sha256: str,
+    task_completion_sha256: str,
+    predictor_semantic_sha256: str,
+    batchnorm_state_sha256_value: str,
+) -> None:
+    if any(sequential.get(key) != value for key, value in expected_provenance.items()):
+        raise ValueError("P6_SEQUENTIAL_TRAINING_PROVENANCE_MISMATCH")
+    if (
+        sequential.get("status")
+        != "SEQUENTIAL_TRAINING_COMPLETE_TEST_NOT_EVALUATED"
+        or sequential.get("test_concepts_generated") is not False
+        or sequential.get("test_evaluated") is not False
+        or sequential.get("cache_partitions") != ["train", "validation"]
+        or sequential.get("concept_completion_sha256")
+        != concept_completion_sha256
+        or sequential.get("cache_manifest_sha256") != cache_manifest_sha256
+        or sequential.get("task_completion_sha256") != task_completion_sha256
+    ):
+        raise ValueError("P6_SEQUENTIAL_TRAINING_COMPLETION_MISMATCH")
+    if (
+        sequential.get("frozen_predictor_semantic_sha256_before_task")
+        != predictor_semantic_sha256
+        or sequential.get("frozen_predictor_semantic_sha256_after_task")
+        != predictor_semantic_sha256
+        or sequential.get("frozen_batchnorm_state_sha256_before_task")
+        != batchnorm_state_sha256_value
+        or sequential.get("frozen_batchnorm_state_sha256_after_task")
+        != batchnorm_state_sha256_value
+    ):
+        raise ValueError("P6_FROZEN_PREDICTOR_TASK_INVARIANT_MISMATCH")
+
+
+def _test_prediction_provenance(context: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "scientific_config_sha256": compute_config_sha256(context["scientific"]),
+        "execution_config_sha256": context["execution_hash"],
+        "p6_execution_config_sha256": context["p6_hash"],
+        "split_sha256": context["split"]["split_sha256"],
+        "fold_index": int(context["split"]["fold_index"]),
+        "fold_seed": int(context["initialization"]["fold_seed"]),
+        "encoder_initialization_sha256": context["initialization"][
+            "encoder_initialization_sha256"
+        ],
+        "encoder_artifact_file_sha256": context["initialization"][
+            "encoder_artifact_file_sha256"
+        ],
+        "concept_head_initialization_sha256": json.dumps(
+            context["initialization"]["concept_head_initialization_sha256"],
+            separators=(",", ":"),
+            sort_keys=True,
+        ),
+        "combined_concept_head_initialization_sha256": context["initialization"][
+            "combined_concept_head_initialization_sha256"
+        ],
+        "concept_best_checkpoint_sha256": context["cache_provenance"][
+            "concept_best_checkpoint_sha256"
+        ],
+        "frozen_predictor_semantic_sha256": context["cache_provenance"][
+            "predictor_semantic_sha256"
+        ],
+        "cache_manifest_sha256": sha256_file(
+            context["output"] / "concept_cache" / "cache_manifest.json"
+        ),
+        "task_head_initialization_sha256": context["task_provenance"][
+            "task_head_initialization_sha256"
+        ],
+        "task_head_initialization_seed": int(
+            context["task_provenance"]["task_head_initialization_seed"]
+        ),
+        "task_best_checkpoint_sha256": sha256_file(
+            context["output"] / "task_stage" / "best.pt"
+        ),
+        "source_manifest_sha256": context["cache_provenance"][
+            "source_manifest_sha256"
+        ],
+        "source_roi_index_sha256": context["cache_provenance"][
+            "source_roi_index_sha256"
+        ],
+    }
+
+
+def _test_prediction_rows(
+    concept_frame: pd.DataFrame,
+    task_head: Any,
+    device: Any,
+    provenance: Mapping[str, Any],
+) -> pd.DataFrame:
+    torch = _torch()
+    vectors = torch.from_numpy(ensure_predicted_cache_features(concept_frame)).to(
+        device=device, dtype=torch.float32
+    )
+    task_head.eval()
+    with torch.no_grad():
+        outputs = task_predictions_and_contributions(task_head, vectors)
+    score = outputs["malignancy_raw_score"].detach().cpu().reshape(-1).numpy()
+    score_1_to_5 = outputs["malignancy_score_1_to_5"].detach().cpu().reshape(-1).numpy()
+    raw_bias = float(outputs["raw_bias"].detach().cpu().reshape(-1)[0])
+    rating_bias = float(outputs["rating_scale_bias"].detach().cpu().reshape(-1)[0])
+    rows: list[dict[str, Any]] = []
+    for index, source in concept_frame.reset_index(drop=True).iterrows():
+        row = dict(source)
+        row.update(
+            {
+                "malignancy_raw_score": float(score[index]),
+                "malignancy_score_normalized": float(score[index]),
+                "malignancy_score_1_to_5": float(score_1_to_5[index]),
+                "raw_bias": raw_bias,
+                "rating_scale_bias": rating_bias,
+                **dict(provenance),
+            }
+        )
+        raw_sum = raw_bias
+        rating_sum = rating_bias
+        for group in CONCEPT_GROUP_ORDER:
+            raw = float(
+                outputs["raw_group_contributions"][group]
+                .detach()
+                .cpu()
+                .reshape(-1)[index]
+            )
+            rating = float(
+                outputs["rating_point_contributions"][group]
+                .detach()
+                .cpu()
+                .reshape(-1)[index]
+            )
+            row[f"{group}_raw_contribution"] = raw
+            row[f"{group}_rating_point_contribution"] = rating
+            raw_sum += raw
+            rating_sum += rating
+        if abs(raw_sum - float(score[index])) > 1e-6:
+            raise ValueError("P6_TEST_NORMALIZED_RECONSTRUCTION_FAILED")
+        if abs(rating_sum - float(score_1_to_5[index])) > 1e-6:
+            raise ValueError("P6_TEST_RATING_RECONSTRUCTION_FAILED")
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _validate_test_predictions(
+    frame: pd.DataFrame,
+    expected_uids: Sequence[str],
+    provenance: Mapping[str, Any],
+) -> None:
+    required_columns = {
+        "nodule_uid",
+        "patient_key",
+        "canonical_activated_concepts",
+        "feature_source",
+        "feature_dimension",
+        "concept_targets",
+        "valid_reader_counts",
+        "internalStructure_modal_tie",
+        "calcification_modal_tie",
+        "target_normalized",
+        "target_1_to_5",
+        "extreme_binary_eligible",
+        "extreme_binary_label",
+        "malignancy_raw_score",
+        "malignancy_score_normalized",
+        "malignancy_score_1_to_5",
+        "raw_bias",
+        "rating_scale_bias",
+        *(
+            f"{group}_{suffix}"
+            for group in CONCEPT_GROUP_ORDER
+            for suffix in (
+                "logits",
+                "activated_prediction",
+                "raw_contribution",
+                "rating_point_contribution",
+            )
+        ),
+    }
+    missing = required_columns - set(frame.columns)
+    if missing:
+        raise ValueError("P6_TEST_PREDICTION_SCHEMA_MISSING")
+    vectors = ensure_predicted_cache_features(frame)
+    observed = list(map(str, frame["nodule_uid"]))
+    expected = list(map(str, expected_uids))
+    if (
+        len(observed) != len(set(observed))
+        or len(expected) != len(set(expected))
+        or set(observed) != set(expected)
+        or len(observed) != len(expected)
+    ):
+        raise ValueError("P6_TEST_PREDICTION_UID_SET_MISMATCH")
+    for key, value in provenance.items():
+        if key not in frame or set(frame[key]) != {value}:
+            raise ValueError(f"P6_TEST_PREDICTION_PROVENANCE_MISMATCH:{key}")
+    if not np.array_equal(
+        frame["malignancy_raw_score"].to_numpy(),
+        frame["malignancy_score_normalized"].to_numpy(),
+    ):
+        raise ValueError("P6_TEST_SCORE_ALIAS_MISMATCH")
+    for row_index, row in frame.reset_index(drop=True).iterrows():
+        activated_pieces: list[float] = []
+        targets = json.loads(str(row["concept_targets"]))
+        valid_counts = json.loads(str(row["valid_reader_counts"]))
+        if set(targets) != set(CONCEPT_GROUP_ORDER) or set(valid_counts) != set(
+            CONCEPT_GROUP_ORDER
+        ):
+            raise ValueError("P6_TEST_CONCEPT_TARGET_SCHEMA_MISMATCH")
+        for group, size in CONCEPT_OUTPUT_SIZES.items():
+            logits = np.asarray(json.loads(str(row[f"{group}_logits"])), dtype=np.float64)
+            activated = np.asarray(
+                json.loads(str(row[f"{group}_activated_prediction"])),
+                dtype=np.float64,
+            )
+            if logits.shape != (size,) or activated.shape != (size,):
+                raise ValueError(f"P6_TEST_CONCEPT_SHAPE_MISMATCH:{group}")
+            if not np.isfinite(logits).all() or not np.isfinite(activated).all():
+                raise ValueError(f"P6_TEST_CONCEPT_NONFINITE:{group}")
+            if np.any(activated < 0.0) or np.any(activated > 1.0):
+                raise ValueError(f"P6_TEST_CONCEPT_ACTIVATION_RANGE:{group}")
+            if group in CATEGORICAL_CONCEPTS:
+                shifted = logits - logits.max()
+                expected_activation = np.exp(shifted) / np.exp(shifted).sum()
+            else:
+                from scipy.special import expit
+
+                expected_activation = expit(logits)
+            if not np.allclose(
+                activated, expected_activation, atol=1e-6, rtol=0.0
+            ):
+                raise ValueError(f"P6_TEST_LOGIT_ACTIVATION_MISMATCH:{group}")
+            if group in CATEGORICAL_CONCEPTS and not np.isclose(
+                activated.sum(), 1.0, atol=1e-6, rtol=0.0
+            ):
+                raise ValueError(f"P6_TEST_CONCEPT_PROBABILITY_SUM:{group}")
+            target = np.asarray(targets[group], dtype=np.float64).reshape(-1)
+            if target.shape != (size,) or not np.isfinite(target).all():
+                raise ValueError(f"P6_TEST_CONCEPT_TARGET_SHAPE:{group}")
+            if np.any(target < 0.0) or np.any(target > 1.0):
+                raise ValueError(f"P6_TEST_CONCEPT_TARGET_RANGE:{group}")
+            if group in CATEGORICAL_CONCEPTS and not np.isclose(
+                target.sum(), 1.0, atol=1e-6, rtol=0.0
+            ):
+                raise ValueError(f"P6_TEST_CONCEPT_TARGET_SUM:{group}")
+            count = valid_counts[group]
+            if not isinstance(count, int) or isinstance(count, bool) or count < 1:
+                raise ValueError(f"P6_TEST_VALID_READER_COUNT:{group}")
+            activated_pieces.extend(map(float, activated))
+        if not np.allclose(
+            np.asarray(activated_pieces, dtype=np.float32),
+            vectors[row_index],
+            atol=1e-6,
+            rtol=0.0,
+        ):
+            raise ValueError("P6_TEST_CANONICAL_VECTOR_CONTENT_MISMATCH")
+        if not isinstance(row["internalStructure_modal_tie"], (bool, np.bool_)) or not isinstance(
+            row["calcification_modal_tie"], (bool, np.bool_)
+        ):
+            raise ValueError("P6_TEST_CATEGORICAL_TIE_TYPE_MISMATCH")
+        for group, tie_column in (
+            ("internalStructure", "internalStructure_modal_tie"),
+            ("calcification", "calcification_modal_tie"),
+        ):
+            distribution = np.asarray(targets[group], dtype=np.float64)
+            expected_tie = bool(
+                np.count_nonzero(
+                    np.isclose(
+                        distribution,
+                        distribution.max(),
+                        atol=1e-12,
+                        rtol=0.0,
+                    )
+                )
+                > 1
+            )
+            if bool(row[tie_column]) != expected_tie:
+                raise ValueError(f"P6_TEST_CATEGORICAL_TIE_SEMANTIC_MISMATCH:{group}")
+        raw_score = float(row["malignancy_raw_score"])
+        score_1_to_5 = float(row["malignancy_score_1_to_5"])
+        target_normalized = float(row["target_normalized"])
+        target_1_to_5 = float(row["target_1_to_5"])
+        numeric = [
+            raw_score,
+            score_1_to_5,
+            target_normalized,
+            target_1_to_5,
+            float(row["raw_bias"]),
+            float(row["rating_scale_bias"]),
+            *(
+                float(row[f"{group}_{suffix}"])
+                for group in CONCEPT_GROUP_ORDER
+                for suffix in (
+                    "raw_contribution",
+                    "rating_point_contribution",
+                )
+            ),
+        ]
+        if not np.isfinite(np.asarray(numeric, dtype=np.float64)).all():
+            raise ValueError("P6_TEST_NUMERIC_NONFINITE")
+        if not 0.0 <= target_normalized <= 1.0 or abs(
+            target_1_to_5 - (1.0 + 4.0 * target_normalized)
+        ) > 1e-6:
+            raise ValueError("P6_TEST_TARGET_SCALE_CONVERSION_FAILED")
+        eligibility = row["extreme_binary_eligible"]
+        if not isinstance(eligibility, (bool, np.bool_)):
+            raise ValueError("P6_TEST_EXTREME_ELIGIBILITY_TYPE_MISMATCH")
+        label = row["extreme_binary_label"]
+        if target_1_to_5 <= 2.0:
+            if (
+                not bool(eligibility)
+                or isinstance(label, (bool, np.bool_))
+                or not isinstance(label, (int, float, np.integer, np.floating))
+                or not math.isfinite(float(label))
+                or float(label) != 0.0
+            ):
+                raise ValueError("P6_TEST_EXTREME_LOW_LABEL_MISMATCH")
+        elif target_1_to_5 >= 4.0:
+            if (
+                not bool(eligibility)
+                or isinstance(label, (bool, np.bool_))
+                or not isinstance(label, (int, float, np.integer, np.floating))
+                or not math.isfinite(float(label))
+                or float(label) != 1.0
+            ):
+                raise ValueError("P6_TEST_EXTREME_HIGH_LABEL_MISMATCH")
+        elif bool(eligibility) or not pd.isna(label):
+            raise ValueError("P6_TEST_EXTREME_MIDDLE_LABEL_MISMATCH")
+        if abs(score_1_to_5 - (1.0 + 4.0 * raw_score)) > 1e-6:
+            raise ValueError("P6_TEST_SCORE_SCALE_CONVERSION_FAILED")
+        if abs(float(row["rating_scale_bias"]) - (1.0 + 4.0 * float(row["raw_bias"]))) > 1e-6:
+            raise ValueError("P6_TEST_BIAS_SCALE_CONVERSION_FAILED")
+        raw = float(row["raw_bias"]) + sum(
+            float(row[f"{group}_raw_contribution"])
+            for group in CONCEPT_GROUP_ORDER
+        )
+        rating = float(row["rating_scale_bias"]) + sum(
+            float(row[f"{group}_rating_point_contribution"])
+            for group in CONCEPT_GROUP_ORDER
+        )
+        if abs(raw - float(row["malignancy_raw_score"])) > 1e-6:
+            raise ValueError("P6_TEST_NORMALIZED_RECONSTRUCTION_FAILED")
+        if abs(rating - float(row["malignancy_score_1_to_5"])) > 1e-6:
+            raise ValueError("P6_TEST_RATING_RECONSTRUCTION_FAILED")
+        for group in CONCEPT_GROUP_ORDER:
+            if abs(
+                float(row[f"{group}_rating_point_contribution"])
+                - 4.0 * float(row[f"{group}_raw_contribution"])
+            ) > 1e-6:
+                raise ValueError(
+                    f"P6_TEST_CONTRIBUTION_SCALE_CONVERSION_FAILED:{group}"
+                )
+
+
+def _seal_test_evaluation(
+    *,
+    output: Path,
+    predictions: pd.DataFrame,
+    expected_uids: Sequence[str],
+    provenance: Mapping[str, Any],
+    claim_sha256: str,
+) -> dict[str, Any]:
+    _validate_test_predictions(predictions, expected_uids, provenance)
+    metrics = regression_metrics(predictions.to_dict(orient="records"))
+    _atomic_json(output / "metrics.json", metrics)
+    evaluation = {
+        **dict(provenance),
+        "status": "TEST_EVALUATED_EXACTLY_ONCE",
+        "test_samples": int(len(predictions)),
+        "test_inference_transactions": 1,
+        "test_claim_sha256": claim_sha256,
+        "test_predictions_sha256": sha256_file(output / "test_predictions.parquet"),
+        "metrics_sha256": sha256_file(output / "metrics.json"),
+    }
+    _atomic_json(output / "test_evaluation.json", evaluation)
+    return evaluation
+
+
+def _validate_test_claim(
+    claim_path: Path,
+    provenance: Mapping[str, Any],
+    expected_test_samples: int,
+) -> tuple[dict[str, Any], str]:
+    if not claim_path.is_file():
+        raise FileNotFoundError("P6_TEST_CLAIM_MISSING")
+    claim = json.loads(claim_path.read_text(encoding="utf-8"))
+    if (
+        claim.get("schema_version") != SCHEMA_VERSION
+        or claim.get("status") != "TEST_INFERENCE_CLAIMED"
+        or claim.get("expected_test_samples") != expected_test_samples
+        or any(claim.get(key) != value for key, value in provenance.items())
+    ):
+        raise ValueError("P6_TEST_CLAIM_PROVENANCE_MISMATCH")
+    return claim, sha256_file(claim_path)
+
+
+def _validate_metrics_file(path: Path, predictions: pd.DataFrame) -> dict[str, Any]:
+    if not path.is_file():
+        raise FileNotFoundError("P6_TEST_METRICS_MISSING")
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    reconstructed = regression_metrics(predictions.to_dict(orient="records"))
+    if set(stored) != set(reconstructed):
+        raise ValueError("P6_TEST_METRICS_SCHEMA_MISMATCH")
+    for key, expected in reconstructed.items():
+        observed = stored[key]
+        if isinstance(expected, int):
+            if observed != expected:
+                raise ValueError(f"P6_TEST_METRIC_MISMATCH:{key}")
+        elif not math.isclose(
+            float(observed), float(expected), rel_tol=1e-12, abs_tol=1e-12
+        ):
+            raise ValueError(f"P6_TEST_METRIC_MISMATCH:{key}")
+    return stored
+
+
+def evaluate_test_once(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    num_workers: int,
+    output_root: Path,
+) -> dict[str, Any]:
+    output = run_directory(fold_index, output_root)
+    with exclusive_fold_lifecycle_lock(output / ".p6_lifecycle.lock"):
+        return _evaluate_test_once_locked(
+            scientific_config_path=scientific_config_path,
+            execution_config_path=execution_config_path,
+            p6_execution_config_path=p6_execution_config_path,
+            manifest_path=manifest_path,
+            roi_index_path=roi_index_path,
+            fold_index=fold_index,
+            device_name=device_name,
+            num_workers=num_workers,
+            output_root=output_root,
+        )
+
+
+def _evaluate_test_once_locked(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    device_name: str,
+    num_workers: int,
+    output_root: Path,
+) -> dict[str, Any]:
+    torch = _torch()
+    device = torch.device(device_name)
+    context = _prepare_trained_context(
+        scientific_config_path=scientific_config_path,
+        execution_config_path=execution_config_path,
+        p6_execution_config_path=p6_execution_config_path,
+        manifest_path=manifest_path,
+        roi_index_path=roi_index_path,
+        fold_index=fold_index,
+        output_root=output_root,
+        device=device,
+    )
+    output = context["output"]
+    expected_uids = list(
+        map(str, context["split"]["partitions"]["test"]["nodule_uids"])
+    )
+    provenance = _test_prediction_provenance(context)
+    evaluation_path = output / "test_evaluation.json"
+    prediction_path = output / "test_predictions.parquet"
+    claim_path = output / "test_claim.json"
+    if evaluation_path.exists():
+        evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+        predictions = pd.read_parquet(prediction_path)
+        _validate_test_predictions(predictions, expected_uids, provenance)
+        _claim, claim_sha = _validate_test_claim(
+            claim_path, provenance, len(expected_uids)
+        )
+        _validate_metrics_file(output / "metrics.json", predictions)
+        if (
+            evaluation.get("status") != "TEST_EVALUATED_EXACTLY_ONCE"
+            or any(evaluation.get(key) != value for key, value in provenance.items())
+            or evaluation.get("test_inference_transactions") != 1
+            or evaluation.get("test_samples") != len(expected_uids)
+            or evaluation.get("test_claim_sha256") != claim_sha
+            or evaluation.get("test_predictions_sha256") != sha256_file(prediction_path)
+            or evaluation.get("metrics_sha256") != sha256_file(output / "metrics.json")
+        ):
+            raise ValueError("P6_TEST_EVALUATION_MISMATCH")
+        return evaluation
+    if prediction_path.exists():
+        _claim, claim_sha = _validate_test_claim(
+            claim_path, provenance, len(expected_uids)
+        )
+        predictions = pd.read_parquet(prediction_path)
+        return _seal_test_evaluation(
+            output=output,
+            predictions=predictions,
+            expected_uids=expected_uids,
+            provenance=provenance,
+            claim_sha256=claim_sha,
+        )
+    if claim_path.exists():
+        raise RuntimeError("P6_TEST_CLAIM_EXISTS_WITHOUT_PREDICTIONS_MANUAL_AUDIT_REQUIRED")
+    claim = {
+        "schema_version": SCHEMA_VERSION,
+        **provenance,
+        "status": "TEST_INFERENCE_CLAIMED",
+        "expected_test_samples": len(expected_uids),
+    }
+    _atomic_json(claim_path, claim)
+    _claim, claim_sha = _validate_test_claim(
+        claim_path, provenance, len(expected_uids)
+    )
+    test_records = build_partition_concept_records(
+        context["manifest"],
+        context["roi_index"],
+        context["split"],
+        "test",
+        roi_index_path,
+    )
+    batch_size = int(
+        context["execution"]["project_preregistered"]["batching"][
+            "micro_batch_size"
+        ]
+    )
+    concept_frame = predict_concept_cache_frame(
+        context["concept_model"],
+        test_records,
+        device,
+        partition="test",
+        batch_size=batch_size,
+        num_workers=num_workers,
+        task_best_checkpoint_sha256=sha256_file(
+            context["output"] / "task_stage" / "best.pt"
+        ),
+    )
+    predictions = _test_prediction_rows(
+        concept_frame, context["task_head"], device, provenance
+    )
+    _atomic_parquet(prediction_path, predictions)
+    return _seal_test_evaluation(
+        output=output,
+        predictions=predictions,
+        expected_uids=expected_uids,
+        provenance=provenance,
+        claim_sha256=claim_sha,
+    )
+
+
+def verify_fold(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    fold_index: int,
+    output_root: Path,
+    require_test: bool,
+) -> dict[str, Any]:
+    torch = _torch()
+    with exclusive_fold_lifecycle_lock(
+        run_directory(fold_index, output_root) / ".p6_lifecycle.lock"
+    ):
+        context = _prepare_trained_context(
+            scientific_config_path=scientific_config_path,
+            execution_config_path=execution_config_path,
+            p6_execution_config_path=p6_execution_config_path,
+            manifest_path=manifest_path,
+            roi_index_path=roi_index_path,
+            fold_index=fold_index,
+            output_root=output_root,
+            device=torch.device("cpu"),
+        )
+        result = {
+            "status": "PASS",
+            "fold_index": fold_index,
+            "concept_epochs": context["concept_completion"]["epochs_completed"],
+            "task_epochs": context["task_completion"]["epochs_completed"],
+            "concept_best_epoch_index": context["concept_completion"][
+                "best_epoch_index"
+            ],
+            "task_best_epoch_index": context["task_completion"]["best_epoch_index"],
+            "train_samples_per_epoch": int(
+                context["split"]["partitions"]["train"]["summary"]["nodules"]
+            ),
+            "test_evaluated_once": False,
+        }
+        if require_test:
+            output = context["output"]
+            evaluation_path = output / "test_evaluation.json"
+            if not evaluation_path.is_file():
+                raise FileNotFoundError("P6_TEST_EVALUATION_MISSING")
+            evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+            predictions = pd.read_parquet(output / "test_predictions.parquet")
+            expected_uids = list(
+                map(
+                    str,
+                    context["split"]["partitions"]["test"]["nodule_uids"],
+                )
+            )
+            provenance = _test_prediction_provenance(context)
+            _validate_test_predictions(predictions, expected_uids, provenance)
+            _claim, claim_sha = _validate_test_claim(
+                output / "test_claim.json", provenance, len(expected_uids)
+            )
+            _validate_metrics_file(output / "metrics.json", predictions)
+            if (
+                evaluation.get("status") != "TEST_EVALUATED_EXACTLY_ONCE"
+                or any(
+                    evaluation.get(key) != value
+                    for key, value in provenance.items()
+                )
+                or evaluation.get("test_inference_transactions") != 1
+                or evaluation.get("test_samples") != len(expected_uids)
+                or evaluation.get("test_claim_sha256") != claim_sha
+                or evaluation.get("test_predictions_sha256")
+                != sha256_file(output / "test_predictions.parquet")
+                or evaluation.get("metrics_sha256")
+                != sha256_file(output / "metrics.json")
+            ):
+                raise ValueError("P6_TEST_EVALUATION_MISMATCH")
+            result["test_evaluated_once"] = True
+            result["test_samples"] = len(expected_uids)
+        return result
+
+
+def verify_all(
+    *,
+    scientific_config_path: Path,
+    execution_config_path: Path,
+    p6_execution_config_path: Path,
+    manifest_path: Path,
+    roi_index_path: Path,
+    output_root: Path,
+) -> dict[str, Any]:
+    folds = [
+        verify_fold(
+            scientific_config_path=scientific_config_path,
+            execution_config_path=execution_config_path,
+            p6_execution_config_path=p6_execution_config_path,
+            manifest_path=manifest_path,
+            roi_index_path=roi_index_path,
+            fold_index=fold,
+            output_root=output_root,
+            require_test=True,
+        )
+        for fold in range(5)
+    ]
+    return {
+        "status": "PASS",
+        "folds": folds,
+        "test_samples": sum(int(fold["test_samples"]) for fold in folds),
+    }
+
+
+def _common_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--config", type=Path, default=Path("configs/baseline_v2.yaml"))
+    parser.add_argument(
+        "--execution-config",
+        type=Path,
+        default=Path(
+            "configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml"
+        ),
+    )
+    parser.add_argument(
+        "--p6-execution-config",
+        type=Path,
+        default=P6_EXECUTION_CONFIG_DEFAULT,
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("artifacts/baseline_v2/manifests/nodules.parquet"),
+    )
+    parser.add_argument(
+        "--roi-index",
+        type=Path,
+        default=Path("artifacts/baseline_v2/manifests/roi_index.parquet"),
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path("runs/baseline_v2/standard_cbm"),
+    )
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    train_parser = commands.add_parser("train")
+    _common_arguments(train_parser)
+    train_parser.add_argument("--fold", type=int, choices=range(5), required=True)
+    train_parser.add_argument("--device", default="cuda")
+    train_parser.add_argument("--num-workers", type=int, default=4)
+    train_parser.add_argument("--resume", action="store_true")
+    evaluate_parser = commands.add_parser("evaluate-test")
+    _common_arguments(evaluate_parser)
+    evaluate_parser.add_argument("--fold", type=int, choices=range(5), required=True)
+    evaluate_parser.add_argument("--device", default="cuda")
+    evaluate_parser.add_argument("--num-workers", type=int, default=4)
+    verify_parser = commands.add_parser("verify")
+    _common_arguments(verify_parser)
+    scope = verify_parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("--fold", type=int, choices=range(5))
+    scope.add_argument("--scope", choices=("all",))
+    verify_parser.add_argument("--require-test", action="store_true")
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    common = {
+        "scientific_config_path": args.config,
+        "execution_config_path": args.execution_config,
+        "p6_execution_config_path": args.p6_execution_config,
+        "manifest_path": args.manifest,
+        "roi_index_path": args.roi_index,
+        "output_root": args.output_root,
+    }
+    if args.command == "train":
+        result = train_fold(
+            **common,
+            fold_index=args.fold,
+            device_name=args.device,
+            num_workers=args.num_workers,
+            resume=args.resume,
+        )
+    elif args.command == "evaluate-test":
+        result = evaluate_test_once(
+            **common,
+            fold_index=args.fold,
+            device_name=args.device,
+            num_workers=args.num_workers,
+        )
+    elif args.scope == "all":
+        if not args.require_test:
+            raise ValueError("P6_VERIFY_ALL_REQUIRES_TEST")
+        result = verify_all(**common)
+    else:
+        result = verify_fold(
+            **common,
+            fold_index=args.fold,
+            require_test=args.require_test,
+        )
+    print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
