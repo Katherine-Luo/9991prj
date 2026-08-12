@@ -6,10 +6,18 @@ from pathlib import Path
 import pytest
 
 from lidc_baseline.p10_audit import (
+    P10_DEVELOPMENT_FILES,
     _source_manifest_sha256,
     validate_git_candidates,
     verify_audit,
 )
+
+
+def test_generated_pdf_and_svg_git_attributes_are_whitespace_safe() -> None:
+    assert ".gitattributes" in P10_DEVELOPMENT_FILES
+    attributes = Path(".gitattributes").read_text(encoding="utf-8")
+    assert "reports/baseline_v2/p10/public/**/*.pdf binary" in attributes
+    assert "reports/baseline_v2/p10/public/**/*.svg binary" in attributes
 
 
 def test_source_manifest_is_order_invariant_and_hash_bound() -> None:

@@ -10,7 +10,7 @@
   "pdfs": {
     "short_en": {
       "page_count": 12,
-      "pdf_sha256": "56a37d8c914bf11e463aec1c38e0f3cd6aa41182e5b6d42255fb26ea873f7193",
+      "pdf_sha256": "3a7345ed0887d9543179550989f8e80a274af90c0e5dfdffe47fc21b7ceb1329",
       "rendered_pages": [
         {
           "height": 936,
@@ -100,7 +100,7 @@
     },
     "short_zh": {
       "page_count": 12,
-      "pdf_sha256": "6130319690f47058b782fc013bd647fef8601198eb1c5eb6bb045fd158db8a95",
+      "pdf_sha256": "8a1d397b7d55a039ff089f9d353c548765abbe1a10ea8c22ff71bed94d519b1f",
       "rendered_pages": [
         {
           "height": 936,
@@ -190,7 +190,7 @@
     },
     "technical_en": {
       "page_count": 32,
-      "pdf_sha256": "f226560cddc4a563ff22aa18b8d637007e8d0b8d829374ee1d472a85f80ee046",
+      "pdf_sha256": "1c355d7af27d948b377455ae5f548864c81d191e96290d1e79e7e2f54d85f1cc",
       "rendered_pages": [
         {
           "height": 936,
@@ -420,7 +420,7 @@
     },
     "technical_zh": {
       "page_count": 32,
-      "pdf_sha256": "d84052ea5199a0a155c59fe4bc03c372b79d7d8b3f2da507989e63c74108d83c",
+      "pdf_sha256": "71bfb16e9a55972beef565d775adf19506e23ab43061d2a3af56211435357adb",
       "rendered_pages": [
         {
           "height": 936,

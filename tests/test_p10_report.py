@@ -165,7 +165,9 @@ def test_shared_tables_are_machine_readable_and_complete(tmp_path: Path) -> None
     assert sum(row["scope"] == "pooled_model" for row in faithfulness_rows) == 8
     dictionary_fields = {row["field"] for row in _data_dictionary_rows("en")}
     for path in paths:
-        columns = path.read_text(encoding="utf-8").splitlines()[0].split(",")
+        raw = path.read_bytes()
+        assert b"\r\n" not in raw
+        columns = raw.decode("utf-8").splitlines()[0].split(",")
         assert set(columns) <= dictionary_fields
     assert [row["field"] for row in _data_dictionary_rows("en")] == [
         row["field"] for row in _data_dictionary_rows("zh")

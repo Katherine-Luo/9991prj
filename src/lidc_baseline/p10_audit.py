@@ -30,6 +30,7 @@ FONT_PATH = Path("/System/Library/Fonts/Supplemental/Songti.ttc")
 REPORT_NAMES = ("report", "archive", "integrity", "summary")
 MAX_GIT_FILE_BYTES = 10 * 1024 * 1024
 P10_DEVELOPMENT_FILES = {
+    ".gitattributes",
     ".gitignore",
     "pyproject.toml",
     "docs/PROJECT_STATUS.md",
