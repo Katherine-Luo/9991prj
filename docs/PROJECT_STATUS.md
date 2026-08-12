@@ -15,12 +15,12 @@ active_bug_ids: [BUG-P8-002]
 resume_phase: P8
 next_phase: P9
 last_updated: 2026-08-12
-last_verified_commit: 377dbeb
+last_verified_commit: 81e7f33
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`437ce85`。P8五折科学执行与唯一有效committed test evaluations均已完成，但final verifier受`BUG-P8-002`的两个实现问题阻断；当前只允许verifier-only维护，P9保持`NOT_STARTED / AT_RISK`且不得启动。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`437ce85`。P8五折科学执行与唯一有效committed test evaluations均已完成；`BUG-P8-002`的两个verifier实现修复已在本地通过，当前仍等待remote existing-artifact final verify。P8继续阻断，P9保持`NOT_STARTED / AT_RISK`且不得启动。
 
 ## 1. 阅读规则
 
@@ -41,12 +41,12 @@ last_verified_commit: 377dbeb
 | 当前开发阶段 | `P8 End-to-end CBM + Learned-softmax GAM Regression` |
 | 阶段状态 | `BLOCKED / AT_RISK` |
 | 维护目标阶段 | `P8` |
-| 活动 Bug | `BUG-P8-002`（`INVESTIGATING`；仅限final verifier实现修复） |
-| 当前阻塞项 | 五折训练、checkpoint选择与唯一有效committed test evaluation均已完成；当前仅有两处verifier implementation阻断：FP32 softmax reconstruction不一致，以及Parquet读取后的NumPy array provenance comparison不正确。 |
-| 恢复阶段 | `P8`（修复后只对现有artifacts运行final verify；五折全部`PASS`后才允许CPU OOF） |
+| 活动 Bug | `BUG-P8-002`（`VERIFYING`；两处verifier-only代码修复已通过本地测试，尚待remote existing-artifact final verify） |
+| 当前阻塞项 | 五折训练、checkpoint选择与唯一有效committed test evaluation均已完成且artifacts未修改；两处verifier implementation修复已在本地通过，但remote五折existing-artifact final verifier尚未重跑。 |
+| 恢复阶段 | `P8`（只对现有artifacts运行remote final verify；五折全部`PASS`后才允许CPU OOF） |
 | 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED / AT_RISK`；P8 final verify与CPU OOF完成前禁止启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | 修复后的10-file exact manifest与有效H200 Stage A job `8978425`仍为`PASS`；旧job `8978152`仍分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt。Formal Fold 0–4 jobs=`8978475/8978478/8978477/8978474/8978476`均已完成80 epochs；best epochs=`10/28/32/15/22`，completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`且各只有一个valid committed evaluation。Fold 1/2/4的PBS automatic rerun/hold事件保留为scheduler execution audit，不改变上述训练/test事务结论，也不授权replacement。Phase Compliance Reviewer判定科学artifacts保持有效，当前仅`BUG-P8-002`的两处final-verifier实现问题阻断；禁止重训、再次test inference或修改existing checkpoints/history/predictions/metrics/evaluation的科学值。 |
+| 状态依据 | 修复后的10-file exact manifest与有效H200 Stage A job `8978425`仍为`PASS`；旧job `8978152`仍分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt。Formal Fold 0–4 jobs=`8978475/8978478/8978477/8978474/8978476`均已完成80 epochs；best epochs=`10/28/32/15/22`，completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`且各只有一个valid committed evaluation。Fold 1/2/4的PBS automatic rerun/hold事件保留为scheduler execution audit。`BUG-P8-002`的FP32 softmax与nested Parquet provenance comparator修复仅涉及`p8_gam_lifecycle.py`及其tests，并已由commit `81e7f33`封存；direct/full=`20/280 passed`、3条既有warnings，Phase Compliance及diff/AST/frozen checks均`PASS`。Remote verifier尚未重跑，CPU OOF尚未构建；禁止重训、再次test inference或修改existing checkpoints/history/predictions/metrics/evaluation的科学值。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -89,15 +89,17 @@ last_verified_commit: 377dbeb
 - Formal Fold 0–4 jobs=`8978475/8978478/8978477/8978474/8978476`均已完成固定80 epochs；minimum-validation-`L_GAM` best epochs依次为`10/28/32/15/22`，对应validation total loss依次为`0.07589372691547717/0.08197871722659196/0.06489942763744191/0.07138819607469593/0.07566188919300593`。Existing training histories与best checkpoints保持有效，不得重训或重选checkpoint。
 - 五折completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`；test sample counts依次为`479/502/539/549/564`，每折只有一个valid committed test evaluation。禁止再次执行test inference或修改existing predictions、metrics、evaluation scientific values。
 - Fold 1、2、4在PBS层出现过automatic rerun/hold；该scheduler lifecycle作为执行审计保留。其现有80-epoch histories、best checkpoints及单次committed test事务完整，automatic rerun/hold不构成额外有效test、replacement或重新执行授权。
+- `BUG-P8-002`的两处verifier-only代码修复已在本地实施，改动仅限`src/lidc_baseline/p8_gam_lifecycle.py`与`tests/test_p8_gam.py`。Alpha路径将persisted logits显式恢复为float32，并以PyTorch CPU FP32 softmax重建；simplex使用`atol=2e-7`，persisted/recomputed weights使用`atol=2e-7, rtol=1e-6`，真实roundoff positive case通过而`1e-4` corruption negative case阻断。
+- Nested Parquet provenance comparator对array使用`array_equal`精确比较、对floating values使用`allclose(atol=1e-12, rtol=1e-12)`，并覆盖identical、different与shape-mismatch cases。P8 direct测试为`20 passed`，完整测试为`280 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer及diff/AST/frozen checks均为`PASS`。功能commit为`81e7f33`（local, unpushed），remote existing-artifact final verifier尚未重跑。
 
 ### 正在进行
 
-- `BUG-P8-002` verifier-only维护：定位并修复FP32 softmax reconstruction与Parquet NumPy-array provenance comparison两处实现问题，并补充对应positive/negative regression tests。不得触碰模型、loss、execution/scientific profile、训练、checkpoint选择或已提交scientific artifacts。
-- 修复完成后只对现有五折artifacts重新运行final verifier；不得调用train或evaluate-test。五折final verifier全部`PASS`后，才允许运行CPU-only OOF构建与完整性验证。
+- `BUG-P8-002`处于`VERIFYING`：同步commit `81e7f33`的最小代码delta，并只对remote现有五折artifacts重新运行final verifier；不得调用train或evaluate-test。
+- 五折existing-artifact final verifier全部`PASS`后，才允许运行CPU-only OOF构建与完整性验证。
 
 ### 尚未完成
 
-- `BUG-P8-002`的两处verifier implementation修复、回归测试与existing-artifact-only五折final verify。
+- `BUG-P8-002` remote existing-artifact-only五折final verify；功能commit `81e7f33`、本地代码修复与回归/完整测试已经通过。
 - 五折final verifier全部`PASS`后才执行actual CPU OOF与tracked脱敏audit；当前尚无可声明通过的P8 pooled OOF结果。
 - 完整阶段门与用户最终确认。
 - P9未制定或实施。
@@ -457,7 +459,7 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `BLOCKED` | `AT_RISK` | Stage A保持`PASS`。五折均完成80 epochs，best epochs=`10/28/32/15/22`；completion=`TRAINING_COMPLETE_TEST_EVALUATED`，test status=`TEST_EVALUATED_ONCE`、transaction=`1`且每折只有一个valid committed evaluation。当前仅`BUG-P8-002`的FP32 softmax reconstruction与Parquet NumPy-array provenance comparison两处verifier implementation问题阻断；禁止重训/重测/修改既有scientific artifacts，修后只做existing-artifact final verify，全部`PASS`后才CPU OOF | 1 | 0 |
+| P8 | CBM + GAM | `BLOCKED` | `AT_RISK` | Stage A保持`PASS`。五折均完成80 epochs，best epochs=`10/28/32/15/22`；completion=`TRAINING_COMPLETE_TEST_EVALUATED`，test status=`TEST_EVALUATED_ONCE`、transaction=`1`且每折只有一个valid committed evaluation。`BUG-P8-002`两处verifier-only修复已本地通过direct/full=`20/280 passed`与Phase Compliance `PASS`，但remote existing-artifact final verify尚未重跑；禁止重训/重测/修改既有scientific artifacts，五折final verify全部`PASS`后才CPU OOF | 1 | 0 |
 | P9 | 统一评估 | `NOT_STARTED` | `AT_RISK` | 未执行；`BUG-P8-002`解决、P8五折final verify、CPU OOF、完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
@@ -465,7 +467,7 @@ Bug 修复后：
 
 ### 活动 Bug
 
-当前活动Bug为`BUG-P8-002`。P8进入`BUG_MAINTENANCE / FULL_DOCUMENT`并标记为`BLOCKED / AT_RISK`；唯一允许工作是两处final-verifier实现修复、对应回归测试与existing-artifact-only重新验证。P9保持`NOT_STARTED / AT_RISK`且不得启动或规划。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前活动Bug为`BUG-P8-002`，状态为`VERIFYING`。两处final-verifier实现修复及本地回归/完整测试已经通过；P8继续处于`BUG_MAINTENANCE / FULL_DOCUMENT`与`BLOCKED / AT_RISK`，直到remote existing-artifact-only五折final verifier全部通过。P9保持`NOT_STARTED / AT_RISK`且不得启动或规划。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
@@ -473,7 +475,7 @@ Bug 修复后：
 
 ### BUG-P8-002：Final verifier 的 FP32 softmax reconstruction 与 Parquet provenance comparison 误报
 
-- 状态：`INVESTIGATING`
+- 状态：`VERIFYING`
 - 严重度：`HIGH`
 - 发现日期：2026-08-12
 - 影响阶段：P8
@@ -486,10 +488,11 @@ Bug 修复后：
 - 根因边界：当前阻断仅属于verifier/numeric reconstruction/provenance comparison实现，不来自数据、模型、loss、P4 initialization、H200 profile、augmentation、optimizer、80-epoch budget、checkpoint选择或test scientific execution。
 - 维护授权边界：禁止重训任何fold、再次执行test inference、修改execution/scientific profile，以及修改existing checkpoint/history/predictions/metrics/evaluation的科学值。只允许修复FP32 softmax reconstruction、Parquet NumPy-array provenance comparison、必要的匿名diagnostic logging与positive/negative regression tests。
 - 验证要求：修复后只对现有Fold 0–4 artifacts运行final verifier，不调用train或evaluate-test。五折全部`PASS`后才允许CPU-only OOF；在此之前不得构建/宣称actual P8 OOF，也不得启动P9。
-- 修复：尚未实施。
-- 验证命令与结果：Phase Compliance Reviewer对上述verifier-only维护边界为`PASS`；代码修复、direct/full tests与existing-artifact final verify尚未执行。
-- 未解决事项：两处verifier implementation问题、五折existing-artifact final verify、随后CPU OOF及P8阶段门。
-- 修复commit：待创建。
+- 修复：仅修改`src/lidc_baseline/p8_gam_lifecycle.py`与`tests/test_p8_gam.py`。Alpha verifier将persisted logits转换为float32 tensor并使用PyTorch CPU FP32 softmax重建；simplex使用`atol=2e-7`，persisted/recomputed weights使用`allclose(atol=2e-7, rtol=1e-6)`。Nested provenance comparator递归处理mapping/list/tuple/NumPy array/scalars：arrays按shape与`array_equal`精确比较，floating values按`allclose(atol=1e-12, rtol=1e-12)`比较。
+- 本地验证：真实FP32 roundoff positive case为`PASS`，`1e-4` alpha corruption为`FAIL`；nested provenance identical为`PASS`，different array与shape mismatch均为`FAIL`。P8 direct=`20 passed`，完整=`280 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer及diff/AST/frozen checks均为`PASS`。
+- Remote验证状态：尚未同步/重跑existing-artifact final verifier；五折checkpoints、histories、predictions、metrics与evaluations未被修改，CPU OOF尚未构建。
+- 未解决事项：remote五折existing-artifact final verify、随后CPU OOF及P8阶段门。
+- 修复commit：`81e7f33`（local, unpushed）。
 
 ### BUG-P8-001：Stage A CLI 传递不支持的 output_root 参数
 
@@ -977,3 +980,4 @@ Bug 修复后：
 | 2026-08-12 | `FORMAL_EXECUTION_APPROVED` | P8 | 用户正式批准P8 H200 Stage A并授权一次性提交Fold 0–4及创建只读后台定时监控。正式提交必须保持冻结scientific/execution profile，五个`qsub`参数均设置`P8_FORMAL_APPROVED=1`。本记录形成时尚未实际提交任何formal job，未生成training/test/OOF产物；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | 用户明确授权；本次状态同步commit待创建 |
 | 2026-08-12 | `FORMAL_FOLDS_QUEUED` | P8 | 使用同一`p8_fold.pbs`和`P8_FORMAL_APPROVED=1`一次性提交唯一Fold 0–4：`8978475→0`、`8978478→1`、`8978477→2`、`8978474→3`、`8978476→4`。五个jobs均为`Q`/`csegpu100`，统一请求H200×1、8 CPU、64 GB、96h，只有`P8_FOLD_INDEX`不同，无重复或遗漏。ACTIVE heartbeat `monitor-p8-gam-five-folds`每10分钟只读监控，禁止取消、修改、重提、替换、改profile、运行OOF或启动P9。当前训练尚未开始或完成；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Jobs `8978474`–`8978478`；本次状态同步commit待创建 |
 | 2026-08-12 | `FORMAL_SCIENTIFIC_EXECUTION_COMPLETE` / `BUG_DISCOVERED` / `PHASE_BLOCKED` | P8 | 先前排队快照已由终态证据取代：Fold 0–4均完成80 epochs，best epochs=`10/28/32/15/22`；completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test status均为`TEST_EVALUATED_ONCE`、transaction=`1`且每折只有一个valid committed evaluation。Fold 1/2/4的PBS automatic rerun/hold作为scheduler audit保留，未形成第二个valid test或replacement。Final verify当前仅被FP32 softmax reconstruction与Parquet NumPy-array provenance comparison两处implementation问题阻断，登记`BUG-P8-002`并切换`BUG_MAINTENANCE / FULL_DOCUMENT`；禁止重训、再次test inference或修改既有scientific artifacts，修后只对现有artifacts final verify，五折全PASS后才CPU OOF。P8为`BLOCKED / AT_RISK`，P9为`NOT_STARTED / AT_RISK`且不得启动。 | `BUG-P8-002`；Jobs `8978474`–`8978478`；Phase Compliance Reviewer `PASS`；本次状态同步commit待创建 |
+| 2026-08-12 | `BUG_FIX_LOCAL_PASS` / `BUG_VERIFYING` | P8 | 两处verifier-only修复仅修改`p8_gam_lifecycle.py`及tests：persisted float32 alpha logits以PyTorch CPU FP32 softmax重建，simplex/weights容差为`2e-7`与`atol=2e-7, rtol=1e-6`；nested Parquet provenance comparator使用exact array equality与`1e-12` floating tolerance。真实roundoff/`1e-4` corruption及identical/different/shape-mismatch正负测试均按预期；direct/full=`20/280 passed`、3条既有warnings，Phase Compliance及diff/AST/frozen checks均`PASS`。五折existing scientific artifacts未修改，remote final verifier尚未重跑，CPU OOF未构建；P8继续`BLOCKED / AT_RISK`，P9继续`NOT_STARTED / AT_RISK`。 | `81e7f33`（local, unpushed）；本次状态同步commit待创建 |
