@@ -42,11 +42,11 @@ last_verified_commit: 0b92e76
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P9-001`已`RESOLVED`。 |
-| 当前阻塞项 | 无P10启动阻塞；Mac私有备份、四份中英文公开报告、两份私有定性附录、执行溯源与最终双agent阶段门尚未完成。 |
+| 当前阻塞项 | 无P10启动阻塞；report/archive代码、Mac私有备份、四份中英文公开报告、两份私有定性附录、执行溯源与最终双agent阶段门尚未完成。 |
 | 恢复阶段 | `P10` |
 | 下一阶段 | 无；P10为当前Baseline-v2协议的最终阶段，不创建未定义的P11。 |
 | 最近更新 | 2026-08-13 |
-| 状态依据 | `main`与`origin/main`在P9 post-delivery anchor `0b92e76`一致且启动前工作区clean。用户批准P10只读使用P5–P9既有科学产物，生成中英短论文与中英技术报告、Mac私有中英文定性附录、existing-job execution registry及约14.4GB P5–P9私有备份；GitHub仅允许脱敏aggregate reports/figures/tables。P10禁止新训练、test inference、H200/CPU scientific jobs、P5–P9 artifact rewrite及P11。当前仅完成分支创建与阶段启动状态同步，P10 config/code/tests/archive/report尚未生成。 |
+| 状态依据 | `main`与`origin/main`在P9 post-delivery anchor `0b92e76`一致；本地`p10-final-report` HEAD=`1dc3283`仅含P10启动状态commit，P10 config/test diff尚未提交。P10 source/resolved supplement及digest已生成并验证，resolved SHA-256=`09a6e99c78c5aed9f75a2d054b90235b5a8d065f61b8d702e599d0102feaae6a`；配置固定四份双语public报告、14个private cases、Mac archive白名单、只读P5–P9/no-new-compute/no-P11 gates。Direct/full=`8/356 passed`、完整套件仅3条既有dependency warnings，Phase Compliance Reviewer=`PASS`。Report/archive代码、Mac备份、reports与最终阶段门尚未完成。 |
 
 ## 3. 当前阶段：P10 Katana正式实验与报告
 
@@ -139,15 +139,17 @@ last_verified_commit: 0b92e76
 ### 正在进行
 
 - P9 completion与post-delivery commits `2223aea`/`0b92e76`已推送；P9保持`COMPLETED / ON_TRACK / DELIVERED`。
-- 用户已批准P10实施计划；`p10-final-report`从最新交付`main`创建，当前仅封存P10=`IN_PROGRESS / ON_TRACK`启动状态。
+- 用户已批准P10实施计划；`p10-final-report`从最新交付`main`创建并由`1dc3283`封存P10=`IN_PROGRESS / ON_TRACK`启动状态。
 - P10将复用P9九份deidentified audit及P5–P8 tracked evidence，existing execution事实与private runs均保持只读；P10-R1不触发任何replacement或新scientific job。
+- P10 report/archive source supplement、canonical resolved config与digest已生成；resolved SHA-256=`09a6e99c78c5aed9f75a2d054b90235b5a8d065f61b8d702e599d0102feaae6a`。配置固定四份双语public Markdown/PDF及共享CSV/图表、14个Mac-private qualitative cases、中英appendices、约14.4GB五目录只读archive、SHA-256 manifest、public privacy whitelist及P5–P9 immutable/no-new-H200/no-new-CPU-scientific-job/no-P11 gates。
+- P10 config直接测试`8 passed`；包含该批次的完整测试为`356 passed`且仅有3条既有dependency warnings。Canonical/hash、diff/whitespace、冻结V1/V2 requirements/config和P9 execution supplement检查均通过，Phase Compliance Reviewer为`PASS`。
 
 ### 尚未完成
 
-- P10 report/archive execution supplement、双语术语表、input verifier、existing-job registry、archive/report/audit CLIs与自动测试尚未实现。
+- P10 config Phase已完成但尚未提交；双语术语表、input verifier、existing-job registry、archive/report/audit CLIs及其行为测试尚未实现。
 - `/Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2/`尚未完成P5–P9约14.4GB只读备份及SHA-256验证。
 - 四份public中英文Markdown/PDF、共享CSV/图表及两份Mac-private中英文定性附录尚未生成或视觉验收。
-- P10完整测试、Phase Compliance Reviewer、Status Synchronization Reviewer与`AWAITING_USER_APPROVAL`阶段门尚未执行。
+- P10 config Phase的完整测试与Phase Compliance Reviewer已通过；后续code/archive/reports批次、整个P10阶段级完整测试、双agent阶段门与`AWAITING_USER_APPROVAL`转换尚未执行。
 
 ### 验收边界
 
@@ -159,6 +161,7 @@ last_verified_commit: 0b92e76
 - P9只读取P5–P8既有best checkpoints和OOF/test artifacts；不得重训、形成第二个committed test evaluation或修改既有training/checkpoint/history/predictions/metrics/evaluation。
 - Spatial Stage A只使用fold 0 validation；formal spatial gate在CLI与PBS两层默认阻断。本次只在Stage A `PASS`、exact approval record与用户再次明确批准后，对已核验的20个formal jobs设置`P9_SPATIAL_APPROVED=1`；该值不授权replacement或P10。
 - `BUG-P9-001`不改变20个formal jobs的成功终态或spatial artifacts有效性。Validation auxiliary predictions可合法在不同outers folds间出现同一UID，必须按fold精确验证；outer test/canonical OOF仍必须全局exactly once。
+- P10 supplement只冻结报告、execution provenance与private archive执行边界；它不运行或授权训练、test inference、H200/CPU scientific jobs、P5–P9 artifact rewrite或P11。四份报告、14个private cases与archive当前仅为配置契约，不得表述为已生成。
 
 ## 4. 下一阶段
 
@@ -504,7 +507,7 @@ Bug 修复后：
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
 | P9 | 统一评估、干预与空间解释 | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：20个formal jobs、唯一CPU recovery `8987554`、2,633/868 aggregate、map accounting、九份deidentified reports、完整`348 passed`及阶段级双agent审查均`PASS`；`BUG-P9-001`已解决，用户于2026-08-13明确确认。Completion commit `2223aea`已fast-forward合并并推送；合并后完整测试`348 passed`，三方SHA一致 | 0 | 0 |
-| P10 | Katana 正式实验与报告 | `IN_PROGRESS` | `ON_TRACK` | 用户已批准P10中英双版本最终报告、existing execution provenance与Mac private backup计划；当前仅完成启动状态，报告/备份/测试/阶段门尚待 | 0 | 1 |
+| P10 | Katana 正式实验与报告 | `IN_PROGRESS` | `ON_TRACK` | P10 report/archive supplement SHA=`09a6e99c...aae6a`已冻结并通过direct/full=`8/356 passed`、3条既有warnings及Phase Compliance `PASS`；code/archive/reports与阶段门尚待 | 0 | 1 |
 
 ## 7. Bug 登记表
 
@@ -1094,3 +1097,4 @@ Bug 修复后：
 | 2026-08-13 | `PHASE_COMPLETED` | P9 | 用户明确确认P9；Stage A、20个formal spatial jobs、唯一CPU aggregate recovery、2,633 nodules / 868 patients aggregate、0 leakage、`73,724=66,769 valid+6,955 undefined` map accounting、task/concept/intervention/contribution/bootstrap/spatial results、九份脱敏audit、完整`348 passed`与阶段级双agent审查证据均已封存。P9转为`COMPLETED / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。Completion状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称P9已交付或启动P10。 | 用户确认；`4e9c921`；本次completion状态commit待创建 |
 | 2026-08-13 | `DELIVERED` | P9 | Completion commit `2223aea`已fast-forward合并至`main`并推送GitHub。合并后完整测试`348 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config、common H200 profile与P9 execution supplement检查均`PASS`。首次交付核对`HEAD=main=origin/main=2223aea1a7d63bf0c93c8460e075fece841bbe18`且ahead/behind=`0/0`。P9为`COMPLETED / ON_TRACK / DELIVERED`；P10保持`NOT_STARTED / NOT_APPLICABLE`，未制定或实施。 | `2223aea`；本次post-delivery状态同步commit待创建 |
 | 2026-08-13 | `PHASE_STARTED` | P10 | 用户批准P10中英双版本最终报告、existing execution provenance与Mac私有备份实施计划；P10在`p10-final-report`进入`IN_PROGRESS / ON_TRACK`。本阶段只读复用P5–P9既有scientific artifacts，不运行训练、test inference或新scientific jobs；GitHub仅允许脱敏报告/图表/表格，约14.4GB private runs只备份至Mac。当前仅完成分支与启动状态，P10 config/code/tests/archive/report均尚未生成；P9保持`COMPLETED / DELIVERED`，不创建P11。 | `p10-final-report`；基线`0b92e76`；本次启动状态commit待创建 |
+| 2026-08-13 | `LOCAL_CONFIG_VERIFIED` | P10 | P10 report/archive source supplement、canonical resolved config与digest已生成并验证；resolved SHA=`09a6e99c...aae6a`。配置固定四份双语public报告、14个Mac-private cases、P5–P9五目录只读archive与SHA manifest、existing-job scheduler/scientific状态分离、public privacy及no-training/no-test/no-new-scientific-job/no-artifact-rewrite/no-P11 gates。Direct/full=`8/356 passed`且完整套件仅3条既有dependency warnings；canonical/hash、diff/whitespace、冻结文件检查与Phase Compliance均`PASS`。Config/test diff仍未提交；report/archive代码、Mac备份、报告产物及整个P10阶段门尚未实现，P10保持`IN_PROGRESS / ON_TRACK`且没有P11。 | supplement SHA `09a6e99c...aae6a`；Phase Compliance `PASS`；本次状态同步commit待创建 |
