@@ -6,21 +6,21 @@ active_requirements: docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md
 active_config: configs/baseline_v2.yaml
 supersedes_protocol: Baseline-v1
 protocol_transition: V2M
-operating_mode: BUG_MAINTENANCE
-reading_scope: FULL_DOCUMENT
+operating_mode: NORMAL_DEVELOPMENT
+reading_scope: CURRENT_AND_NEXT
 development_phase: P9
-development_phase_status: BLOCKED
-maintenance_phase: P9
-active_bug_ids: [BUG-P9-001]
+development_phase_status: AWAITING_USER_APPROVAL
+maintenance_phase: null
+active_bug_ids: []
 resume_phase: P9
 next_phase: P10
 last_updated: 2026-08-13
-last_verified_commit: b4bc6a6
+last_verified_commit: d0fa7e2
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。P9的20个formal spatial jobs均已`F / Exit_status=0 / run_count=1`，既有spatial artifacts保持有效且只读；CPU aggregate job `8987452`在前置验证均`PASS`后被validation-frame verifier implementation bug阻断。`BUG-P9-001`的verifier-only修复已由本地commit `78e34d5`封存，状态commit为`b4bc6a6`；tests、Phase Compliance、exact minimal-delta remote integrity与implementation verify均`PASS`。唯一获授权的CPU aggregate recovery job `8987554`已提交，提交时为`Q`且当前只读快照为`R`，尚未产生final audit/summary或终态`PASS`，因此Bug保持`VERIFYING`。项目保持`BUG_MAINTENANCE / FULL_DOCUMENT`，P9保持`BLOCKED / AT_RISK`；禁止重训、重测、改写P5–P8或20份spatial artifacts及提交H200 replacement。P10保持`NOT_STARTED / AT_RISK`。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。P9的20个formal spatial jobs及唯一CPU aggregate recovery均已`PASS`，`BUG-P9-001`已解决；九份脱敏aggregate reports由commit `d0fa7e2`封存，完整测试`348 passed`且Phase Compliance Reviewer为`PASS`。项目已恢复`NORMAL_DEVELOPMENT / CURRENT_AND_NEXT`，P9进入`AWAITING_USER_APPROVAL / ON_TRACK`；尚未获得用户最终确认，不得标记`COMPLETED`、合并、推送或规划/启动P10。P10保持`NOT_STARTED / NOT_APPLICABLE`。
 
 ## 1. 阅读规则
 
@@ -34,19 +34,19 @@ last_verified_commit: b4bc6a6
 
 | 字段 | 当前值 |
 |---|---|
-| 工作模式 | `BUG_MAINTENANCE` |
-| 阅读范围 | `FULL_DOCUMENT` |
+| 工作模式 | `NORMAL_DEVELOPMENT` |
+| 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P9 统一评估、干预与空间解释` |
-| 阶段状态 | `BLOCKED / AT_RISK` |
-| 维护目标阶段 | `P9` |
-| 活动 Bug | `BUG-P9-001`（`VERIFYING`）：verifier-only修复已由`78e34d5`（local, unpushed）封存并通过tests/Phase Compliance；exact minimal delta已通过remote verify，唯一existing-artifact recovery job `8987554`正在运行。 |
-| 当前阻塞项 | 等待唯一授权的CPU-only aggregate recovery job `8987554`达到终态并通过final audit/summary及deidentification gates；当前不得将运行中状态写成recovery `PASS`。 |
+| 阶段状态 | `AWAITING_USER_APPROVAL / ON_TRACK` |
+| 维护目标阶段 | 无 |
+| 活动 Bug | 无；`BUG-P9-001`已`RESOLVED`。 |
+| 当前阻塞项 | 无技术阻塞；仅等待用户对P9最终技术与科学证据的明确确认。 |
 | 恢复阶段 | `P9` |
-| 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / AT_RISK`；`BUG-P9-001`解决且P9完成、确认并交付前禁止启动或规划） |
+| 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / NOT_APPLICABLE`；P9获用户确认、封存、合并并推送前禁止启动或规划） |
 | 最近更新 | 2026-08-13 |
-| 状态依据 | 20个formal jobs `8986218`–`8986237`均为`F / Exit_status=0 / run_count=1`，每个model×fold的strict verifier已在原job内通过，既有Grad-CAM/occlusion/intervention/spatial artifacts有效且只读。CPU job `8987452`永久记为`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`；未生成final audit/summary。Commit `78e34d5`（local, unpushed）只修改`src/lidc_baseline/p9_evaluation.py`与`tests/test_p9_evaluation.py`：validation唯一键改为`(fold_index,nodule_uid)`，通过P4 `read_split`验证canonical split hash、per-fold exact validation membership、same-fold validation/test nodule+patient disjoint、四模型fold/UID/target identity与finite；outer test/canonical OOF global exactly-once保持不变。Regression=`21 passed`、P9 direct=`68 passed`、full=`348 passed`且仅3条既有warnings，diff/AST/frozen及Phase Compliance均`PASS`；状态commit=`b4bc6a6`。重建的private exact P9 manifest为11 files / `195,322` bytes，internal/file SHA-256=`07119445732f8bb9fa604b32e8c96657b182a62a2cf7017e1f9305bdfb17c5a1`/`d0266b5c073c314496f8085da051e399056d5e0034bcb4df41aa8e5d2f9446f8`；KDM实际只传输manifest与`p9_evaluation.py`。Remote `p9_katana verify-stage-a`为`PASS`：P8 base为10 files / `147,168` bytes，P9 delta为11 files / `195,322` bytes，scientific/config hashes均匹配。Precheck只发现原job `8987452 F/Exit 1`且final audit/summary不存在；随后仅提交一个获授权的CPU recovery job `8987554`，`Job_Name=p9_aggr_recovery`、`cse12`、`ngpus=0`、8 CPU、64 GB、4h、`P9_SPATIAL_APPROVED=1`，提交时为`Q`，当前只读快照为`R`于`k128`、2026-08-13 02:43:25 AEST启动、`run_count=1`。Automation `monitor-p9-cpu-aggregate-recovery`每10分钟只读监控且禁止qsub/replacement。P5–P8与20份spatial artifacts无修改。 |
+| 状态依据 | 20个formal jobs `8986218`–`8986237`均为`F / Exit_status=0 / run_count=1`，每个model×fold strict verifier均`PASS`。Verifier-only commits `78e34d5`与`b4bc6a6`通过本地与remote exact integrity；唯一CPU recovery `8987554`在`k128`以`ngpus=0`、`run_count=1`、walltime=`00:37:06`、`F / Exit_status=0`完成，remote exact integrity、spatial verify与audit均`PASS`。OOF精确覆盖2,633 nodules / 868 patients，fold counts=`479/502/539/549/564`、patient leakage=0；map accounting=`73,724 = 66,769 valid + 6,955 undefined`。P5–P8 artifacts modified=`false`、second committed test=`false`、P10 started=`false`。Private P9 storage=`8,821,543,077` bytes / 1,426 files。九份deidentified aggregate reports由commit `d0fa7e2`封存，summary SHA-256=`16626aa6e6a8fe711fd66766145aad2d4646c8dfd22cc0d926f90558d2af2294`且内含其余八份report hashes；approval record继续Git ignored。完整测试=`348 passed`且仅3条既有warnings，Phase Compliance、frozen与deidentification checks均`PASS`。 |
 
 ## 3. 当前阶段：P9 统一评估、干预与空间解释
 
@@ -129,20 +129,22 @@ last_verified_commit: b4bc6a6
 - CPU-only aggregate job `8987452`在`k178`以`ngpus=0`、8 CPU、64 GB、`run_count=1`执行。`p9_katana verify-stage-a` 与 `p9_spatial verify --scope all`先后`PASS`，但`p9_audit build`于Black-box validation frame触发`P9_VALIDATION_FRAME_INVALID:blackbox`，job以`F / Exit_status=1`结束；final audit与summary未生成。
 - 只读诊断显示pooled validation共1,315 rows，226个UID在不同fold validation间合法重复；四模型每fold内duplicate=0、逐fold exact P4 validation membership且所有数值finite。`_p9_evaluation._validation_frame`错误施加cross-fold全局UID唯一性；正确规则是validation按fold验证，只有outer test/canonical OOF要求全局exactly once。
 - Phase Compliance Reviewer将唯一阻断定位为状态尚未切换到Bug维护；用户已批准verifier-only recovery边界。Aggregate job `8987452`永久记为`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`，不得计为有效aggregate或科学失败。
+- Verifier-only recovery输入由commits `78e34d5`与`b4bc6a6`封存；重建exact manifest为11 files / `195,322` bytes，internal/file SHA-256=`07119445732f8bb9fa604b32e8c96657b182a62a2cf7017e1f9305bdfb17c5a1`/`d0266b5c073c314496f8085da051e399056d5e0034bcb4df41aa8e5d2f9446f8`。KDM只传输manifest与`p9_evaluation.py`，remote exact integrity、scientific/config hashes及P8 base binding均`PASS`。
+- 唯一授权的CPU recovery job `8987554`在`k128`以`ngpus=0`、8 CPU、64 GB、`run_count=1`执行，walltime=`00:37:06`，终态`F / Exit_status=0`。Remote exact integrity、`p9_spatial verify --scope all`与`p9_audit build/verify`均`PASS`；没有重训、test inference、H200 replacement或P5–P8/spatial artifact改写。
+- Final audit精确覆盖2,633 unique nodules / 868 patients，fold counts=`479/502/539/549/564`且patient leakage=0；20个formal jobs全部`F / Exit_status=0 / run_count=1`。Map accounting精确为`73,724 = 66,769 valid + 6,955 undefined`；P5–P8 artifacts modified=`false`、second committed test evaluation=`false`、P10 started=`false`。Private storage为`8,821,543,077` bytes / 1,426 files。
+- `.gitignore` exact 9-report whitelist与九份deidentified aggregate reports由commit `d0fa7e2`封存；tracked reports为`task/concept/contribution_centering/intervention/bootstrap/learned_alpha/spatial/integrity/summary.json`，approval record继续ignored。Summary SHA-256=`16626aa6e6a8fe711fd66766145aad2d4646c8dfd22cc0d926f90558d2af2294`，其余report hashes由summary逐项绑定；完整测试`348 passed`且仅3条既有dependency warnings，final Phase Compliance Reviewer为`PASS`。
+- Undefined-map RCA的严格证据边界：verifier证明每个undefined map均为finite FP32 `64³` post-ReLU exact-zero map；existing artifacts未持久化其pre-ReLU CAM、gradient、activation、channel weights/norms及运行时target scalar，因此在禁止额外forward的协议边界内不能精确区分gradient消失、加权和非正或其他sign/cancellation机制。
+- Undefined maps呈model/target/class/fold系统性分布：Mixed CEM malignancy=`51.88%`、internalStructure=`33.65%`、calcification=`27.23%`，并存在class/fold effects。阶段RCA结论为`SYSTEMATIC_MODEL/TARGET_ISSUE`，与特定模型/target的Grad-CAM post-ReLU zero-map行为一致，不支持implementation bug；精确gradient/sign机制保留为无法从既有证据解析的限制，不触发被禁止的重新forward。
 
 ### 正在进行
 
-- P9本地分支`p9-unified-evaluation`当前status anchor为`b4bc6a6`；工作模式为`BUG_MAINTENANCE / FULL_DOCUMENT`，P9为`BLOCKED / AT_RISK`，唯一活动Bug `BUG-P9-001`处于`VERIFYING`。
-- Verifier-only fix只修改`p9_evaluation.py`与直接tests：validation以`(fold_index,nodule_uid)`为唯一键，使用P4 `read_split`绑定canonical split hash并验证per-fold exact membership、same-fold validation/test nodule与patient disjoint、四模型fold UID/target identity与finite；outer test/canonical OOF仍全局exactly once。
-- 本地regression/P9 direct/full=`21/68/348 passed`，完整测试仅3条既有dependency warnings；diff、AST、frozen与Phase Compliance均`PASS`。P5–P8及20份existing spatial artifacts未修改。
-- Verifier-only功能commit=`78e34d5`、状态commit=`b4bc6a6`（均local, unpushed）。重建的exact P9 manifest为11 files / `195,322` bytes，internal/file SHA-256=`07119445732f8bb9fa604b32e8c96657b182a62a2cf7017e1f9305bdfb17c5a1`/`d0266b5c073c314496f8085da051e399056d5e0034bcb4df41aa8e5d2f9446f8`；KDM只同步manifest与`p9_evaluation.py`。Remote integrity/implementation verify已`PASS`，P8 base 10 files / `147,168` bytes与P9 11 files / `195,322` bytes及scientific/config hashes均匹配。
-- Remote precheck确认只有原aggregate `8987452 F/Exit 1`且final audit/summary不存在。唯一授权的CPU recovery `8987554`已以`P9_SPATIAL_APPROVED=1`提交；提交时为`Q / cse12`，当前只读快照为`R`于`k128`、2026-08-13 02:43:25 AEST启动、`run_count=1`，资源为`ngpus=0`、8 CPU、64 GB、4h。Automation `monitor-p9-cpu-aggregate-recovery`每10分钟只读监控，禁止qsub、replacement或修改profile/artifacts。
+- P9本地分支`p9-unified-evaluation`当前evidence anchor为`d0fa7e2`；工作模式已恢复`NORMAL_DEVELOPMENT / CURRENT_AND_NEXT`，P9为`AWAITING_USER_APPROVAL / ON_TRACK`，无活动Bug。
+- Stage A、20个formal spatial jobs、唯一CPU aggregate recovery、九份deidentified aggregate reports、完整测试及阶段级双agent审查均已`PASS`。当前只等待用户明确确认P9；不得把等待用户确认写成技术阻塞。
 
 ### 尚未完成
 
-- CPU recovery job `8987554`尚未达到并验证终态；不得把当前运行态写成recovery `PASS`，也不得提交replacement。
-- 最终P9 deidentified audit/summary、最终阶段审查、用户确认、completion封存、合并与推送均尚未完成。
-- P10仍为`NOT_STARTED / AT_RISK`，`BUG-P9-001`解决且P9完成aggregate与最终交付门前不得启动或规划。
+- P9尚未获得用户最终确认，因此completion状态封存、fast-forward合并、合并后完整验证与GitHub push尚未执行。
+- P10仍为`NOT_STARTED / NOT_APPLICABLE`；P9获用户确认并完成交付前不得制定实施计划、启动或实现P10。
 
 ### 验收边界
 
@@ -159,8 +161,8 @@ last_verified_commit: b4bc6a6
 
 ### 进入条件
 
-- P9须完成20个formal spatial jobs、CPU aggregate、完整测试、阶段级双agent审查、用户最终确认、completion封存、合并与GitHub推送。
-- 在`BUG-P9-001`解决且上述P9交付门全部完成前，P10保持`NOT_STARTED / AT_RISK`，不得规划或实现。
+- P9的20个formal spatial jobs、CPU aggregate、完整测试与阶段级双agent审查均已通过；仍须获得用户最终确认，并完成completion封存、合并与GitHub推送。
+- 在上述P9用户确认与交付门完成前，P10保持`NOT_STARTED / NOT_APPLICABLE`，不得规划或实现。
 
 ### 第一批任务
 
@@ -504,14 +506,14 @@ Bug 修复后：
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
-| P9 | 统一评估、干预与空间解释 | `BLOCKED` | `AT_RISK` | 20个formal jobs均Exit 0且artifacts只读有效；`BUG-P9-001` verifier-only fix由`78e34d5`封存且tests/Phase Compliance与remote exact minimal-delta verify均`PASS`。唯一CPU recovery `8987554`已提交并正在运行，final audit/summary与recovery终态仍待验证 | 1 | 0 |
-| P10 | Katana 正式实验与报告 | `NOT_STARTED` | `AT_RISK` | 受`BUG-P9-001`与P9 aggregate/final delivery gate阻断，禁止启动或规划 | 0 | 1 |
+| P9 | 统一评估、干预与空间解释 | `AWAITING_USER_APPROVAL` | `ON_TRACK` | 20个formal jobs、唯一CPU recovery `8987554`、2,633/868 aggregate、map accounting、九份deidentified reports、完整`348 passed`及阶段级双agent审查均`PASS`；`BUG-P9-001`已解决，仅等待用户确认 | 0 | 0 |
+| P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | P9用户确认、completion封存、合并与推送前禁止启动或规划 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-`BUG-P9-001`是当前唯一活动Bug。P9为`BLOCKED / AT_RISK`，P10为`NOT_STARTED / AT_RISK`。`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9为`AWAITING_USER_APPROVAL / ON_TRACK`，P10为`NOT_STARTED / NOT_APPLICABLE`。
 
 ### Bug 状态
 
@@ -519,13 +521,13 @@ Bug 修复后：
 
 ### BUG-P9-001：Pooled validation frame 错误要求 cross-fold UID 全局唯一
 
-- 状态：`VERIFYING`
+- 状态：`RESOLVED`
 - 严重度：`HIGH`
 - 发现日期：2026-08-13
 - 影响阶段：P9
 - 影响验收标准：是；20个formal spatial jobs均已成功并且existing artifacts有效，但final P9 audit/summary必须由CPU aggregate成功构建与验证。
 - 恢复阶段：P9
-- 受影响下游阶段：P10为`NOT_STARTED / AT_RISK`；Bug解决并完成P9最终交付前禁止启动或规划。
+- 受影响下游阶段：风险已解除；P10恢复`NOT_STARTED / NOT_APPLICABLE`，但P9完成最终确认与交付前仍禁止启动或规划。
 - 现象：CPU-only aggregate job `8987452`以`ngpus=0`、8 CPU、64 GB、`run_count=1`运行。`p9_katana verify-stage-a`和`p9_spatial verify --scope all`均`PASS`；`p9_audit build`调用`build_task_results`时，`_p9_evaluation._validation_frame`对Black-box pooled validation frame抛出`P9_VALIDATION_FRAME_INVALID:blackbox`，job终态`F / Exit_status=1`。Final audit与summary未生成。
 - 科学执行证据：jobs `8986218`–`8986237`全部`F / Exit_status=0 / run_count=1`，每个model×fold strict verifier已通过。原始20份spatial artifacts、Grad-CAM、occlusion、intervention与faithfulness证据保持有效且只读；本Bug不是model、checkpoint、spatial execution或scientific result失败。
 - 诊断：pooled validation共1,315 rows与226个cross-fold repeated UIDs。四模型的每fold内duplicate=0，每fold UID set精确等于P4 validation membership，所有数值finite。同一patient/nodule在不同outer development folds中合法可进入多个validation partitions，因此pooled validation不应全局UID唯一。
@@ -536,11 +538,11 @@ Bug 修复后：
 - 本地验证：新增/更新regression tests共`21 passed`，P9 direct=`68 passed`，完整=`348 passed`且仅有3条既有dependency warnings；Git diff、AST、frozen checks及Phase Compliance Reviewer均为`PASS`。P5–P8 artifacts、20份spatial artifacts及其Grad-CAM/occlusion/intervention scientific values均未修改。
 - 功能commit：`78e34d5`（`fix: validate P9 auxiliary data per fold`，local, unpushed）。该commit仅封存上述verifier/tests变更，没有修改P5–P8或20份spatial artifacts；对应状态commit为`b4bc6a6`（local, unpushed）。
 - Remote修复输入验证：重建的private exact P9 manifest为11 files / `195,322` bytes，internal/file SHA-256=`07119445732f8bb9fa604b32e8c96657b182a62a2cf7017e1f9305bdfb17c5a1`/`d0266b5c073c314496f8085da051e399056d5e0034bcb4df41aa8e5d2f9446f8`。KDM实际只传输manifest与`p9_evaluation.py`；remote `p9_katana verify-stage-a`为`PASS`，P8 base 10 files / `147,168` bytes、P9 11 files / `195,322` bytes及scientific/config hashes均匹配。
-- Recovery precheck与提交：precheck只发现原aggregate `8987452 F/Exit 1`且final audit/summary不存在。随后仅提交一个获用户授权的CPU-only recovery job `8987554`，`Job_Name=p9_aggr_recovery`、queue=`cse12`、`ngpus=0`、8 CPU、64 GB、4h、`P9_SPATIAL_APPROVED=1`；提交时为`Q`，当前只读快照为`R`于`k128`、2026-08-13 02:43:25 AEST启动、`run_count=1`。Automation `monitor-p9-cpu-aggregate-recovery`每10分钟只读监控且禁止qsub/replacement。
-- 当前验证边界：exact minimal delta remote verify已完成，唯一CPU recovery正在运行；尚无recovery终态或final audit/summary，因此不得虚报recovery `PASS`、提交replacement或解除Bug。
-- 恢复路径：仅允许job `8987554`对既有只读20-job artifacts完成本次CPU aggregate recovery；recovery后仍需验证final audit/summary、deidentification与existing artifact hashes，并重新执行Phase Compliance与Status Synchronization阶段审查。
+- Recovery执行：precheck只发现原aggregate `8987452 F/Exit 1`且无final audit/summary。随后唯一获授权的CPU-only recovery `8987554`在`k128`以`ngpus=0`、8 CPU、64 GB、`run_count=1`执行，walltime=`00:37:06`，终态`F / Exit_status=0`；remote exact integrity、spatial verify、audit build/verify及deidentification均`PASS`。
+- 当前验证结论：existing 20-job artifacts与P5–P8 artifacts hashes保持不变，未执行train、test inference或H200 replacement。九份deidentified reports由`d0fa7e2`封存，完整测试`348 passed`且Phase Compliance Reviewer为`PASS`。
+- 恢复路径：已完成；P9恢复`AWAITING_USER_APPROVAL / ON_TRACK`，等待用户最终确认。
 - 解除条件：recovery job必须通过Stage A/formal artifact verify、按fold validation membership、outer test/canonical OOF global exactly-once、final audit/summary与deidentification gates，且不修改existing artifact hashes。
-- 未解决事项：job `8987554`终态、final audit/summary与deidentification验证及最终阶段审查尚未完成。
+- 未解决事项：无Bug事项；仅剩P9用户确认与交付流程。
 
 ### BUG-P8-002：Final verifier 的 FP32 softmax reconstruction 与 Parquet provenance comparison 误报
 
@@ -766,7 +768,7 @@ Bug 修复后：
 - 所属阶段：P10
 - 首次记录：2026-08-08
 - 影响：正式训练、Grad-CAM 和中间产物可能超过当前 scratch 的安全容量。
-- 当前结论：不阻塞 P0–P8。P5 Black-box、P6 Standard CBM、P7 Mixed-type CEM与P8 GAM均已完成五折科学执行及CPU OOF audit；当前容量足以保存四个模型的private runs，但仍不能覆盖P9–P10的Grad-CAM、intervention和全部解释/报告产物。
+- 当前结论：不阻塞 P0–P9。P5–P8四模型训练/OOF及P9 Grad-CAM、intervention与aggregate audit均已完成实测；P10最终报告与长期保留工作集仍须结合当前scratch配额评估。
 - 缓解措施：不上传原始 DICOM；通过 KDM 传输；正式 job 使用 `$TMPDIR`；重要数据和证据保留本地副本。
 - P3 测量证据：P3 technical gate 已生成 2,633 个私有 ROI，合计 `1,002,688,586` bytes（约 `0.93 GiB`）；不含 private manifest、future checkpoints、predictions、Grad-CAM 和 `$TMPDIR` 运行时空间。
 - P4 远程证据：explicit KDM workset 为约 `1.2 GiB`，Katana scratch 为 128 GiB total / 7.6 GiB used / 121 GiB available；job `8962963.kman.restech.unsw.edu.au` 已在 L40S 上 Exit 0。该证据满足 P4 smoke，但不代表 P10 正式实验工作集已完成估算。
@@ -774,6 +776,7 @@ Bug 修复后：
 - P6 测量证据：五折 Standard CBM private run与OOF合计 `1,375,098,359` bytes / 92 files；包含concept/task checkpoints与histories、train/validation frozen concept caches、test predictions、metrics、runtime和test transaction evidence。Private OOF SHA-256为`c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587`。该证据缩小了正式工作集估计的不确定性，但仍不能代表CEM、GAM、P9 Grad-CAM/intervention或全部解释产物。
 - P7 测量证据：五折 Mixed-type CEM private runs与OOF合计 `1,425,996,600` bytes / 50 files；包含checkpoints、histories、test predictions、runtime、受控Fold 4 recovery transaction及OOF。Private OOF SHA-256为`a42350e63908b2fa8fdfdd5c952428efe60f1ae5d6dbeccfe531f0ce121b996f`。该证据进一步缩小正式工作集估计的不确定性，但仍不能代表GAM、P9 Grad-CAM/intervention或最终报告产物。
 - P8 测量证据：五折 GAM private runs与OOF合计 `1,374,513,236` bytes / 47 files；包含checkpoints、histories、test predictions、metrics、runtime、test transactions及OOF。Private OOF SHA-256为`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。该证据完成P5–P8四模型训练产物实测，但仍不能代表P9 Grad-CAM/intervention或最终报告产物。
+- P9 测量证据：四模型20个formal spatial jobs、Grad-CAM/occlusion/intervention及aggregate private artifacts合计`8,821,543,077` bytes / 1,426 files；九份deidentified aggregate reports已tracked封存。该证据完成P9解释工作集实测，但不等同于P10最终报告、导出和长期保留空间需求。
 - 下一步：等待扩容回复；在 P10 前以已测量 ROI 大小加上 checkpoint、predictions、contributions、Grad-CAM 和临时文件估算正式总工作集。
 - 解除条件：Katana 可用存储不少于预计正式工作集的 120%，或学校批准足够的扩容空间。
 - 关联 Bug：无。
@@ -1090,3 +1093,4 @@ Bug 修复后：
 | 2026-08-13 | `BUG_DISCOVERED` / `INVALIDATED_AGGREGATE_ATTEMPT` / `PHASE_BLOCKED` | P9 | CPU-only aggregate job `8987452`在`p9_katana verify-stage-a`与`p9_spatial verify --scope all`均PASS后，于`p9_audit build`触发`P9_VALIDATION_FRAME_INVALID:blackbox`并`F / Exit_status=1`；final audit/summary未生成。诊断证明1,315-row pooled validation中的226个cross-fold repeated UIDs合法，每fold内duplicate=0且精确匹配P4 validation membership；根因为`_validation_frame`错误施加全局UID唯一性。Job永久标记`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`。用户仅批准verifier/tests修复与通过双审查后一次CPU aggregate recovery；禁止改写P5–P8/20份spatial artifacts、重训、重测或H200 replacement。切换`BUG_MAINTENANCE / FULL_DOCUMENT`，P9为`BLOCKED / AT_RISK`，P10为`NOT_STARTED / AT_RISK`。 | `BUG-P9-001`；CPU job `8987452`；Phase Compliance `FAIL`（唯一阻断为状态未同步）；本次状态同步commit待创建 |
 | 2026-08-13 | `BUG_FIX_LOCAL_PASS` / `BUG_VERIFYING` | P9 | Verifier-only fix将validation唯一键修正为`(fold_index,nodule_uid)`，通过P4 `read_split`绑定canonical split hash，逐fold验证exact membership、same-fold validation/test nodule+patient disjoint、四模型fold UID/target identity/finite；outer test/canonical OOF global exactly-once保持不变。改动仅限`p9_evaluation.py`与直接tests；regression/P9 direct/full=`21/68/348 passed`、3条既有warnings，diff/AST/frozen与Phase Compliance均`PASS`。P5–P8及20份spatial artifacts未改。功能commit `78e34d5`已创建但仍local/unpushed；remote sync/verify与CPU recovery尚未执行。P9继续`BLOCKED / AT_RISK`，P10继续`NOT_STARTED / AT_RISK`。 | `78e34d5`（local, unpushed）；Phase Compliance `PASS`；本次状态同步commit待创建 |
 | 2026-08-13 | `REMOTE_FIX_VERIFIED` / `CPU_AGGREGATE_RECOVERY_SUBMITTED` | P9 | Status commit `b4bc6a6`后重建的private exact P9 manifest为11 files / `195,322` bytes，internal/file SHA=`07119445...c5a1`/`d0266b5c...46f8`；KDM实际只同步manifest与`p9_evaluation.py`。Remote `p9_katana verify-stage-a`验证P8 base 10 files / `147,168` bytes、P9 11 files / `195,322` bytes及scientific/config hashes均`PASS`。Precheck仅见原invalidated aggregate `8987452 F/Exit 1`且无final audit/summary；随后唯一获授权的CPU recovery job `8987554`以`P9_SPATIAL_APPROVED=1`提交，提交时为`Q / cse12`，请求`ngpus=0`、8 CPU、64 GB、4h。只读automation `monitor-p9-cpu-aggregate-recovery`已激活，禁止replacement；该历史节点不宣称recovery已运行完成或`PASS`。P9继续`BLOCKED / AT_RISK`，P10继续`NOT_STARTED / AT_RISK`。 | `78e34d5`、`b4bc6a6`（local, unpushed）；job `8987554`；manifest file SHA `d0266b5c...46f8`；本次状态同步commit待创建 |
+| 2026-08-13 | `BUG_RESOLVED` / `CPU_AGGREGATE_RECOVERY_PASS` / `PHASE_AWAITING_APPROVAL` | P9 | 唯一CPU recovery `8987554`在`k128`以ngpus0、run count 1、walltime `00:37:06`、Exit 0完成；remote exact integrity、20-job spatial verify、aggregate audit与deidentification均PASS。Final OOF为2,633/868、fold counts=`479/502/539/549/564`、0 leakage；map accounting=`73,724=66,769 valid+6,955 undefined`，P5–P8 modified=false、second test=false、P10 started=false。九份deidentified reports由`d0fa7e2`封存，summary SHA=`16626aa...2294`；full=`348 passed`/3条既有warnings，Phase Compliance PASS。Undefined maps被严格验证为finite FP32 post-ReLU exact-zero，分布支持`SYSTEMATIC_MODEL/TARGET_ISSUE`而非implementation bug；因未持久化pre-ReLU/gradient等中间量且禁止额外forward，精确gradient/sign机制保持未解析限制。`BUG-P9-001`转为RESOLVED，P9恢复`AWAITING_USER_APPROVAL / ON_TRACK`，P10为`NOT_STARTED / NOT_APPLICABLE`。 | Job `8987554`；`d0fa7e2`（local, unpushed）；Phase Compliance `PASS`；本次状态同步commit待创建 |
