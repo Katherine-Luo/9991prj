@@ -73,12 +73,89 @@ RUN_ROOT_DEFAULT = Path("runs/baseline_v2/gam")
 NUMERIC_SCHEMA = "p8_fp32_serialization_scale_aware_v1"
 NUMERIC_ABSOLUTE_FLOOR = 1e-6
 NUMERIC_FLOAT32_OPERATION_FACTOR = 64.0
+ALPHA_SOFTMAX_ABSOLUTE_TOLERANCE = 2e-7
+ALPHA_SOFTMAX_RELATIVE_TOLERANCE = 1e-6
+PROVENANCE_FLOAT_ABSOLUTE_TOLERANCE = 1e-12
+PROVENANCE_FLOAT_RELATIVE_TOLERANCE = 1e-12
 
 
 def _torch() -> Any:
     import torch
 
     return torch
+
+
+def _float32_softmax(values: np.ndarray) -> np.ndarray:
+    """Reconstruct persisted alpha weights with the model's FP32 semantics."""
+    torch = _torch()
+    tensor = torch.as_tensor(values, dtype=torch.float32, device="cpu")
+    return torch.softmax(tensor, dim=0).numpy()
+
+
+def _provenance_value_matches(observed: Any, expected: Any) -> bool:
+    """Compare nested Parquet provenance without ambiguous array truth values."""
+    if isinstance(observed, Mapping) or isinstance(expected, Mapping):
+        if not isinstance(observed, Mapping) or not isinstance(expected, Mapping):
+            return False
+        if set(observed) != set(expected):
+            return False
+        return all(
+            _provenance_value_matches(observed[key], expected[key])
+            for key in expected
+        )
+    observed_is_array = isinstance(observed, np.ndarray)
+    expected_is_array = isinstance(expected, np.ndarray)
+    observed_is_sequence = isinstance(observed, Sequence) and not isinstance(
+        observed, (str, bytes, bytearray)
+    )
+    expected_is_sequence = isinstance(expected, Sequence) and not isinstance(
+        expected, (str, bytes, bytearray)
+    )
+    if (
+        observed_is_array
+        or expected_is_array
+        or observed_is_sequence
+        or expected_is_sequence
+    ):
+        if not (observed_is_array or observed_is_sequence) or not (
+            expected_is_array or expected_is_sequence
+        ):
+            return False
+        observed_array = np.asarray(observed)
+        expected_array = np.asarray(expected)
+        if observed_array.shape != expected_array.shape:
+            return False
+        if observed_array.dtype.kind in "fc" or expected_array.dtype.kind in "fc":
+            try:
+                return bool(
+                    np.allclose(
+                        observed_array.astype(np.float64),
+                        expected_array.astype(np.float64),
+                        atol=PROVENANCE_FLOAT_ABSOLUTE_TOLERANCE,
+                        rtol=PROVENANCE_FLOAT_RELATIVE_TOLERANCE,
+                        equal_nan=False,
+                    )
+                )
+            except (TypeError, ValueError):
+                return False
+        return bool(np.array_equal(observed_array, expected_array))
+    if isinstance(observed, (float, np.floating)) or isinstance(
+        expected, (float, np.floating)
+    ):
+        try:
+            return math.isclose(
+                float(observed),
+                float(expected),
+                abs_tol=PROVENANCE_FLOAT_ABSOLUTE_TOLERANCE,
+                rel_tol=PROVENANCE_FLOAT_RELATIVE_TOLERANCE,
+            )
+        except (TypeError, ValueError):
+            return False
+    try:
+        result = observed == expected
+    except (TypeError, ValueError):
+        return False
+    return bool(result) if isinstance(result, (bool, np.bool_)) else False
 
 
 def _alpha_snapshot(model: Any) -> dict[str, Any]:
@@ -1000,7 +1077,10 @@ def _validate_test_predictions(
     if set(frame["nodule_uid"].astype(str)) != set(expected):
         raise ValueError("P8_TEST_PREDICTION_UID_SET_MISMATCH")
     for key, expected_value in row_provenance.items():
-        if not all(value == expected_value for value in frame[key].tolist()):
+        if not all(
+            _provenance_value_matches(value, expected_value)
+            for value in frame[key].tolist()
+        ):
             raise ValueError(f"P8_TEST_PROVENANCE_MISMATCH:{key}")
     by_uid = frame.set_index(frame["nodule_uid"].astype(str), drop=False)
     maximum_numeric_error = 0.0
@@ -1525,14 +1605,23 @@ def _validate_history_and_runtime(
                 EXPERTS_PER_GROUP,
                 "P8_ALPHA_HISTORY_INVALID",
             )
-            shifted = logits - logits.max()
-            expected_weights = np.exp(shifted) / np.exp(shifted).sum()
+            persisted_logits = logits.astype(np.float32)
+            persisted_weights = weights.astype(np.float32)
+            expected_weights = _float32_softmax(persisted_logits)
             if (
-                np.any(weights < 0.0)
-                or np.any(weights > 1.0)
-                or not np.isclose(weights.sum(), 1.0, atol=1e-7, rtol=0.0)
+                np.any(persisted_weights < 0.0)
+                or np.any(persisted_weights > 1.0)
+                or not np.isclose(
+                    persisted_weights.sum(dtype=np.float32),
+                    np.float32(1.0),
+                    atol=ALPHA_SOFTMAX_ABSOLUTE_TOLERANCE,
+                    rtol=0.0,
+                )
                 or not np.allclose(
-                    weights, expected_weights, atol=1e-7, rtol=0.0
+                    persisted_weights,
+                    expected_weights,
+                    atol=ALPHA_SOFTMAX_ABSOLUTE_TOLERANCE,
+                    rtol=ALPHA_SOFTMAX_RELATIVE_TOLERANCE,
                 )
             ):
                 raise ValueError(f"P8_ALPHA_HISTORY_SOFTMAX_MISMATCH:{group}")

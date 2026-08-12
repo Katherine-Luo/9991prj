@@ -370,6 +370,41 @@ def test_prediction_schema_reconstructs_experts_alpha_and_ties(tmp_path: Path) -
         )
 
 
+def test_prediction_provenance_compares_parquet_arrays_explicitly(
+    tmp_path: Path,
+) -> None:
+    assert p8l._provenance_value_matches(
+        np.asarray([0.1 + 5e-14, 0.2]), [0.1, 0.2]
+    )
+    assert not p8l._provenance_value_matches(
+        np.asarray([0.1 + 1e-6, 0.2]), [0.1, 0.2]
+    )
+    model = _image_model()
+    records = _concept_records(tmp_path, 2)
+    frame = pd.DataFrame(
+        p8l._prediction_rows(
+            model, records, torch.device("cpu"), batch_size=2, num_workers=0
+        )
+    )
+    frame["fold_index"] = 0
+    frame["provenance_array"] = pd.Series(
+        [np.asarray(["left", "right"]) for _ in range(len(frame))],
+        dtype=object,
+    )
+    expected = {"fold_index": 0, "provenance_array": ["left", "right"]}
+    p8l._validate_test_predictions(frame, records, expected, model)
+
+    different = frame.copy(deep=True)
+    different.at[0, "provenance_array"] = np.asarray(["left", "changed"])
+    with pytest.raises(ValueError, match="P8_TEST_PROVENANCE_MISMATCH"):
+        p8l._validate_test_predictions(different, records, expected, model)
+
+    shape_mismatch = frame.copy(deep=True)
+    shape_mismatch.at[0, "provenance_array"] = np.asarray([["left", "right"]])
+    with pytest.raises(ValueError, match="P8_TEST_PROVENANCE_MISMATCH"):
+        p8l._validate_test_predictions(shape_mismatch, records, expected, model)
+
+
 def test_history_runtime_requires_h200_precision_coverage_and_alpha_evidence() -> None:
     split = {
         "partitions": {
@@ -442,6 +477,41 @@ def test_history_runtime_requires_h200_precision_coverage_and_alpha_evidence() -
     with pytest.raises(ValueError, match="P8_ALPHA_HISTORY_SOFTMAX_MISMATCH"):
         p8l._validate_history_and_runtime(
             invalid_softmax, runtime, split, provenance
+        )
+
+    fp32_roundoff = history.copy()
+    fp32_roundoff.loc[0, "alpha_subtlety_logits"] = json.dumps(
+        [
+            -0.023739252239465714,
+            0.016330799087882042,
+            -0.0025521512143313885,
+            -0.0020735361613333225,
+            -0.00544451829046011,
+        ]
+    )
+    fp32_roundoff.loc[0, "alpha_subtlety_weights"] = json.dumps(
+        [
+            0.195976123213768,
+            0.20398834347724915,
+            0.2001725733280182,
+            0.20026841759681702,
+            0.1995944380760193,
+        ]
+    )
+    p8l._validate_history_and_runtime(fp32_roundoff, runtime, split, provenance)
+
+    materially_altered = fp32_roundoff.copy()
+    altered_weights = json.loads(
+        str(materially_altered.loc[0, "alpha_subtlety_weights"])
+    )
+    altered_weights[0] += 1e-4
+    altered_weights[1] -= 1e-4
+    materially_altered.loc[0, "alpha_subtlety_weights"] = json.dumps(
+        altered_weights
+    )
+    with pytest.raises(ValueError, match="P8_ALPHA_HISTORY_SOFTMAX_MISMATCH"):
+        p8l._validate_history_and_runtime(
+            materially_altered, runtime, split, provenance
         )
 
 
