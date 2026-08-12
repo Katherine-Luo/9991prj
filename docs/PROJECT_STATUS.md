@@ -15,7 +15,7 @@ active_bug_ids: []
 resume_phase: P9
 next_phase: P10
 last_updated: 2026-08-12
-last_verified_commit: ecdb692
+last_verified_commit: c1f80e5
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: ecdb692
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P8-002`已由supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`。 |
-| 当前阻塞项 | 无技术阻塞；P9 evaluation与spatial primitives已实现，真实checkpoint/model loader、spatial lifecycle、Katana与audit仍未实现，formal spatial jobs受显式用户门约束。 |
+| 当前阻塞项 | 无技术阻塞；P9 spatial execution lifecycle已完成本地实现与验证，实际H200 Stage A、Katana/PBS、formal spatial jobs与最终OOF/audit尚未执行，formal jobs仍受显式用户门约束。 |
 | 恢复阶段 | `P9` |
 | 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / NOT_APPLICABLE`；P9完成、确认并交付前禁止启动或规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | P9 execution supplement/evaluation core分别由`572433f`/`b2865c6`封存，spatial primitives由本地功能commit `ecdb692`封存。Spatial core覆盖4模型共28个target paths、strict FP32 spatial-mean-gradient weighted-sum→ReLU→trilinear Grad-CAM raw maps、all-zero undefined exclusion、stable 26,215-voxel masks、model-independent 20个matched-random masks、no-inplace occlusion、两类faithfulness各20个raw values与aggregates，以及16-nodule/144-row ZSTD Parquet atomic shard seal/tamper checks。Direct config+evaluation+spatial `35 passed`，完整测试`315 passed`且仅有3条既有dependency warnings，Phase Compliance Reviewer为`PASS`。CLI lifecycle仍明确`NOT_IMPLEMENTED`且`run`先执行approval gate；真实loader、Stage A、Katana、audit与jobs均未实现或执行，`P9_SPATIAL_APPROVED=0`，P10未启动。 |
+| 状态依据 | P9 spatial execution lifecycle已由本地功能commit `c1f80e5`封存。实现四模型strict frozen best-checkpoint loaders、P6 concept+task composite checkpoint SHA、P4 encoder initialization/implementation/source OOF绑定、validation auxiliary predictions、P6 frozen cache与P7/P8 best-checkpoint train-forward centering、28 target实际Grad-CAM+occlusion、16-nodule atomic shards的verify/reuse/no-overwrite、strict final verifier、actual H200 Stage A runtime/storage/faithfulness gates及formal approval-record gate。Direct P9 config+evaluation+spatial+lifecycle `46 passed`，完整测试`326 passed`且仅有3条既有dependency warnings，Phase Compliance Reviewer为`PASS`。实际Stage A尚未执行，`P9_SPATIAL_APPROVED=0`；无Katana/PBS、formal jobs或最终OOF/audit，P10未启动。 |
 
 ## 3. 当前阶段：P9 统一评估、干预与空间解释
 
@@ -109,17 +109,22 @@ last_verified_commit: ecdb692
 - Grad-CAM严格要求FP32 activation/gradient，以spatial-mean gradients加权channel sum、post-combination ReLU及`align_corners=False` trilinear upsample生成raw unnormalized FP32 maps。All-zero maps标记`undefined`并从occlusion denominator排除；stable saliency以value descending、flat-index ascending选择精确26,215 voxels。
 - 每个fold/nodule/target确定性生成20个不含model域、without-replacement的matched-random masks；occlusion复制输入且禁止in-place修改。双faithfulness同时保留20个random output-sensitivity与20个random error-increase values、各自aggregates及saliency-vs-random comparisons。
 - Private raw maps使用little-endian FP32 bytes、ZSTD Parquet与atomic sibling replace；16-nodule concept-model shard精确为144 rows，并以file/map/schema/target/seal hashes阻断tampering。Direct config+evaluation+spatial测试`35 passed`，完整测试`315 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`。
+- P9 spatial execution lifecycle已由本地功能commit `c1f80e5`封存。四模型loader只读取各fold既有frozen best checkpoints；Standard CBM以concept-best与task-best构造domain-separated composite checkpoint SHA，所有模型均绑定P4 encoder initialization、当前implementation SHA与source OOF SHA，并验证加载前后semantic state不变。
+- Lifecycle生成并封存fold validation auxiliary predictions，不读取或改写test artifacts。Contribution centering对Standard CBM只使用既有frozen train cache与task-best head；Mixed CEM和learned-softmax GAM只使用best checkpoint、无augmentation train-forward，并强制exact train UID membership及normalized/rating reconstruction gates。
+- 实际spatial runner覆盖每个model/fold的全部target paths，执行strict FP32 Grad-CAM与saliency/matched-random occlusion；每16个nodules形成atomic shard，已完成shard会先strict verify后复用，任何provenance/tamper mismatch均阻断且禁止静默覆盖。Final verifier重建checkpoint/source/auxiliary/centering/runtime/shard/faithfulness证据。
+- Stage A lifecycle固定fold 0 validation-only，在H200上验证4模型共28 targets、true batch-16 occlusion forward、raw FP32 shard roundtrip、semantic state不变、无optimizer/parameter update、peak-memory、projected runtime、scratch ratio及faithfulness正负error-increase evidence。Formal run除`P9_SPATIAL_APPROVED=1`外还必须提供绑定该Stage A SHA的exact user approval record。
+- P9 direct config+evaluation+spatial+lifecycle测试`46 passed`，完整测试`326 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结requirements/config与P5–P8 scientific artifacts无改动。以上仅为本地接口验证，actual H200 Stage A尚未执行。
 
 ### 正在进行
 
-- P9本地分支`p9-unified-evaluation`现位于功能commit `ecdb692`；P9为`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。
-- P9 execution supplement、evaluation core与spatial primitives批次已完成；下一批按真实checkpoint loader/spatial lifecycle、Katana与audit接口的原子边界推进。
+- P9本地分支`p9-unified-evaluation`现位于功能commit `c1f80e5`；P9为`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。
+- P9 execution supplement、evaluation core、spatial primitives与spatial lifecycle本地批次已完成；下一批按Katana/PBS、actual Stage A与audit接口的原子边界推进。
 - `P9_SPATIAL_APPROVED`保持`0`。只有实际H200 Stage A、runtime/storage gate、完整测试和双agent审查全部通过、向用户汇报完整证据并再次获得明确批准后，才允许一次性提交20个model×fold jobs。
 
 ### 尚未完成
 
-- 真实checkpoint train-forward centering inputs与intervention artifact lifecycle尚未实现或生成。
-- Spatial CLI的preflight/run/verify lifecycle仍故意返回`NOT_IMPLEMENTED`；`run`必须先通过approval gate。真实model/checkpoint loader、Grad-CAM forward、occlusion execution、Katana/audit接口及actual H200 Stage A尚未实现或执行。
+- 真实checkpoint train-forward centering与spatial artifacts尚未生成；当前只有synthetic/local lifecycle验证证据。
+- Actual H200 Stage A、Katana transfer/PBS、formal 20-job execution、CPU aggregate与最终P9 OOF/audit尚未实现或执行；`P9_SPATIAL_APPROVED=0`，不得创建formal approval record或提交jobs。
 - 20个formal spatial jobs、CPU aggregate、P9 audit、阶段级双agent审查和用户最终确认均尚未完成；不得提前启动P10。
 
 ### 验收边界
@@ -481,7 +486,7 @@ Bug 修复后：
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
-| P9 | 统一评估、干预与空间解释 | `IN_PROGRESS` | `ON_TRACK` | Supplement/evaluation/spatial commits=`572433f/b2865c6/ecdb692`；28 targets、strict FP32 raw Grad-CAM、stable/matched masks、双faithfulness及atomic shards primitives已实现，direct/full=`35/315 passed`、3条既有warnings，Phase Compliance `PASS`。真实loader/lifecycle、Katana/audit、Stage A与jobs尚未实现或执行；`P9_SPATIAL_APPROVED=0` | 0 | 0 |
+| P9 | 统一评估、干预与空间解释 | `IN_PROGRESS` | `ON_TRACK` | Spatial lifecycle=`c1f80e5`：四模型strict loaders/provenance、validation auxiliary、P6 cache/P7-P8 train-forward centering、28-target actual runner、atomic resume/no-overwrite、final verifier及Stage A/formal approval gates已实现；direct/full=`46/326 passed`、3条既有warnings，Phase Compliance `PASS`。Actual Stage A、Katana/PBS、formal jobs与最终OOF/audit未执行；`P9_SPATIAL_APPROVED=0` | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
@@ -1033,3 +1038,4 @@ Bug 修复后：
 | 2026-08-12 | `LOCAL_CONFIG_VERIFIED` | P9 | P9 execution supplement、deterministic resolved config与SHA-256已冻结；SHA-256=`a52d559cb241e8e5cb0f834f41fc171dca63ba2fcfda2164f251e48f4dfc4906`。固定P5–P8 artifacts只读、validation-extreme-only Youden-J、正向delta、双faithfulness与各20个matched-random values、2,000次patient bootstrap/6 pairs、raw FP32 Grad-CAM、Stage A runtime/storage gates及`P9_SPATIAL_APPROVED=0`再授权门。Direct/full=`8/288 passed`、3条既有warnings，Phase Compliance `PASS`。Evaluation/spatial/Katana/audit尚未实现，无Stage A或job；P9保持`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED`。 | `572433f`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_EVALUATION_CORE_VERIFIED` | P9 | 四模型OOF exact P4 membership/targets、unclipped双量纲task metrics、validation-extreme-only fold Youden-J与固定0.5 sensitivity、concept metrics/ties、strict train-UID centering/reconstruction、100个shared random permutations/error-first interventions与正向deltas、patient-all-nodule 2,000次bootstrap/secondary redraw/6 pairs均已实现并测试。Direct config+core/full=`23/303 passed`、3条既有warnings，Phase Compliance `PASS`。Checkpoint forward/intervention artifacts、spatial/Katana/audit未实现，无Stage A/job；P9保持`IN_PROGRESS / ON_TRACK`、`P9_SPATIAL_APPROVED=0`，P10保持`NOT_STARTED`。 | `b2865c6`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_SPATIAL_CORE_VERIFIED` | P9 | 28个target paths、strict FP32 raw Grad-CAM formula、undefined-map exclusion、stable 26,215-voxel saliency、model-independent 20 matched-random masks、no-inplace occlusion、双faithfulness两类20-value arrays/aggregates及16-nodule/144-row ZSTD Parquet atomic shard seal/tamper checks已实现。Direct config+evaluation+spatial/full=`35/315 passed`、3条既有warnings，Phase Compliance `PASS`。CLI lifecycle仍故意`NOT_IMPLEMENTED`且run先gate；真实loader、Stage A、Katana/audit/jobs未实现或执行。P9保持`IN_PROGRESS / ON_TRACK`、`P9_SPATIAL_APPROVED=0`，P10保持`NOT_STARTED`。 | `ecdb692`（local, unpushed）；本次状态同步commit待创建 |
+| 2026-08-12 | `LOCAL_SPATIAL_LIFECYCLE_VERIFIED` | P9 | 四模型strict frozen best-checkpoint loaders、P6 composite checkpoint SHA、P4 encoder/implementation/source-OOF binding、validation auxiliary predictions、P6 cache与P7/P8 best-checkpoint train-forward centering、28-target actual Grad-CAM/occlusion、16-nodule atomic shard resume/no-overwrite、strict final verifier、actual-H200 Stage A runtime/storage/faithfulness gate及formal approval-record gate已实现。Direct/full=`46/326 passed`、3条既有warnings，Phase Compliance `PASS`。Actual Stage A、Katana/PBS、formal jobs与最终OOF/audit均未执行；P9保持`IN_PROGRESS / ON_TRACK`、`P9_SPATIAL_APPROVED=0`，P10保持`NOT_STARTED`。 | `c1f80e5`（local, unpushed）；本次状态同步commit待创建 |
