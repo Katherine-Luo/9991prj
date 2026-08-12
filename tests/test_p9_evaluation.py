@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import itertools
+import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from lidc_baseline import p9_evaluation as p9
+from lidc_baseline.p4_prepare import canonical_json_bytes, sha256_bytes
 
 
 def test_unclipped_regression_metrics_preserve_range_and_out_of_bounds() -> None:
@@ -214,6 +217,41 @@ def test_oof_equality_binds_reference_to_p4_fold_membership() -> None:
         p9.verify_oof_equality(frames, changed)
 
 
+def test_oof_equality_rejects_global_duplicate_test_uid() -> None:
+    reference = _oof_frame()
+    reference.loc[1, "nodule_uid"] = reference.loc[0, "nodule_uid"]
+    frames = {model: reference.copy() for model in p9.MODEL_ORDER}
+    with pytest.raises(ValueError, match="REFERENCE_OOF_INTEGRITY_MISMATCH"):
+        p9.verify_oof_equality(frames)
+
+
+def test_p4_partition_membership_rejects_stale_split_hash(tmp_path: Path) -> None:
+    for fold_index in range(5):
+        payload = {
+            "fold_index": fold_index,
+            "partitions": {
+                partition: {
+                    "nodule_uids": [f"{partition}-nodule-{fold_index}"],
+                    "patient_keys": [f"{partition}-patient-{fold_index}"],
+                }
+                for partition in ("validation", "test")
+            },
+        }
+        payload["split_sha256"] = sha256_bytes(canonical_json_bytes(payload))
+        (tmp_path / f"fold_{fold_index}.json").write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    tampered = json.loads((tmp_path / "fold_0.json").read_text(encoding="utf-8"))
+    tampered["partitions"]["validation"]["patient_keys"][0] = "tampered"
+    (tmp_path / "fold_0.json").write_text(
+        json.dumps(tampered, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="SPLIT_HASH_MISMATCH"):
+        p9.load_expected_partition_membership(tmp_path)
+
+
 def test_build_task_results_uses_fold_youden_not_fixed_half(monkeypatch: pytest.MonkeyPatch) -> None:
     test_rows = []
     validation_rows = []
@@ -272,15 +310,26 @@ def test_build_task_results_uses_fold_youden_not_fixed_half(monkeypatch: pytest.
     )
     monkeypatch.setattr(
         p9,
-        "load_expected_partition_uids",
+        "load_expected_partition_membership",
         lambda _: {
-            "test": {},
+            "test": {
+                fold: {
+                    "nodule_uids": tuple(
+                        test_frame.loc[test_frame["fold_index"] == fold, "nodule_uid"]
+                    ),
+                    "patient_keys": (f"test-patient-{fold}",),
+                }
+                for fold in range(5)
+            },
             "validation": {
-                fold: tuple(
-                    validation_frame.loc[
-                        validation_frame["fold_index"] == fold, "nodule_uid"
-                    ]
-                )
+                fold: {
+                    "nodule_uids": tuple(
+                        validation_frame.loc[
+                            validation_frame["fold_index"] == fold, "nodule_uid"
+                        ]
+                    ),
+                    "patient_keys": (f"validation-patient-{fold}",),
+                }
                 for fold in range(5)
             },
         },
@@ -296,13 +345,23 @@ def test_build_task_results_uses_fold_youden_not_fixed_half(monkeypatch: pytest.
     assert report["models"]["blackbox"]["pooled_secondary"]["fixed_0_5_sensitivity"] == 1.0
 
 
-def test_validation_threshold_inputs_are_bound_to_p4_membership() -> None:
+def _validation_membership_inputs() -> tuple[
+    dict[str, pd.DataFrame],
+    dict[int, tuple[str, ...]],
+    dict[int, tuple[str, ...]],
+    dict[int, tuple[str, ...]],
+    dict[int, tuple[str, ...]],
+]:
     rows = []
-    expected = {}
+    expected_validation = {}
+    expected_test = {}
+    expected_validation_patients = {}
+    expected_test_patients = {}
     for fold in range(5):
+        low_uid = "shared-validation-nodule" if fold in (0, 1) else f"v-{fold}-low"
         fold_rows = [
             {
-                "nodule_uid": f"v-{fold}-low",
+                "nodule_uid": low_uid,
                 "fold_index": fold,
                 "malignancy_raw_score": 0.2,
                 "target_1_to_5": 1.0,
@@ -315,10 +374,76 @@ def test_validation_threshold_inputs_are_bound_to_p4_membership() -> None:
             },
         ]
         rows.extend(fold_rows)
-        expected[fold] = tuple(row["nodule_uid"] for row in fold_rows)
+        expected_validation[fold] = tuple(row["nodule_uid"] for row in fold_rows)
+        expected_test[fold] = (f"test-{fold}",)
+        expected_validation_patients[fold] = (f"validation-patient-{fold}",)
+        expected_test_patients[fold] = (f"test-patient-{fold}",)
     frame = pd.DataFrame(rows)
     frames = {model: frame.copy() for model in p9.MODEL_ORDER}
-    p9.verify_validation_membership(frames, expected)
+    return (
+        frames,
+        expected_validation,
+        expected_test,
+        expected_validation_patients,
+        expected_test_patients,
+    )
+
+
+def _verify_validation_inputs(
+    inputs: tuple[
+        dict[str, pd.DataFrame],
+        dict[int, tuple[str, ...]],
+        dict[int, tuple[str, ...]],
+        dict[int, tuple[str, ...]],
+        dict[int, tuple[str, ...]],
+    ],
+) -> None:
+    frames, validation, test, validation_patients, test_patients = inputs
+    p9.verify_validation_membership(
+        frames,
+        validation,
+        expected_test_uids=test,
+        expected_validation_patient_keys=validation_patients,
+        expected_test_patient_keys=test_patients,
+    )
+
+
+def test_validation_uid_may_legitimately_appear_in_different_folds() -> None:
+    inputs = _validation_membership_inputs()
+    _verify_validation_inputs(inputs)
+
+
+def test_validation_duplicate_within_same_fold_is_rejected() -> None:
+    inputs = _validation_membership_inputs()
+    frames = inputs[0]
+    frames["blackbox"] = pd.concat(
+        [frames["blackbox"], frames["blackbox"].iloc[[0]]], ignore_index=True
+    )
+    with pytest.raises(ValueError, match="VALIDATION_FRAME_INVALID"):
+        _verify_validation_inputs(inputs)
+
+
+def test_validation_threshold_inputs_are_bound_to_p4_membership() -> None:
+    inputs = _validation_membership_inputs()
+    frames = inputs[0]
     frames["standard_cbm"].loc[0, "nodule_uid"] = "test-or-other-uid"
     with pytest.raises(ValueError, match="P4_VALIDATION_MEMBERSHIP_MISMATCH"):
-        p9.verify_validation_membership(frames, expected)
+        _verify_validation_inputs(inputs)
+
+
+def test_validation_and_same_fold_test_overlap_is_rejected() -> None:
+    inputs = _validation_membership_inputs()
+    validation = inputs[1]
+    test = inputs[2]
+    test[0] = (validation[0][0],)
+    with pytest.raises(ValueError, match="VALIDATION_TEST_NODULE_OVERLAP"):
+        _verify_validation_inputs(inputs)
+
+
+def test_validation_and_same_fold_test_patient_overlap_is_rejected() -> None:
+    inputs = _validation_membership_inputs()
+    validation_patients = inputs[3]
+    test_patients = inputs[4]
+    test_patients[0] = validation_patients[0]
+    with pytest.raises(ValueError, match="VALIDATION_TEST_PATIENT_OVERLAP"):
+        _verify_validation_inputs(inputs)

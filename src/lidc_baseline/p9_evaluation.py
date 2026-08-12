@@ -17,7 +17,7 @@ from scipy import stats
 from sklearn import metrics
 
 from lidc_baseline.config import compute_config_sha256, load_config
-from lidc_baseline.p4_prepare import sha256_file
+from lidc_baseline.p4_prepare import read_split, sha256_file
 from lidc_baseline.p6_standard_cbm import (
     CATEGORICAL_CONCEPTS,
     CONCEPT_GROUP_ORDER,
@@ -575,19 +575,34 @@ def load_validation_frames(validation_root: str | Path) -> dict[str, pd.DataFram
 def load_expected_partition_uids(
     split_root: str | Path = P4_SPLIT_ROOT_DEFAULT,
 ) -> dict[str, dict[int, tuple[str, ...]]]:
+    membership = load_expected_partition_membership(split_root)
+    return {
+        partition: {
+            fold_index: values["nodule_uids"]
+            for fold_index, values in folds.items()
+        }
+        for partition, folds in membership.items()
+    }
+
+
+def load_expected_partition_membership(
+    split_root: str | Path = P4_SPLIT_ROOT_DEFAULT,
+) -> dict[str, dict[int, dict[str, tuple[str, ...]]]]:
     root = Path(split_root)
-    result: dict[str, dict[int, tuple[str, ...]]] = {
+    result: dict[str, dict[int, dict[str, tuple[str, ...]]]] = {
         "validation": {},
         "test": {},
     }
     for fold_index in range(5):
-        payload = json.loads((root / f"fold_{fold_index}.json").read_text(encoding="utf-8"))
+        payload = read_split(root / f"fold_{fold_index}.json")
         if int(payload.get("fold_index", -1)) != fold_index:
             raise ValueError(f"P9_P4_SPLIT_FOLD_ID_MISMATCH:{fold_index}")
         for partition in result:
-            result[partition][fold_index] = tuple(
-                map(str, payload["partitions"][partition]["nodule_uids"])
-            )
+            registered = payload["partitions"][partition]
+            result[partition][fold_index] = {
+                "nodule_uids": tuple(map(str, registered["nodule_uids"])),
+                "patient_keys": tuple(map(str, registered["patient_keys"])),
+            }
     return result
 
 
@@ -600,9 +615,29 @@ def load_expected_fold_uids(
 def verify_validation_membership(
     frames: Mapping[str, pd.DataFrame],
     expected_validation_uids: Mapping[int, Sequence[str]],
+    *,
+    expected_test_uids: Mapping[int, Sequence[str]] | None = None,
+    expected_validation_patient_keys: Mapping[int, Sequence[str]] | None = None,
+    expected_test_patient_keys: Mapping[int, Sequence[str]] | None = None,
 ) -> None:
-    if set(frames) != set(MODEL_ORDER) or set(expected_validation_uids) != set(range(5)):
+    if set(frames) != set(MODEL_ORDER) or set(expected_validation_uids) != set(
+        range(5)
+    ):
         raise ValueError("P9_VALIDATION_MODEL_OR_FOLD_SET_MISMATCH")
+    optional_fold_mappings = (
+        expected_test_uids,
+        expected_validation_patient_keys,
+        expected_test_patient_keys,
+    )
+    if any(
+        mapping is not None and set(mapping) != set(range(5))
+        for mapping in optional_fold_mappings
+    ):
+        raise ValueError("P9_VALIDATION_MODEL_OR_FOLD_SET_MISMATCH")
+    if (expected_validation_patient_keys is None) != (
+        expected_test_patient_keys is None
+    ):
+        raise ValueError("P9_VALIDATION_PATIENT_MEMBERSHIP_INCOMPLETE")
     reference: pd.DataFrame | None = None
     for model in MODEL_ORDER:
         frame = _validation_frame(frames[model], model)
@@ -618,12 +653,39 @@ def verify_validation_membership(
                 raise ValueError(
                     f"P9_P4_VALIDATION_MEMBERSHIP_MISMATCH:{model}:{fold_index}"
                 )
-        ordered = frame.sort_values("nodule_uid").reset_index(drop=True)
+            if expected_test_uids is not None:
+                expected_test = tuple(map(str, expected_test_uids[fold_index]))
+                if (
+                    len(expected_test) != len(set(expected_test))
+                    or set(expected) & set(expected_test)
+                ):
+                    raise ValueError(
+                        f"P9_VALIDATION_TEST_NODULE_OVERLAP:{fold_index}"
+                    )
+            if expected_validation_patient_keys is not None:
+                validation_patients = tuple(
+                    map(str, expected_validation_patient_keys[fold_index])
+                )
+                test_patients = tuple(map(str, expected_test_patient_keys[fold_index]))
+                if (
+                    len(validation_patients) != len(set(validation_patients))
+                    or len(test_patients) != len(set(test_patients))
+                    or set(validation_patients) & set(test_patients)
+                ):
+                    raise ValueError(
+                        f"P9_VALIDATION_TEST_PATIENT_OVERLAP:{fold_index}"
+                    )
+        ordered = frame.sort_values(["fold_index", "nodule_uid"]).reset_index(
+            drop=True
+        )
         if reference is None:
             reference = ordered
             continue
-        if not np.array_equal(ordered["nodule_uid"], reference["nodule_uid"]):
-            raise ValueError(f"P9_VALIDATION_UID_IDENTITY_MISMATCH:{model}")
+        for column in ("fold_index", "nodule_uid"):
+            if not np.array_equal(ordered[column], reference[column]):
+                raise ValueError(
+                    f"P9_VALIDATION_UID_IDENTITY_MISMATCH:{model}:{column}"
+                )
         if not np.allclose(
             ordered["target_1_to_5"].astype(float),
             reference["target_1_to_5"].astype(float),
@@ -651,12 +713,22 @@ def _validation_frame(frame: pd.DataFrame, model: str) -> pd.DataFrame:
         raise ValueError(f"P9_VALIDATION_REQUIRED_COLUMN_MISSING:{model}")
     result = frame.copy()
     result["nodule_uid"] = result["nodule_uid"].astype(str)
-    if result["nodule_uid"].duplicated().any() or not np.isfinite(
-        result[["malignancy_raw_score", "target_1_to_5"]].to_numpy(dtype=float)
-    ).all():
-        raise ValueError(f"P9_VALIDATION_FRAME_INVALID:{model}")
-    if set(result["fold_index"].astype(int)) != set(range(5)):
+    fold_values = result["fold_index"].to_numpy(dtype=float)
+    if (
+        not np.isfinite(fold_values).all()
+        or not np.array_equal(fold_values, fold_values.astype(np.int64))
+        or set(fold_values.astype(np.int64)) != set(range(5))
+    ):
         raise ValueError(f"P9_VALIDATION_FOLD_SET_MISMATCH:{model}")
+    result["fold_index"] = fold_values.astype(np.int64)
+    if (
+        result.duplicated(subset=["fold_index", "nodule_uid"]).any()
+        or not np.isfinite(
+            result[["malignancy_raw_score", "target_1_to_5"]].to_numpy(dtype=float)
+        ).all()
+        or ("model" in result and set(result["model"].astype(str)) != {model})
+    ):
+        raise ValueError(f"P9_VALIDATION_FRAME_INVALID:{model}")
     return result
 
 
@@ -669,10 +741,29 @@ def build_task_results(
         model: canonical_oof_frame(frame, model)
         for model, frame in load_oof_frames(oof_root).items()
     }
-    expected_partitions = load_expected_partition_uids(split_root)
-    verify_oof_equality(frames, expected_partitions["test"])
+    expected_membership = load_expected_partition_membership(split_root)
+    expected_partition_uids = {
+        partition: {
+            fold_index: values["nodule_uids"]
+            for fold_index, values in folds.items()
+        }
+        for partition, folds in expected_membership.items()
+    }
+    verify_oof_equality(frames, expected_partition_uids["test"])
     validation_raw = load_validation_frames(validation_root)
-    verify_validation_membership(validation_raw, expected_partitions["validation"])
+    verify_validation_membership(
+        validation_raw,
+        expected_partition_uids["validation"],
+        expected_test_uids=expected_partition_uids["test"],
+        expected_validation_patient_keys={
+            fold_index: values["patient_keys"]
+            for fold_index, values in expected_membership["validation"].items()
+        },
+        expected_test_patient_keys={
+            fold_index: values["patient_keys"]
+            for fold_index, values in expected_membership["test"].items()
+        },
+    )
     validation = {
         model: _validation_frame(frame, model)
         for model, frame in validation_raw.items()
