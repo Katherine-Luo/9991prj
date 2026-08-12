@@ -15,12 +15,12 @@ active_bug_ids: []
 resume_phase: P8
 next_phase: P9
 last_updated: 2026-08-12
-last_verified_commit: 5e7a66b
+last_verified_commit: 6ca4f48
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`437ce85`。P8 Stage A、五折科学执行、existing-artifact final verification、CPU OOF、脱敏audit与阶段级双agent审查均已通过，`BUG-P8-002`已解决；用户于2026-08-12明确确认P8，现为`COMPLETED / ON_TRACK`。P8 completion状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行；此前不得声称P8已交付，也不得启动或规划P9。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。P8 Stage A、五折科学执行、existing-artifact final verification、CPU OOF、脱敏audit与阶段级双agent审查均已通过，`BUG-P8-002`已解决；completion commit `6ca4f48`已fast-forward合并至`main`并推送GitHub，合并后完整测试为`280 passed`且仅有3条既有dependency warnings。P8为`COMPLETED / ON_TRACK / DELIVERED`；P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。
 
 ## 1. 阅读规则
 
@@ -42,11 +42,11 @@ last_verified_commit: 5e7a66b
 | 阶段状态 | `COMPLETED / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P8-002`已由supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`。 |
-| 当前阻塞项 | 无技术阻塞；正在执行用户确认后的completion状态封存、fast-forward合并、`main`完整验证与GitHub push。 |
+| 当前阻塞项 | 无；P8已完成并交付，当前没有活动开发阶段。 |
 | 恢复阶段 | `P8`（已恢复正常阶段门流程） |
-| 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED / NOT_APPLICABLE`；P8完成封存、合并与推送前禁止启动或详细规划） |
+| 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED / NOT_APPLICABLE`；须另行制定并获得用户批准后才能启动） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | Final verifier commits=`81e7f33`、`d462e20`，六份脱敏audit evidence commit=`2ddbe30`（均local, unpushed）；latest exact manifest为10 files / `147,168` bytes，internal/file SHA-256=`d6a541372d37d32c3f20ba736845ed78101238021fb4654217d325adb31f7a58`/`3cc7f1821b4cbfdfc03e838fd19d53e64c24af1b44364af5d6601be7f38d5f46`。首次CPU verifier job `8983007`仅发现同范围checkpoint/history alpha verifier leftover并Exit 1，无train/test/OOF；补充修复后job `8983016`在`k218`、`ngpus=0`以Exit 0完成五折existing-artifact final verify，且checkpoints/history/predictions/metrics/evaluation hashes不变。CPU OOF job `8983018`在`k218`、`ngpus=0`以Exit 0完成：2,633 nodules / 868 patients、fold counts=`479/502/539/549/564`、0 leakage、五折transaction均为1，OOF SHA-256=`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。Direct/full tests=`23/280 passed`且仅3条既有warnings；Phase Compliance Reviewer为`PASS`。用户于2026-08-12明确确认P8；completion状态commit、合并、合并后测试与push尚待执行，P9保持未启动。 |
+| 状态依据 | Final verifier commits=`81e7f33`、`d462e20`，六份脱敏audit evidence commit=`2ddbe30`，均已随P8交付推送；latest exact manifest为10 files / `147,168` bytes，internal/file SHA-256=`d6a541372d37d32c3f20ba736845ed78101238021fb4654217d325adb31f7a58`/`3cc7f1821b4cbfdfc03e838fd19d53e64c24af1b44364af5d6601be7f38d5f46`。首次CPU verifier job `8983007`仅发现同范围checkpoint/history alpha verifier leftover并Exit 1，无train/test/OOF；补充修复后job `8983016`在`k218`、`ngpus=0`以Exit 0完成五折existing-artifact final verify，且checkpoints/history/predictions/metrics/evaluation hashes不变。CPU OOF job `8983018`在`k218`、`ngpus=0`以Exit 0完成：2,633 nodules / 868 patients、fold counts=`479/502/539/549/564`、0 leakage、五折transaction均为1，OOF SHA-256=`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。用户于2026-08-12明确确认；completion commit `6ca4f48`已fast-forward合并并推送，合并后完整测试`280 passed`、3条既有warnings，冻结检查PASS，首次交付核对`HEAD=main=origin/main=6ca4f4875cd78ed8bbcd6d8b717f02fa746913b6`且ahead/behind=`0/0`。P9保持未启动。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -64,16 +64,16 @@ last_verified_commit: 5e7a66b
 - P8 model core已实现8个独立linear concept heads与8组×5个独立concept-local GAM experts；continuous/categorical groups分别只读取所属activated sigmoid/softmax predictions，expert结构为`input→32→16→1`、ReLU hidden与linear scalar output，不存在DenseNet feature bypass、cross-concept input、ground-truth concept task input或简单平均。
 - 每组fold-level trainable alpha logits与global raw bias均以零初始化；alpha softmax初始权重精确为`0.2`，直接测试验证每组alpha均获得finite nonzero gradient并在Adam step后更新。Concept heads与40个experts使用fold-specific、domain-separated、CPU RNG-isolated初始化及per-component/combined semantic hashes，并从P4 shared encoder artifact加载且复核encoder semantic/file hashes。
 - 已实现`L_GAM=L_task+L_concept`、八组等权concept loss、unconstrained `raw_task_score=raw_bias+Σgroup_contribution`及normalized/rating-scale贡献重建；构造`>1`输出保持未裁剪，tampering guard可阻断，重建误差门固定为`≤1e-6`。
-- Model-core直接测试`9 passed`、完整测试`261 passed`且仅有3条既有dependency warnings；AST/whitespace检查与Phase Compliance Reviewer均为`PASS`，冻结V1/V2 requirements/config、common H200 profile及P8 execution supplement无diff。功能commit为`0d04223`（local, unpushed）。
+- Model-core直接测试`9 passed`、完整测试`261 passed`且仅有3条既有dependency warnings；AST/whitespace检查与Phase Compliance Reviewer均为`PASS`，冻结V1/V2 requirements/config、common H200 profile及P8 execution supplement无diff。功能commit为`0d04223`，已随P8交付推送。
 - 已实现固定80 epochs的joint training lifecycle：复用common H200 profile的Adam、validation-`L_GAM` scheduler、minimum validation total-loss checkpoint与earlier-epoch tie-break；epoch history逐项保存task MSE、concept loss、8组loss、total loss、LR、full train/validation coverage与UID-set hashes，并保留partial final batch与train-only augmentation边界。
 - 已实现epoch-boundary atomic `last.pt`/`best.pt`、optimizer/scheduler/RNG/history resume与completed-run verified reuse。Checkpoint metadata绑定validation task/concept/8-group/total objectives及alpha snapshot；initial、best与final alpha均保存per-group/combined semantic hashes，并与history、checkpoint state及completion hashes交叉验证。
 - 已实现best checkpoint封存后的test exactly-once transaction：claim、private predictions、metrics、evaluation与completion按hash/provenance提交；已提交evaluation可在中断后zero-inference恢复，已完成test再次调用会阻断。Private schema严格保存activated concepts、logits、expert outputs、alpha logits/weights、targets/ties/valid-reader counts、8组贡献、bias与完整provenance，缺失/额外字段、tampering和artifact corruption均阻断。
 - Strict verifier使用显式FP32 serialization/scale-aware numeric policy重建expert outputs、alpha-weighted group contributions及normalized/rating scores，保留匿名diagnostic而不包含patient/nodule标识；fold verifier重建minimum-validation-`L_GAM` checkpoint、H200/FP32/no-AMP/no-BF16/no-TF32 runtime、coverage、alpha gradient/update和test-once证据。`verify --scope all`接口验证五折test counts、2,633 nodules / 868 patients及0 patient leakage，并有count/patient/leakage负测试；后续existing-artifact final verification与actual OOF证据见本节末尾。
-- Lifecycle批次的direct config+lifecycle测试为`22 passed`，完整测试为`268 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config、common H200 profile及P8 execution supplement无diff。Lifecycle功能commit为`1c841a5`（local, unpushed）。
+- Lifecycle批次的direct config+lifecycle测试为`22 passed`，完整测试为`268 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer为`PASS`，冻结V1/V2 requirements/config、common H200 profile及P8 execution supplement无diff。Lifecycle功能commit为`1c841a5`，已随P8交付推送。
 - 已实现Stage A `overfit-check`与`preflight`命令及H200 PBS：只运行8-sample/40-step overfit与true-batch-16 forward/task+concept+total loss/backward/Adam、alpha gradient/update、reconstruction、P4 encoder hash、FP32/no-AMP/BF16/TF32及peak-memory gates，不启动formal epochs或test。
 - 已实现P8 exact-whitelist transfer/KDM接口、H200 Stage A PBS、带`P8_FORMAL_APPROVED=1`门的五折formal PBS和CPU-only OOF PBS。Formal orchestration支持epoch-boundary resume、completed training reuse、best-checkpoint test exactly once，以及已提交test artifacts的completion-aware zero-inference recovery；不会为已完成test执行第二次inference。
 - 已实现private OOF与tracked aggregate audit构建/验证接口：五折完成后聚合2,633 nodules / 868 patients、固定fold counts、0 leakage、task metrics、alpha与贡献重建、private storage及deidentified fold/summary evidence；actual P8 OOF与六份脱敏audit现已生成并验证，证据见本节末尾。
-- Private exact transfer manifest本地verify为`PASS`：10 files / `143,473` bytes，internal SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`，manifest file SHA-256=`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。P8 direct测试`31 passed`、完整测试`277 passed`且仅有3条既有dependency warnings；Bash/diff/frozen checks及Phase Compliance Reviewer均为`PASS`。接口功能commit为`486c9c0`（local, unpushed）。
+- Private exact transfer manifest本地verify为`PASS`：10 files / `143,473` bytes，internal SHA-256=`31e0ec0b5479b5bf5203a6a209e03361df9cadc627cd2fe42316b0a8b442feb4`，manifest file SHA-256=`d07cabd8e42f2ddc0c1530b6bd677f3e8b1e806d7aa86888658ec6ad93111bac`。P8 direct测试`31 passed`、完整测试`277 passed`且仅有3条既有dependency warnings；Bash/diff/frozen checks及Phase Compliance Reviewer均为`PASS`。接口功能commit为`486c9c0`，已随P8交付推送。
 - Exact-whitelist KDM同步已实际完成；Katana login node仅执行remote integrity，`verify-stage-a`为`PASS`。P7 immutable base与P8 delta的file counts、bytes及internal/file hashes均匹配；login node未运行GPU计算、训练或test。
 - 首次P8 H200 Stage A job `8978152.kman.restech.unsw.edu.au`已于2026-08-12 07:55 Sydney提交至`csegpu12`。资源请求固定为H200×1、8 CPU、64 GB RAM、4小时walltime，不包含formal training或test。
 - Job `8978152`实际分配至`k203` H200 GPU 3，于08:05:47–08:06:24运行，PBS walltime=`00:00:29`、`Exit_status=1`。Remote integrity先通过，随后CLI在overfit/preflight前以`TypeError: overfit_check() got an unexpected keyword argument 'output_root'`终止。
@@ -90,24 +90,24 @@ last_verified_commit: 5e7a66b
 - 五折completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`；test sample counts依次为`479/502/539/549/564`，每折只有一个valid committed test evaluation。禁止再次执行test inference或修改existing predictions、metrics、evaluation scientific values。
 - Fold 1、2、4在PBS层出现过automatic rerun/hold；该scheduler lifecycle作为执行审计保留。其现有80-epoch histories、best checkpoints及单次committed test事务完整，automatic rerun/hold不构成额外有效test、replacement或重新执行授权。
 - `BUG-P8-002`的两处verifier-only代码修复已在本地实施，改动仅限`src/lidc_baseline/p8_gam_lifecycle.py`与`tests/test_p8_gam.py`。Alpha路径将persisted logits显式恢复为float32，并以PyTorch CPU FP32 softmax重建；simplex使用`atol=2e-7`，persisted/recomputed weights使用`atol=2e-7, rtol=1e-6`，真实roundoff positive case通过而`1e-4` corruption negative case阻断。
-- Nested Parquet provenance comparator对array使用`array_equal`精确比较、对floating values使用`allclose(atol=1e-12, rtol=1e-12)`，并覆盖identical、different与shape-mismatch cases。P8 direct测试为`20 passed`，完整测试为`280 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer及diff/AST/frozen checks均为`PASS`。功能commit为`81e7f33`（local, unpushed）；该commit形成时remote verifier尚未重跑，后续重新验收结果见下方最终证据。
+- Nested Parquet provenance comparator对array使用`array_equal`精确比较、对floating values使用`allclose(atol=1e-12, rtol=1e-12)`，并覆盖identical、different与shape-mismatch cases。P8 direct测试为`20 passed`，完整测试为`280 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer及diff/AST/frozen checks均为`PASS`。功能commit为`81e7f33`，已随P8交付推送；该commit形成时remote verifier尚未重跑，后续重新验收结果见下方最终证据。
 - Supplemental verifier commit `d462e20`将同一PyTorch CPU FP32 softmax与`atol=2e-7, rtol=1e-6` policy覆盖到checkpoint/history alpha snapshots，未修改训练、checkpoint、prediction、metrics或evaluation scientific values。最终P8 direct测试为`23 passed`，完整测试为`280 passed`且仅有3条既有dependency warnings；diff/AST/frozen checks与Phase Compliance Reviewer均为`PASS`。
 - Latest exact-whitelist manifest已通过local/remote integrity：10 files / `147,168` bytes，internal/file SHA-256=`d6a541372d37d32c3f20ba736845ed78101238021fb4654217d325adb31f7a58`/`3cc7f1821b4cbfdfc03e838fd19d53e64c24af1b44364af5d6601be7f38d5f46`。
 - 首次CPU verifier job `8983007`以`Exit_status=1`发现同一范围内遗漏的checkpoint/history alpha FP32 mismatch；该job没有调用train、test inference或OOF，也没有修改scientific artifacts。Supplemental修复后CPU verifier job `8983016`在`k218`、`ngpus=0`以`Exit_status=0`完成五折existing-artifact verification；五折均`PASS`且既有checkpoint/history/predictions/metrics/evaluation hashes保持不变。
 - Formal PBS终态按scheduler事实保留：Fold 0/3 jobs=`8979874/8979873`为`F`、`Exit_status=1`，原因是已解决的verifier false failure；Fold 1/2/4 jobs=`8979876/8979877/8979875`为`H`、`run_count=21`、`Exit_status=-18`，属于PBS automatic rerun/hold。不得写成五个formal jobs均Exit 0；科学80 epochs、minimum-validation checkpoints与每折唯一committed test由CPU verifier `8983016`对existing artifacts完整验证为`PASS`。
 - CPU OOF job `8983018`在`k218`、`ngpus=0`以`Exit_status=0`完成。OOF精确覆盖2,633 unique nodules / 868 patients，fold counts=`479/502/539/549/564`，patient leakage=0，五折test transaction均为1；P4 encoder initialization hashes全部匹配，private OOF SHA-256=`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。
 - Pooled OOF original-scale MAE/RMSE=`0.48042932722742515/0.6175917269812211`，normalized MAE/RMSE=`0.12010733180685629/0.15439793174530528`，Pearson/Spearman=`0.7405389222160152/0.6527851614938172`；normalized prediction range=`[0.002012693788856268,0.9204012751579285]`，below-0/above-1 rates均为0，pooled rating-scale reconstruction最大误差=`6.407499313354492e-7`。
-- P8 private runs与OOF测量为`1,374,513,236` bytes / 47 files。六份deidentified audit JSON均为`PASS`且不含patient/nodule identifiers或绝对路径；fold 0–4 SHA-256=`d0e4fcccbd577fe4892df2cd87899e9f7c017846d047052e4258c9b8ef865412/c9e3e408134d8c434f57da89797dfda17947886b4646097d21b15cf43110cfc2/0d99ecd4347e2f2d3de1bca6f47302d29c5eedd83b8daeb50b6fc3526a9aa88d/c47a86e691616971fff1710d1222e1a150e06857023ad042ce39d96ddac7f2ae/38e25cb6ec17f14deeea5378b978816050fdf4ee40fccec4e40d2647421e61f4`，summary SHA-256=`957e0e4b80a46fc2f33c381c4bc105132e254308f69ee28c4224fa0d0f02a590`。六份audit已由原子commit `2ddbe30`封存（local, unpushed）。
+- P8 private runs与OOF测量为`1,374,513,236` bytes / 47 files。六份deidentified audit JSON均为`PASS`且不含patient/nodule identifiers或绝对路径；fold 0–4 SHA-256=`d0e4fcccbd577fe4892df2cd87899e9f7c017846d047052e4258c9b8ef865412/c9e3e408134d8c434f57da89797dfda17947886b4646097d21b15cf43110cfc2/0d99ecd4347e2f2d3de1bca6f47302d29c5eedd83b8daeb50b6fc3526a9aa88d/c47a86e691616971fff1710d1222e1a150e06857023ad042ce39d96ddac7f2ae/38e25cb6ec17f14deeea5378b978816050fdf4ee40fccec4e40d2647421e61f4`，summary SHA-256=`957e0e4b80a46fc2f33c381c4bc105132e254308f69ee28c4224fa0d0f02a590`。六份audit已由原子commit `2ddbe30`封存并随P8交付推送。
 
 ### 正在进行
 
-- 用户已明确确认P8；正在创建独立completion状态commit，随后按治理顺序fast-forward合并至`main`、运行合并后完整验证并推送。
-- 交付完成前不得声称P8已推送，也不得启动或详细规划P9。
+- P8已完成封存、fast-forward合并、`main`完整测试与GitHub推送；当前没有活动开发阶段。
+- P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。
 
 ### 尚未完成
 
-- 完成状态封存、fast-forward合并、合并后验证与GitHub推送。
-- P9未制定或实施。
+- P8无尚未完成项。
+- P9计划与开发未开始。
 
 ### 验收边界
 
@@ -115,13 +115,13 @@ last_verified_commit: 5e7a66b
 - `BUG-P8-002`维护期间禁止重训任何fold、再次执行test inference，以及修改existing checkpoints、history、predictions、metrics或test evaluation中的科学值；实际修复仅限verifier/numeric reconstruction/provenance comparison及必要diagnostic/test，且现已重新验收通过。
 - Fold 1/2/4的PBS automatic rerun/hold仅作为scheduler audit保留，不允许据此取消、替换、重复提交或改变frozen execution profile。
 - 仅实现P8-R1–P8-R3与P8阶段所需运行/完整性证据；不实现P9完整concept metrics、跨模型比较、centering、intervention curves、Grad-CAM、occlusion或bootstrap。
-- P8的H200 Stage A、五折80 epochs与test exactly once、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、完整测试与双agent阶段审查均已通过；但用户明确确认前仍不得称为`COMPLETED`或交付。
+- P8的H200 Stage A、五折80 epochs与test exactly once、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、完整测试与双agent阶段审查均已通过；用户确认后的completion封存、合并、合并后验证与GitHub推送也已完成。
 
 ## 4. 下一阶段：P9 统一评估、干预与解释
 
 ### 进入条件
 
-- P8必须先获得用户最终确认、完成状态封存、合并与GitHub推送。当前P9为`NOT_STARTED / NOT_APPLICABLE`；不得因P8技术阶段门已通过而提前启动或详细规划。
+- P8已获用户最终确认并完成状态封存、合并与GitHub推送。当前P9仍为`NOT_STARTED / NOT_APPLICABLE`；须另行制定并获得用户批准后才能启动。
 
 ### 第一批任务
 
@@ -464,15 +464,15 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion状态commit、合并与push待执行 | 0 | 0 |
-| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成状态封存、合并与推送前禁止启动或规划 | 0 | 0 |
+| P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
+| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；须另行制定并获得用户批准后才能启动 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P8-002`已通过supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`；P8恢复`NORMAL_DEVELOPMENT / CURRENT_AND_NEXT`并进入`AWAITING_USER_APPROVAL / ON_TRACK`。P9保持`NOT_STARTED / NOT_APPLICABLE`且不得启动或规划。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前无活动Bug。`BUG-P8-002`已通过supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`；P8已完成、确认并交付。P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
@@ -497,8 +497,8 @@ Bug 修复后：
 - 本地验证：真实FP32 roundoff positive case为`PASS`，`1e-4` alpha corruption为`FAIL`；nested provenance identical为`PASS`，different array与shape mismatch均为`FAIL`。Supplemental verifier进一步将同一FP32 policy覆盖checkpoint/history alpha snapshots。P8 direct=`23 passed`，完整=`280 passed`且仅有3条既有dependency warnings；Phase Compliance Reviewer及diff/AST/frozen checks均为`PASS`。
 - Remote重新验收：latest 10-file manifest为`147,168` bytes，internal/file SHA-256=`d6a541372d37d32c3f20ba736845ed78101238021fb4654217d325adb31f7a58`/`3cc7f1821b4cbfdfc03e838fd19d53e64c24af1b44364af5d6601be7f38d5f46`。Job `8983007`在无train/test/OOF的情况下发现同范围leftover checkpoint alpha mismatch并Exit 1；supplemental修复后job `8983016`在`k218`、`ngpus=0`、Exit 0完成五折existing-artifact final verifier，所有scientific artifact hashes不变。
 - OOF重新验收：CPU job `8983018`在`k218`、`ngpus=0`、Exit 0完成；2,633 nodules / 868 patients、fold counts=`479/502/539/549/564`、0 leakage、五折transaction=1、P4 encoder hashes一致，rating reconstruction最大误差=`6.407499313354492e-7`。Private OOF SHA-256=`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。
-- 未解决事项：无技术事项；P8仅等待用户最终确认。
-- 修复commits：`81e7f33`、`d462e20`（local, unpushed）。
+- 未解决事项：无；P8已获用户最终确认并完成交付。
+- 修复commits：`81e7f33`、`d462e20`，已随P8交付推送。
 
 ### BUG-P8-001：Stage A CLI 传递不支持的 output_root 参数
 
@@ -517,7 +517,7 @@ Bug 修复后：
 - 本地验证：`tests/test_p8_gam.py`为`19 passed`，完整`279 passed`/3条既有warnings；Phase Compliance Reviewer、diff/frozen checks均`PASS`。更新后的private exact manifest本地verify为10 files / `143,590` bytes，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。
 - 远程验证：更新后的10-file manifest已KDM同步并通过remote integrity，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。有效Stage A job `8978425`在`csegpu12`/`k201` H200 GPU 3上于2026-08-12 08:50:53 AEST启动，`run_count=1`、walltime=`00:02:33`、`Exit_status=0`。Overfit最近5步均值`0.4029014229774475→0.06921419948339462`；true batch 16 forward/loss/backward/Adam、八组alpha finite nonzero gradient/update/simplex、FP32/no-AMP/BF16/TF32、encoder hashes与peak-memory gate全部`PASS`。Task/concept/total loss=`0.10217960178852081/0.46578413248062134/0.567963719367981`，normalized/rating reconstruction最大误差=`2.9802322387695312e-08/1.1920928955078125e-07`，peak reserved fraction=`0.01902019501277658`。仅有预期pool3d warn-only warnings；overfit/preflight/log SHA-256=`54eca3b186ee2ead480eebae1947b3405424a3d5910fd802eed0ade452a13630`/`c2d5e2dc9915e34aefc8eda5d6d94eab3712486c6cc3dfcbdb7b0e7aae188a7b`/`5d4f34c60d107b135511e0965493b16197ef8e69e484f12e68f4f28f044662cf`。远端只有两份Stage A JSON，没有formal/test/OOF artifact；Phase Compliance Reviewer为`PASS`。
 - 解除条件：已满足。旧job `8978152`永久保持`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt；修复后的完整重跑`8978425`满足全部原定Stage A gates。P8恢复正常开发；用户已授权formal execution，唯一五折已使用`P8_FORMAL_APPROVED=1`提交并排队。
-- 修复commit：`377dbeb`（local, unpushed）。
+- 修复commit：`377dbeb`，已随P8交付推送。
 
 ### BUG-P7-001：Fold 4 precommit test state-mixture verifier false failure
 
@@ -904,7 +904,7 @@ Bug 修复后：
 - 明确未纳入内容：P9完整concept metrics、跨模型比较、contribution centering、intervention curves、Grad-CAM、occlusion与bootstrap均未实现；P9保持`NOT_STARTED`。
 - 关键commits：P8 config `0b292e7`、model core `0d04223`、lifecycle `1c841a5`、Katana/audit interfaces `486c9c0`、Stage A CLI fix `377dbeb`、verifier fixes `81e7f33`/`d462e20`、脱敏audit evidence `2ddbe30`、approval-gate status `5e7a66b`。
 - 阶段门结论：`PASS`
-- 交付状态：用户已确认；completion状态commit、fast-forward合并、`main`完整测试、冻结检查与GitHub push尚待执行，完成前不得声称P8已交付或启动P9。
+- 交付状态：Completion commit `6ca4f4875cd78ed8bbcd6d8b717f02fa746913b6`已fast-forward合并至`main`并推送GitHub。合并后完整测试`280 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config、common H200 profile与P8 execution profile均无diff。首次交付核对`HEAD=main=origin/main=6ca4f4875cd78ed8bbcd6d8b717f02fa746913b6`且ahead/behind=`0/0`。P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。
 
 ### 阶段完成记录模板
 
@@ -1012,3 +1012,4 @@ Bug 修复后：
 | 2026-08-12 | `BUG_FIX_LOCAL_PASS` / `BUG_VERIFYING` | P8 | 两处verifier-only修复仅修改`p8_gam_lifecycle.py`及tests：persisted float32 alpha logits以PyTorch CPU FP32 softmax重建，simplex/weights容差为`2e-7`与`atol=2e-7, rtol=1e-6`；nested Parquet provenance comparator使用exact array equality与`1e-12` floating tolerance。真实roundoff/`1e-4` corruption及identical/different/shape-mismatch正负测试均按预期；direct/full=`20/280 passed`、3条既有warnings，Phase Compliance及diff/AST/frozen checks均`PASS`。五折existing scientific artifacts未修改，remote final verifier尚未重跑，CPU OOF未构建；P8继续`BLOCKED / AT_RISK`，P9继续`NOT_STARTED / AT_RISK`。 | `81e7f33`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `BUG_RESOLVED` / `FIVE_FOLD_OOF_PASS` / `PHASE_AWAITING_APPROVAL` | P8 | Supplemental verifier commit `d462e20`将FP32 alpha policy覆盖checkpoint/history snapshots；latest 10-file manifest为`147,168` bytes，internal/file SHA=`d6a54137...f7a58`/`3cc7f182...d5f46`。CPU verifier `8983007`仅发现同范围leftover并Exit 1，无train/test/OOF；最终CPU verifier `8983016`在`k218`、ngpus0、Exit 0验证五折existing artifacts全部PASS且hashes不变。Formal终态保留为Fold0/3 F Exit1 verifier false failure、Fold1/2/4 H run_count21 Exit-18 automatic rerun/hold，不虚构五个formal Exit0。CPU OOF `8983018`在`k218`、ngpus0、Exit 0完成2,633/868、fold counts=`479/502/539/549/564`、0 leakage、transaction=1；original MAE/RMSE=`0.4804293272/0.6175917270`，normalized MAE=`0.1201073318`，Pearson/Spearman=`0.7405389222/0.6527851615`，rating reconstruction≤`6.4075e-7`，OOF SHA=`a5066e99...3ffa`。六份deidentified audit及direct/full=`23/280 passed`、Phase Compliance均PASS；audit evidence由`2ddbe30`原子封存。`BUG-P8-002`转为`RESOLVED`，P8恢复`AWAITING_USER_APPROVAL / ON_TRACK`，P9为`NOT_STARTED / NOT_APPLICABLE`。尚未用户确认，不得完成、推送或启动P9。 | `81e7f33`、`d462e20`、`2ddbe30`（local, unpushed）；jobs `8983007`、`8983016`、`8983018`；summary SHA `957e0e4b...a590`；本次状态同步commit待创建 |
 | 2026-08-12 | `PHASE_COMPLETED` | P8 | 用户明确确认P8；Stage A、五折80 epochs与minimum-validation checkpoints、每折唯一committed test、existing-artifact final verifies、2,633 nodules / 868 patients OOF、0 leakage、learned-alpha与贡献重建、六份脱敏audit、完整`280 passed`与阶段级双agent审查证据均已封存。P8转为`COMPLETED / ON_TRACK`，P9保持`NOT_STARTED / NOT_APPLICABLE`。Completion状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称已交付或启动P9。 | 用户确认；`81e7f33`、`d462e20`、`2ddbe30`、`5e7a66b`；本次completion状态commit待创建 |
+| 2026-08-12 | `DELIVERED` | P8 | Completion commit `6ca4f48`已fast-forward合并至`main`并推送GitHub。合并后完整测试`280 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config、common H200 profile与P8 execution profile无diff。首次交付核对`HEAD=main=origin/main=6ca4f4875cd78ed8bbcd6d8b717f02fa746913b6`且ahead/behind=`0/0`。P8为`COMPLETED / ON_TRACK / DELIVERED`；P9保持`NOT_STARTED / NOT_APPLICABLE`，未制定或实施。 | `6ca4f48`；本次post-delivery状态同步commit待创建 |
