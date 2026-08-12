@@ -15,12 +15,12 @@ active_bug_ids: [BUG-P9-001]
 resume_phase: P9
 next_phase: P10
 last_updated: 2026-08-13
-last_verified_commit: e77c4b5
+last_verified_commit: 78e34d5
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。P9的20个formal spatial jobs均已`F / Exit_status=0 / run_count=1`，既有spatial artifacts保持有效且只读；CPU aggregate job `8987452`在前置验证均`PASS`后被validation-frame verifier implementation bug阻断。当前切换为`BUG_MAINTENANCE / FULL_DOCUMENT`，`BUG-P9-001` 为唯一活动Bug，P9为`BLOCKED / AT_RISK`。用户仅授权verifier/tests修复和一次CPU aggregate recovery；禁止重训、重测、改写P5–P8或20份spatial artifacts及提交H200 replacement。P10保持`NOT_STARTED / AT_RISK`。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。P9的20个formal spatial jobs均已`F / Exit_status=0 / run_count=1`，既有spatial artifacts保持有效且只读；CPU aggregate job `8987452`在前置验证均`PASS`后被validation-frame verifier implementation bug阻断。`BUG-P9-001`的verifier-only修复已由本地commit `78e34d5`封存，tests与Phase Compliance均`PASS`，Bug保持`VERIFYING`；远端最小delta同步/verify及唯一CPU aggregate recovery尚未执行。项目保持`BUG_MAINTENANCE / FULL_DOCUMENT`，P9保持`BLOCKED / AT_RISK`；禁止重训、重测、改写P5–P8或20份spatial artifacts及提交H200 replacement。P10保持`NOT_STARTED / AT_RISK`。
 
 ## 1. 阅读规则
 
@@ -41,12 +41,12 @@ last_verified_commit: e77c4b5
 | 当前开发阶段 | `P9 统一评估、干预与空间解释` |
 | 阶段状态 | `BLOCKED / AT_RISK` |
 | 维护目标阶段 | `P9` |
-| 活动 Bug | `BUG-P9-001`：`_p9_evaluation._validation_frame`错误对pooled cross-fold validation frame施加全局UID唯一性，导致CPU aggregate false failure。 |
-| 当前阻塞项 | CPU aggregate job `8987452`在`p9_audit build`阶段以`P9_VALIDATION_FRAME_INVALID:blackbox`失败，final audit/summary未生成。修复必须仅限verifier/tests，通过完整测试与双agent审查后才允许一次CPU-only aggregate recovery。 |
+| 活动 Bug | `BUG-P9-001`（`VERIFYING`）：verifier-only修复已由`78e34d5`（local, unpushed）封存并通过tests/Phase Compliance；remote existing-artifact recovery尚待。 |
+| 当前阻塞项 | Commit `78e34d5`的minimal delta尚未同步/远端验证，唯一授权的CPU-only aggregate recovery尚未提交；final audit/summary仍不存在。 |
 | 恢复阶段 | `P9` |
 | 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / AT_RISK`；`BUG-P9-001`解决且P9完成、确认并交付前禁止启动或规划） |
 | 最近更新 | 2026-08-13 |
-| 状态依据 | 20个formal jobs `8986218`–`8986237`均为`F / Exit_status=0 / run_count=1`，每个model×fold的strict verifier已在原job内通过，既有Grad-CAM/occlusion/intervention/spatial artifacts有效且只读。CPU-only aggregate job `8987452`在`k178`以`ngpus=0`、8 CPU、64 GB、`run_count=1`运行，`p9_katana verify-stage-a` 与 `p9_spatial verify --scope all`均`PASS`，随后`p9_audit build`在`P9_VALIDATION_FRAME_INVALID:blackbox`处终止，PBS终态`F / Exit_status=1`。诊断确认pooled validation为1,315 rows，226个UID因合法cross-fold validation membership重复；四模型每fold内duplicate=0、逐fold精确匹配P4 validation membership且数值finite。根因是`_validation_frame`错误要求pooled validation UID全局唯一；正确边界是validation按fold验证，outer test/canonical OOF继续全局exactly once。Job `8987452`永久记为`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`；未生成final audit/summary。 |
+| 状态依据 | 20个formal jobs `8986218`–`8986237`均为`F / Exit_status=0 / run_count=1`，每个model×fold的strict verifier已在原job内通过，既有Grad-CAM/occlusion/intervention/spatial artifacts有效且只读。CPU job `8987452`永久记为`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`；未生成final audit/summary。Commit `78e34d5`（local, unpushed）只修改`src/lidc_baseline/p9_evaluation.py`与`tests/test_p9_evaluation.py`：validation唯一键改为`(fold_index,nodule_uid)`，通过P4 `read_split`验证canonical split hash、per-fold exact validation membership、same-fold validation/test nodule+patient disjoint、四模型fold/UID/target identity与finite；outer test/canonical OOF global exactly-once保持不变。Regression=`21 passed`、P9 direct=`68 passed`、full=`348 passed`且仅3条既有warnings，diff/AST/frozen及Phase Compliance均`PASS`。尚未remote sync/verify或提交CPU recovery；P5–P8与20份spatial artifacts无修改。 |
 
 ## 3. 当前阶段：P9 统一评估、干预与空间解释
 
@@ -132,14 +132,15 @@ last_verified_commit: e77c4b5
 
 ### 正在进行
 
-- P9本地分支`p9-unified-evaluation`当前status anchor为`e77c4b5`；工作模式为`BUG_MAINTENANCE / FULL_DOCUMENT`，P9为`BLOCKED / AT_RISK`，唯一活动Bug为`BUG-P9-001`。
-- 只允许修正`_validation_frame`的validation per-fold membership verifier及直接positive/negative tests；修复须运行完整测试与双agent审查。禁止修改P5–P8 artifacts、20份spatial artifacts/Grad-CAM/occlusion/intervention、scientific/execution profiles或任何scientific value。
-- 修复并通过审查后，只允许使用既有20份artifacts执行一次CPU-only aggregate recovery；禁止重训、重测、H200 replacement或重提formal jobs。
+- P9本地分支`p9-unified-evaluation`当前status anchor为`78e34d5`；工作模式为`BUG_MAINTENANCE / FULL_DOCUMENT`，P9为`BLOCKED / AT_RISK`，唯一活动Bug `BUG-P9-001`处于`VERIFYING`。
+- Verifier-only fix只修改`p9_evaluation.py`与直接tests：validation以`(fold_index,nodule_uid)`为唯一键，使用P4 `read_split`绑定canonical split hash并验证per-fold exact membership、same-fold validation/test nodule与patient disjoint、四模型fold UID/target identity与finite；outer test/canonical OOF仍全局exactly once。
+- 本地regression/P9 direct/full=`21/68/348 passed`，完整测试仅3条既有dependency warnings；diff、AST、frozen与Phase Compliance均`PASS`。P5–P8及20份existing spatial artifacts未修改。
+- Verifier-only功能commit=`78e34d5`（local, unpushed）。下一步严格为：exact minimal delta同步Katana并remote integrity/implementation verify → 仅提交一次CPU-only aggregate recovery。禁止重训、重测、H200 replacement、重提formal jobs或改写既有artifacts。
 
 ### 尚未完成
 
-- `BUG-P9-001`的verifier-only修复、直接/完整测试、Phase Compliance与Status Synchronization双agent审查尚未完成。
-- 唯一授权的CPU aggregate recovery、最终P9 deidentified audit/summary、最终阶段审查、用户确认、completion封存、合并与推送均尚未完成。
+- Commit `78e34d5`的minimal delta remote sync/verify及唯一授权的CPU aggregate recovery尚未完成；不得把本地`PASS`写成remote recovery `PASS`。
+- 最终P9 deidentified audit/summary、最终阶段审查、用户确认、completion封存、合并与推送均尚未完成。
 - P10仍为`NOT_STARTED / AT_RISK`，`BUG-P9-001`解决且P9完成aggregate与最终交付门前不得启动或规划。
 
 ### 验收边界
@@ -502,7 +503,7 @@ Bug 修复后：
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
-| P9 | 统一评估、干预与空间解释 | `BLOCKED` | `AT_RISK` | 20个formal jobs `8986218`–`8986237`均`F`/Exit 0/run count 1，existing artifacts有效且只读。CPU aggregate `8987452`在前置两项verify `PASS`后因`BUG-P9-001` validation cross-fold global-uniqueness verifier bug而Exit 1；未生成final audit/summary，只授权verifier-only修复与一次CPU recovery | 1 | 0 |
+| P9 | 统一评估、干预与空间解释 | `BLOCKED` | `AT_RISK` | 20个formal jobs均Exit 0且artifacts只读有效；`BUG-P9-001` verifier-only fix由`78e34d5`封存且tests/Phase Compliance已`PASS`，但remote minimal-delta verify与唯一CPU aggregate recovery尚未执行，final audit/summary不存在 | 1 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `AT_RISK` | 受`BUG-P9-001`与P9 aggregate/final delivery gate阻断，禁止启动或规划 | 0 | 1 |
 
 ## 7. Bug 登记表
@@ -517,7 +518,7 @@ Bug 修复后：
 
 ### BUG-P9-001：Pooled validation frame 错误要求 cross-fold UID 全局唯一
 
-- 状态：`INVESTIGATING`
+- 状态：`VERIFYING`
 - 严重度：`HIGH`
 - 发现日期：2026-08-13
 - 影响阶段：P9
@@ -530,9 +531,13 @@ Bug 修复后：
 - 根因：`_validation_frame`错误将outer test/canonical OOF的cross-fold global exactly-once不变量应用到pooled validation。正确语义是validation必须按fold验证exact membership与fold内唯一；outer test/canonical OOF继续要求全局exactly once。
 - 失败attempt定性：job `8987452`永久记为`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`。该attempt在final audit/summary commit前失败，不得计为有效aggregate、科学失败或调参依据。
 - 用户授权边界：只允许修复verifier与直接positive/negative tests。禁止修改P5–P8 artifacts、20份spatial artifacts、Grad-CAM、occlusion、intervention、scientific/execution profiles或任何scientific values；禁止重训、重测、H200 replacement或重提formal jobs。
-- 恢复路径：verifier-only修复需通过直接与完整测试、Phase Compliance Reviewer与Status Synchronization Reviewer。全部通过后，只允许对既有只读20-job artifacts执行一次CPU-only aggregate recovery。
+- 修复：本地diff仅修改`src/lidc_baseline/p9_evaluation.py`与`tests/test_p9_evaluation.py`。Validation frame的唯一键改为`(fold_index,nodule_uid)`；P4 membership通过`read_split`绑定canonical split hash，逐fold验证exact validation membership与same-fold validation/test nodule+patient disjoint，并强制四模型fold UID/target identity和finite。Outer test/canonical OOF的global exactly-once验证保持不变。
+- 本地验证：新增/更新regression tests共`21 passed`，P9 direct=`68 passed`，完整=`348 passed`且仅有3条既有dependency warnings；Git diff、AST、frozen checks及Phase Compliance Reviewer均为`PASS`。P5–P8 artifacts、20份spatial artifacts及其Grad-CAM/occlusion/intervention scientific values均未修改。
+- 功能commit：`78e34d5`（`fix: validate P9 auxiliary data per fold`，local, unpushed）。该commit仅封存上述verifier/tests变更，没有修改P5–P8或20份spatial artifacts。
+- 当前验证边界：本地fix与功能commit已完成，但未同步remote或提交CPU recovery。下一步固定为exact minimal delta sync/remote verify → 一次CPU-only aggregate recovery；不得虚报remote/recovery `PASS`。
+- 恢复路径：commit `78e34d5`通过remote integrity/implementation verify后，只允许对既有只读20-job artifacts执行一次CPU-only aggregate recovery；recovery后仍需重新执行Phase Compliance与Status Synchronization阶段审查。
 - 解除条件：recovery job必须通过Stage A/formal artifact verify、按fold validation membership、outer test/canonical OOF global exactly-once、final audit/summary与deidentification gates，且不修改existing artifact hashes。
-- 未解决事项：verifier修复、tests、双agent审查及一次CPU aggregate recovery均尚未完成。
+- 未解决事项：remote minimal-delta verify、一次CPU aggregate recovery、final audit/summary与最终阶段审查尚未完成。
 
 ### BUG-P8-002：Final verifier 的 FP32 softmax reconstruction 与 Parquet provenance comparison 误报
 
@@ -1080,3 +1085,4 @@ Bug 修复后：
 | 2026-08-13 | `FORMAL_SPATIAL_JOBS_SUBMITTED` | P9 | Exactly 20 jobs `8986218`–`8986237`已按Black-box、Standard CBM、Mixed CEM、Learned-softmax GAM各fold 0–4顺序提交，均为`csegpu12`、H200×1、8 CPU、64 GB、11h且`P9_SPATIAL_APPROVED=1`；mapping/env/workdir无重复或遗漏。Phase Compliance快照为1 `R` + 19 `Q`。ACTIVE automation `monitor-p9-formal-spatial-jobs`每10分钟只读监控，任一失败阻断且不自动replacement。尚无CPU aggregate/final audit，P9仍为`IN_PROGRESS / ON_TRACK`，P10仍为`NOT_STARTED`。 | Jobs `8986218`–`8986237`；automation `monitor-p9-formal-spatial-jobs`；本次状态同步commit待创建 |
 | 2026-08-13 | `FORMAL_SPATIAL_EXECUTION_PASS` | P9 | 20个formal spatial jobs `8986218`–`8986237`全部到达`F / Exit_status=0 / run_count=1`；四模型×五折mapping完整且每个原job内strict verifier均PASS。Existing Grad-CAM、occlusion、intervention与faithfulness artifacts有效且只读，不需要也不授权重训、重测、replacement或artifact改写。该时点尚未运行CPU aggregate，P9仍为`IN_PROGRESS / ON_TRACK`，P10仍为`NOT_STARTED`。 | Katana jobs `8986218`–`8986237`；本次状态同步commit待创建 |
 | 2026-08-13 | `BUG_DISCOVERED` / `INVALIDATED_AGGREGATE_ATTEMPT` / `PHASE_BLOCKED` | P9 | CPU-only aggregate job `8987452`在`p9_katana verify-stage-a`与`p9_spatial verify --scope all`均PASS后，于`p9_audit build`触发`P9_VALIDATION_FRAME_INVALID:blackbox`并`F / Exit_status=1`；final audit/summary未生成。诊断证明1,315-row pooled validation中的226个cross-fold repeated UIDs合法，每fold内duplicate=0且精确匹配P4 validation membership；根因为`_validation_frame`错误施加全局UID唯一性。Job永久标记`INVALIDATED_AGGREGATE_ATTEMPT / VERIFIER_IMPLEMENTATION_BUG`。用户仅批准verifier/tests修复与通过双审查后一次CPU aggregate recovery；禁止改写P5–P8/20份spatial artifacts、重训、重测或H200 replacement。切换`BUG_MAINTENANCE / FULL_DOCUMENT`，P9为`BLOCKED / AT_RISK`，P10为`NOT_STARTED / AT_RISK`。 | `BUG-P9-001`；CPU job `8987452`；Phase Compliance `FAIL`（唯一阻断为状态未同步）；本次状态同步commit待创建 |
+| 2026-08-13 | `BUG_FIX_LOCAL_PASS` / `BUG_VERIFYING` | P9 | Verifier-only fix将validation唯一键修正为`(fold_index,nodule_uid)`，通过P4 `read_split`绑定canonical split hash，逐fold验证exact membership、same-fold validation/test nodule+patient disjoint、四模型fold UID/target identity/finite；outer test/canonical OOF global exactly-once保持不变。改动仅限`p9_evaluation.py`与直接tests；regression/P9 direct/full=`21/68/348 passed`、3条既有warnings，diff/AST/frozen与Phase Compliance均`PASS`。P5–P8及20份spatial artifacts未改。功能commit `78e34d5`已创建但仍local/unpushed；remote sync/verify与CPU recovery尚未执行。P9继续`BLOCKED / AT_RISK`，P10继续`NOT_STARTED / AT_RISK`。 | `78e34d5`（local, unpushed）；Phase Compliance `PASS`；本次状态同步commit待创建 |
