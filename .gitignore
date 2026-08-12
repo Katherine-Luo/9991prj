@@ -50,6 +50,17 @@ artifacts/baseline_v2/audit/*
 !artifacts/baseline_v2/audit/p7/*.json
 !artifacts/baseline_v2/audit/p8/
 !artifacts/baseline_v2/audit/p8/*.json
+!artifacts/baseline_v2/audit/p9/
+artifacts/baseline_v2/audit/p9/*
+!artifacts/baseline_v2/audit/p9/bootstrap.json
+!artifacts/baseline_v2/audit/p9/concept.json
+!artifacts/baseline_v2/audit/p9/contribution_centering.json
+!artifacts/baseline_v2/audit/p9/integrity.json
+!artifacts/baseline_v2/audit/p9/intervention.json
+!artifacts/baseline_v2/audit/p9/learned_alpha.json
+!artifacts/baseline_v2/audit/p9/spatial.json
+!artifacts/baseline_v2/audit/p9/summary.json
+!artifacts/baseline_v2/audit/p9/task.json
 
 runs/
 reports/baseline_v1/

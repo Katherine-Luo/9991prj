@@ -1,0 +1,20 @@
+{
+  "fold_counts": [
+    479,
+    502,
+    539,
+    549,
+    564
+  ],
+  "oof_file_sha256": {
+    "blackbox": "6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8",
+    "learned_softmax_gam": "a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa",
+    "mixed_cem": "a42350e63908b2fa8fdfdd5c952428efe60f1ae5d6dbeccfe531f0ce121b996f",
+    "standard_cbm": "c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587"
+  },
+  "patient_leakage": 0,
+  "schema_version": 1,
+  "status": "PASS",
+  "unique_nodules": 2633,
+  "unique_patients": 868
+}

@@ -1,0 +1,53 @@
+{
+  "bootstrap_draws": 2000,
+  "bootstrap_private_draws_sha256": "fa931c17a630aa8e0366f2112e646b1708f657e32d647c5b6344e922a2f3a95c",
+  "canonical_oof_sha256": {
+    "blackbox": "6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8",
+    "learned_softmax_gam": "a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa",
+    "mixed_cem": "a42350e63908b2fa8fdfdd5c952428efe60f1ae5d6dbeccfe531f0ce121b996f",
+    "standard_cbm": "c7ae75d343c8c7ba026ffbb64a25200385c5e06cdb171645e015e26b98225587"
+  },
+  "fold_counts": [
+    479,
+    502,
+    539,
+    549,
+    564
+  ],
+  "models": [
+    "blackbox",
+    "standard_cbm",
+    "mixed_cem",
+    "learned_softmax_gam"
+  ],
+  "oof_nodules": 2633,
+  "oof_patients": 868,
+  "p10_started": false,
+  "p5_through_p8_artifacts_modified": false,
+  "patient_leakage": 0,
+  "phase": "P9",
+  "private_storage": {
+    "file_count": 1426,
+    "total_bytes": 8821543077
+  },
+  "schema_version": 1,
+  "second_committed_test_evaluation": false,
+  "spatial_jobs_verified": 20,
+  "status": "PASS",
+  "tracked_report_sha256": {
+    "bootstrap.json": "6f834a47aeb2f10c5cfe84cd6ccdbc5c4229ff047f504b770e5d82ddd20bbb71",
+    "concept.json": "f0c2ee330998b4ee8b635517093ad3f08928bc7761c6e794abd9b3a25999139a",
+    "contribution_centering.json": "142356fe50bfbbfdc9592e85e456123de3a6449d11a57aa15ab47f8841993690",
+    "integrity.json": "da1418cad512c95070869c94e44d1dce130c1e14a07c7435ca3bb0fbfa4fb5e8",
+    "intervention.json": "1463c23754524722e9c6ccfe28e3772b6c2a29b8821d7b6b94e1f6f82394efa7",
+    "learned_alpha.json": "7bd0f18673a07bafddcca03b919dd00f13ae5e1d674f8570e0af5f4207c1af9d",
+    "spatial.json": "64656d54e573e2ce8c626c6403e6dc295498d233dd90c4152efcd12b9240cfbf",
+    "task.json": "d62eb69568af89301c816fc505c129ab2a60cece3aff1dd66ccec567d20dfa01"
+  },
+  "validation_auxiliary_sha256": {
+    "blackbox": "af4e51650e5735c89af73ce315cb7eaaf72fa21daea79ecfef6280cdf278eede",
+    "learned_softmax_gam": "18dc8076955e1303991a59919f8af5447e7c6a3f659f9a22fdec37e7b5a69b9b",
+    "mixed_cem": "ddbbdbbd737a80fcb79706449ef5eb0b22b202e01704c589a7abd8e40b7c06c0",
+    "standard_cbm": "780cb9792b3b301cd5e21be56c190d3f44240831b41615374d1766c6b2da7182"
+  }
+}

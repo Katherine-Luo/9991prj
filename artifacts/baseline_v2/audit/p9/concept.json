@@ -1,0 +1,1141 @@
+{
+  "learned_softmax_gam": {
+    "folds": [
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.30327700972862265,
+            "hard_sample_count": 468,
+            "multiclass_brier": 0.06214278554055763,
+            "soft_cross_entropy": 0.21747957813905913,
+            "soft_sample_count": 479,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24973821989528797,
+            "hard_sample_count": 478,
+            "multiclass_brier": 0.00611539906293354,
+            "soft_cross_entropy": 0.03342672749927665,
+            "soft_sample_count": 479,
+            "true_tie_count": 1
+          },
+          "lobulation": {
+            "mae": 0.1295194185158094,
+            "pearson": 0.47453283104715194,
+            "rmse": 0.1995826743307543,
+            "sample_count": 479,
+            "spearman": 0.4477504866968374
+          },
+          "margin": {
+            "mae": 0.14889169069073147,
+            "pearson": 0.6697547497215286,
+            "rmse": 0.2036533799327157,
+            "sample_count": 479,
+            "spearman": 0.6248468906750381
+          },
+          "sphericity": {
+            "mae": 0.14151564825302873,
+            "pearson": 0.46281744765030974,
+            "rmse": 0.1798798170488891,
+            "sample_count": 479,
+            "spearman": 0.486165375068771
+          },
+          "spiculation": {
+            "mae": 0.11383951730619812,
+            "pearson": 0.57851891170534,
+            "rmse": 0.1801633514162668,
+            "sample_count": 479,
+            "spearman": 0.4613930378718506
+          },
+          "subtlety": {
+            "mae": 0.1701708901867986,
+            "pearson": 0.5761398197345309,
+            "rmse": 0.22302682290935472,
+            "sample_count": 479,
+            "spearman": 0.5593492800903163
+          },
+          "texture": {
+            "mae": 0.11267125829743194,
+            "pearson": 0.7734814865993511,
+            "rmse": 0.18724794996337346,
+            "sample_count": 479,
+            "spearman": 0.5698742730532456
+          }
+        },
+        "fold_index": 0
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.31851578717360424,
+            "hard_sample_count": 491,
+            "multiclass_brier": 0.04371744175460648,
+            "soft_cross_entropy": 0.18110455447220752,
+            "soft_sample_count": 502,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24975024975024976,
+            "hard_sample_count": 501,
+            "multiclass_brier": 0.00234544294179098,
+            "soft_cross_entropy": 0.015035339331122362,
+            "soft_sample_count": 502,
+            "true_tie_count": 1
+          },
+          "lobulation": {
+            "mae": 0.12590481166865128,
+            "pearson": 0.46461493095397005,
+            "rmse": 0.18684965500606768,
+            "sample_count": 502,
+            "spearman": 0.5263723170481419
+          },
+          "margin": {
+            "mae": 0.1385637976793179,
+            "pearson": 0.709108172119128,
+            "rmse": 0.19000062297796197,
+            "sample_count": 502,
+            "spearman": 0.7077329627512942
+          },
+          "sphericity": {
+            "mae": 0.13804162789388483,
+            "pearson": 0.4226527333069736,
+            "rmse": 0.17647944916851338,
+            "sample_count": 502,
+            "spearman": 0.42120678673146705
+          },
+          "spiculation": {
+            "mae": 0.11891824539854708,
+            "pearson": 0.4982197535197227,
+            "rmse": 0.18936646633471926,
+            "sample_count": 502,
+            "spearman": 0.45218908747014724
+          },
+          "subtlety": {
+            "mae": 0.16501155966128486,
+            "pearson": 0.6067448229227906,
+            "rmse": 0.21802500599118915,
+            "sample_count": 502,
+            "spearman": 0.6262066827947211
+          },
+          "texture": {
+            "mae": 0.11285514258352884,
+            "pearson": 0.779332559160065,
+            "rmse": 0.18394146003246425,
+            "sample_count": 502,
+            "spearman": 0.6229168802484898
+          }
+        },
+        "fold_index": 1
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.3040319449836393,
+            "hard_sample_count": 523,
+            "multiclass_brier": 0.06720994995051932,
+            "soft_cross_entropy": 0.29212321092676474,
+            "soft_sample_count": 539,
+            "true_tie_count": 16
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.41596507639538505,
+            "hard_sample_count": 537,
+            "multiclass_brier": 0.01075376136582384,
+            "soft_cross_entropy": 0.047141756824499316,
+            "soft_sample_count": 539,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.12636214853065686,
+            "pearson": 0.42850087041623175,
+            "rmse": 0.18492470036740896,
+            "sample_count": 539,
+            "spearman": 0.41808927407816393
+          },
+          "margin": {
+            "mae": 0.15080738540372512,
+            "pearson": 0.6364916580871519,
+            "rmse": 0.2047080945830434,
+            "sample_count": 539,
+            "spearman": 0.6036009931612674
+          },
+          "sphericity": {
+            "mae": 0.13799615754488448,
+            "pearson": 0.43515652205073907,
+            "rmse": 0.17543218790551568,
+            "sample_count": 539,
+            "spearman": 0.4366860237590583
+          },
+          "spiculation": {
+            "mae": 0.11237940268162534,
+            "pearson": 0.4746689158415327,
+            "rmse": 0.1803134727289605,
+            "sample_count": 539,
+            "spearman": 0.4367850374173743
+          },
+          "subtlety": {
+            "mae": 0.16449246006794896,
+            "pearson": 0.5616704659448561,
+            "rmse": 0.21775579275054688,
+            "sample_count": 539,
+            "spearman": 0.5612475327076332
+          },
+          "texture": {
+            "mae": 0.11427495793779839,
+            "pearson": 0.7473110106086587,
+            "rmse": 0.18563070743730348,
+            "sample_count": 539,
+            "spearman": 0.5290946825815652
+          }
+        },
+        "fold_index": 2
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.31976539108322055,
+            "hard_sample_count": 538,
+            "multiclass_brier": 0.04412952115915824,
+            "soft_cross_entropy": 0.1848010246474026,
+            "soft_sample_count": 549,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24954212454212454,
+            "hard_sample_count": 547,
+            "multiclass_brier": 0.008978373034598253,
+            "soft_cross_entropy": 0.05537273382903806,
+            "soft_sample_count": 549,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.1351887963522219,
+            "pearson": 0.4793177677860874,
+            "rmse": 0.19644848968852824,
+            "sample_count": 549,
+            "spearman": 0.48618488717581987
+          },
+          "margin": {
+            "mae": 0.1396483156850429,
+            "pearson": 0.7103179567256199,
+            "rmse": 0.18525244648557648,
+            "sample_count": 549,
+            "spearman": 0.6861297273398393
+          },
+          "sphericity": {
+            "mae": 0.1445445104049203,
+            "pearson": 0.4047177754723579,
+            "rmse": 0.18435575794132342,
+            "sample_count": 549,
+            "spearman": 0.4256555946682606
+          },
+          "spiculation": {
+            "mae": 0.1278827788854503,
+            "pearson": 0.4235553983968469,
+            "rmse": 0.20408866809258797,
+            "sample_count": 549,
+            "spearman": 0.4302510250533567
+          },
+          "subtlety": {
+            "mae": 0.16554432036609598,
+            "pearson": 0.6186490825825839,
+            "rmse": 0.2188131547440793,
+            "sample_count": 549,
+            "spearman": 0.6166422426976508
+          },
+          "texture": {
+            "mae": 0.10816962624779598,
+            "pearson": 0.8020495615368527,
+            "rmse": 0.1668495485132746,
+            "sample_count": 549,
+            "spearman": 0.5847031043835907
+          }
+        },
+        "fold_index": 3
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.3145074224021593,
+            "hard_sample_count": 558,
+            "multiclass_brier": 0.02547589440666332,
+            "soft_cross_entropy": 0.13481010385908268,
+            "soft_sample_count": 564,
+            "true_tie_count": 6
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24955436720142601,
+            "hard_sample_count": 562,
+            "multiclass_brier": 0.007657802690557649,
+            "soft_cross_entropy": 0.037274406424416005,
+            "soft_sample_count": 564,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.11949615315402072,
+            "pearson": 0.45881300706076106,
+            "rmse": 0.1806680748082806,
+            "sample_count": 564,
+            "spearman": 0.5046955032376852
+          },
+          "margin": {
+            "mae": 0.14928364410256664,
+            "pearson": 0.7049528671603819,
+            "rmse": 0.20662612756086535,
+            "sample_count": 564,
+            "spearman": 0.6381055931797815
+          },
+          "sphericity": {
+            "mae": 0.13801864101320294,
+            "pearson": 0.4570791598518274,
+            "rmse": 0.17596417328330796,
+            "sample_count": 564,
+            "spearman": 0.4637724946298025
+          },
+          "spiculation": {
+            "mae": 0.0997957962206796,
+            "pearson": 0.5560645195770568,
+            "rmse": 0.16327316580239262,
+            "sample_count": 564,
+            "spearman": 0.5005076213800945
+          },
+          "subtlety": {
+            "mae": 0.17305369603824108,
+            "pearson": 0.5492864835457019,
+            "rmse": 0.226373647639952,
+            "sample_count": 564,
+            "spearman": 0.5584398460334459
+          },
+          "texture": {
+            "mae": 0.10842757782377038,
+            "pearson": 0.832962225996801,
+            "rmse": 0.17273474982633835,
+            "sample_count": 564,
+            "spearman": 0.6156433877092699
+          }
+        },
+        "fold_index": 4
+      }
+    ],
+    "pooled": {
+      "calcification": {
+        "hard_modal_macro_f1": 0.312731908772181,
+        "hard_sample_count": 2578,
+        "multiclass_brier": 0.0480570545460712,
+        "soft_cross_entropy": 0.20130280139427664,
+        "soft_sample_count": 2633,
+        "true_tie_count": 55
+      },
+      "internalStructure": {
+        "hard_modal_macro_f1": 0.31207052872685626,
+        "hard_sample_count": 2625,
+        "multiclass_brier": 0.007273487807661317,
+        "soft_cross_entropy": 0.03812797031534167,
+        "soft_sample_count": 2633,
+        "true_tie_count": 8
+      },
+      "lobulation": {
+        "mae": 0.1272190256593229,
+        "pearson": 0.4509477798747783,
+        "rmse": 0.18958358618247842,
+        "sample_count": 2633,
+        "spearman": 0.4721243684769252
+      },
+      "margin": {
+        "mae": 0.14547141192306187,
+        "pearson": 0.6833592591610684,
+        "rmse": 0.19826073308937975,
+        "sample_count": 2633,
+        "spearman": 0.6478455646857657
+      },
+      "sphericity": {
+        "mae": 0.1400152948637947,
+        "pearson": 0.42420868210814455,
+        "rmse": 0.17844798532513542,
+        "sample_count": 2633,
+        "spearman": 0.4350899154727833
+      },
+      "spiculation": {
+        "mae": 0.11442881150843566,
+        "pearson": 0.49852718278923136,
+        "rmse": 0.1838277666326701,
+        "sample_count": 2633,
+        "spearman": 0.45611311346419464
+      },
+      "subtlety": {
+        "mae": 0.16767763455093834,
+        "pearson": 0.5784669280342281,
+        "rmse": 0.2208590730564958,
+        "sample_count": 2633,
+        "spearman": 0.5823135681878614
+      },
+      "texture": {
+        "mae": 0.11118697126187664,
+        "pearson": 0.7861150941772284,
+        "rmse": 0.1791066256966138,
+        "sample_count": 2633,
+        "spearman": 0.5828593064121105
+      }
+    }
+  },
+  "mixed_cem": {
+    "folds": [
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.29388916933086545,
+            "hard_sample_count": 468,
+            "multiclass_brier": 0.08269542418355039,
+            "soft_cross_entropy": 0.27022266336391243,
+            "soft_sample_count": 479,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24973821989528797,
+            "hard_sample_count": 478,
+            "multiclass_brier": 0.00607996506349117,
+            "soft_cross_entropy": 0.035700105682834785,
+            "soft_sample_count": 479,
+            "true_tie_count": 1
+          },
+          "lobulation": {
+            "mae": 0.18507419514133439,
+            "pearson": 0.3701316051115225,
+            "rmse": 0.22126314729368432,
+            "sample_count": 479,
+            "spearman": 0.287907359839268
+          },
+          "margin": {
+            "mae": 0.18238532602289276,
+            "pearson": 0.5310910570751917,
+            "rmse": 0.23392311532803897,
+            "sample_count": 479,
+            "spearman": 0.5151482529421403
+          },
+          "sphericity": {
+            "mae": 0.16061781629888897,
+            "pearson": 0.23543452686015043,
+            "rmse": 0.19566100596363908,
+            "sample_count": 479,
+            "spearman": 0.2261547133059404
+          },
+          "spiculation": {
+            "mae": 0.15284095597229821,
+            "pearson": 0.519382863019852,
+            "rmse": 0.19977331254010197,
+            "sample_count": 479,
+            "spearman": 0.37734224207187905
+          },
+          "subtlety": {
+            "mae": 0.2018514258596494,
+            "pearson": 0.519747716374358,
+            "rmse": 0.24655615844596998,
+            "sample_count": 479,
+            "spearman": 0.49692865576532863
+          },
+          "texture": {
+            "mae": 0.28389208849387276,
+            "pearson": 0.5501456718125821,
+            "rmse": 0.31293570559179523,
+            "sample_count": 479,
+            "spearman": 0.47331622481563446
+          }
+        },
+        "fold_index": 0
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.3080309549557841,
+            "hard_sample_count": 491,
+            "multiclass_brier": 0.11024150846885122,
+            "soft_cross_entropy": 0.3743671629806877,
+            "soft_sample_count": 502,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.25,
+            "hard_sample_count": 501,
+            "multiclass_brier": 0.021733973251268364,
+            "soft_cross_entropy": 0.13486071263030133,
+            "soft_sample_count": 502,
+            "true_tie_count": 1
+          },
+          "lobulation": {
+            "mae": 0.18584408575438882,
+            "pearson": 0.361735981129106,
+            "rmse": 0.2171638416355887,
+            "sample_count": 502,
+            "spearman": 0.3115951384792014
+          },
+          "margin": {
+            "mae": 0.26436109641989863,
+            "pearson": 0.05517103408427239,
+            "rmse": 0.30117249677359315,
+            "sample_count": 502,
+            "spearman": 0.12160532868509684
+          },
+          "sphericity": {
+            "mae": 0.2100988595609171,
+            "pearson": 0.138703238058406,
+            "rmse": 0.2488774684452092,
+            "sample_count": 502,
+            "spearman": 0.06032758501024333
+          },
+          "spiculation": {
+            "mae": 0.1874197121279173,
+            "pearson": 0.378477882847873,
+            "rmse": 0.22166967985206878,
+            "sample_count": 502,
+            "spearman": 0.362715698748461
+          },
+          "subtlety": {
+            "mae": 0.21820108893798643,
+            "pearson": 0.49460564263262363,
+            "rmse": 0.26119084420519595,
+            "sample_count": 502,
+            "spearman": 0.5197769016787906
+          },
+          "texture": {
+            "mae": 0.2839123629241351,
+            "pearson": 0.37185978297828776,
+            "rmse": 0.3156630636432847,
+            "sample_count": 502,
+            "spearman": 0.409646697119074
+          }
+        },
+        "fold_index": 1
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.3040319449836393,
+            "hard_sample_count": 523,
+            "multiclass_brier": 0.06789635678056567,
+            "soft_cross_entropy": 0.2862360030574071,
+            "soft_sample_count": 539,
+            "true_tie_count": 16
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24929971988795518,
+            "hard_sample_count": 537,
+            "multiclass_brier": 0.023131551804209678,
+            "soft_cross_entropy": 0.12282628476395378,
+            "soft_sample_count": 539,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.21827670301488689,
+            "pearson": 0.1349199566708531,
+            "rmse": 0.2459504590390543,
+            "sample_count": 539,
+            "spearman": 0.05813752231835948
+          },
+          "margin": {
+            "mae": 0.32615012951983147,
+            "pearson": 0.127223054955893,
+            "rmse": 0.36582411389730557,
+            "sample_count": 539,
+            "spearman": 0.052271624605315634
+          },
+          "sphericity": {
+            "mae": 0.16323938313353262,
+            "pearson": 0.1596474564575267,
+            "rmse": 0.19689305167133145,
+            "sample_count": 539,
+            "spearman": 0.14866599239794628
+          },
+          "spiculation": {
+            "mae": 0.18358144860763054,
+            "pearson": 0.31600032877448847,
+            "rmse": 0.21517201153244506,
+            "sample_count": 539,
+            "spearman": 0.2045249697662048
+          },
+          "subtlety": {
+            "mae": 0.1811728179731263,
+            "pearson": 0.5380430855701295,
+            "rmse": 0.22989043489917593,
+            "sample_count": 539,
+            "spearman": 0.534946935704755
+          },
+          "texture": {
+            "mae": 0.2360505126485798,
+            "pearson": 0.41066414451052397,
+            "rmse": 0.28340469266293195,
+            "sample_count": 539,
+            "spearman": 0.3584093278483214
+          }
+        },
+        "fold_index": 2
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.31976539108322055,
+            "hard_sample_count": 538,
+            "multiclass_brier": 0.057146109562965584,
+            "soft_cross_entropy": 0.2429297417168011,
+            "soft_sample_count": 549,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24954212454212454,
+            "hard_sample_count": 547,
+            "multiclass_brier": 0.010521612701454333,
+            "soft_cross_entropy": 0.0752907101799245,
+            "soft_sample_count": 549,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.16967162750457807,
+            "pearson": 0.39635641935180155,
+            "rmse": 0.2113526180879362,
+            "sample_count": 549,
+            "spearman": 0.35622010515077535
+          },
+          "margin": {
+            "mae": 0.19486255957346363,
+            "pearson": 0.5354611995436411,
+            "rmse": 0.23859284320737645,
+            "sample_count": 549,
+            "spearman": 0.5775358908447259
+          },
+          "sphericity": {
+            "mae": 0.20725596667638893,
+            "pearson": -0.11119133693047867,
+            "rmse": 0.24719386244631103,
+            "sample_count": 549,
+            "spearman": -0.13255440702726537
+          },
+          "spiculation": {
+            "mae": 0.21933545664848525,
+            "pearson": 0.39710653484658287,
+            "rmse": 0.2452570344390684,
+            "sample_count": 549,
+            "spearman": 0.37062848954478433
+          },
+          "subtlety": {
+            "mae": 0.22584679051012288,
+            "pearson": 0.3634583688346448,
+            "rmse": 0.27085426812189156,
+            "sample_count": 549,
+            "spearman": 0.31004730393676955
+          },
+          "texture": {
+            "mae": 0.3098509829823871,
+            "pearson": 0.4240254792088055,
+            "rmse": 0.3320603120936929,
+            "sample_count": 549,
+            "spearman": 0.44801160483923336
+          }
+        },
+        "fold_index": 3
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.319549429376019,
+            "hard_sample_count": 558,
+            "multiclass_brier": 0.027215728933445395,
+            "soft_cross_entropy": 0.15239203585423824,
+            "soft_sample_count": 564,
+            "true_tie_count": 6
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.2497773820124666,
+            "hard_sample_count": 562,
+            "multiclass_brier": 0.006471246946148769,
+            "soft_cross_entropy": 0.04516603684440283,
+            "soft_sample_count": 564,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.15734256292752763,
+            "pearson": 0.42062819259381223,
+            "rmse": 0.18985958329751274,
+            "sample_count": 564,
+            "spearman": 0.41142053422407754
+          },
+          "margin": {
+            "mae": 0.25834927565239846,
+            "pearson": 0.448598657964527,
+            "rmse": 0.2962921779308705,
+            "sample_count": 564,
+            "spearman": 0.49969582037355115
+          },
+          "sphericity": {
+            "mae": 0.14977921503232727,
+            "pearson": 0.2232529627420709,
+            "rmse": 0.1892583359350544,
+            "sample_count": 564,
+            "spearman": 0.22009345148656775
+          },
+          "spiculation": {
+            "mae": 0.1544164854584011,
+            "pearson": 0.4110993306624241,
+            "rmse": 0.1908532229473243,
+            "sample_count": 564,
+            "spearman": 0.33518277264057916
+          },
+          "subtlety": {
+            "mae": 0.19275445554484713,
+            "pearson": 0.4904915498685569,
+            "rmse": 0.24096317138536646,
+            "sample_count": 564,
+            "spearman": 0.5004732677327377
+          },
+          "texture": {
+            "mae": 0.21625192784407038,
+            "pearson": 0.6717323097586043,
+            "rmse": 0.2807523358304171,
+            "sample_count": 564,
+            "spearman": 0.4940311719442853
+          }
+        },
+        "fold_index": 4
+      }
+    ],
+    "pooled": {
+      "calcification": {
+        "hard_modal_macro_f1": 0.3098312470634747,
+        "hard_sample_count": 2578,
+        "multiclass_brier": 0.06770655792196739,
+        "soft_cross_entropy": 0.2624260211317417,
+        "soft_sample_count": 2633,
+        "true_tie_count": 55
+      },
+      "internalStructure": {
+        "hard_modal_macro_f1": 0.24966622162883845,
+        "hard_sample_count": 2625,
+        "multiclass_brier": 0.013565063771646159,
+        "soft_cross_entropy": 0.08272390448890315,
+        "soft_sample_count": 2633,
+        "true_tie_count": 8
+      },
+      "lobulation": {
+        "mae": 0.18286606245255044,
+        "pearson": 0.27014362221062044,
+        "rmse": 0.21752332081662135,
+        "sample_count": 2633,
+        "spearman": 0.24882408658693328
+      },
+      "margin": {
+        "mae": 0.24631800153920552,
+        "pearson": 0.1879508769641104,
+        "rmse": 0.29209313291999894,
+        "sample_count": 2633,
+        "spearman": 0.17089772099824163
+      },
+      "sphericity": {
+        "mae": 0.17799110976046045,
+        "pearson": 0.05612882021409644,
+        "rmse": 0.21707861119555993,
+        "sample_count": 2633,
+        "spearman": 0.05139042541459757
+      },
+      "spiculation": {
+        "mae": 0.17992859008621906,
+        "pearson": 0.304952953369775,
+        "rmse": 0.215524803249559,
+        "sample_count": 2633,
+        "spearman": 0.2743330431682969
+      },
+      "subtlety": {
+        "mae": 0.20379009853342483,
+        "pearson": 0.44451508611039947,
+        "rmse": 0.25023689621015377,
+        "sample_count": 2633,
+        "spearman": 0.44907956408386884
+      },
+      "texture": {
+        "mae": 0.26502613743085895,
+        "pearson": 0.2024534292915387,
+        "rmse": 0.3051717569392387,
+        "sample_count": 2633,
+        "spearman": 0.16663506061442399
+      }
+    }
+  },
+  "schema_version": 1,
+  "standard_cbm": {
+    "folds": [
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.30327700972862265,
+            "hard_sample_count": 468,
+            "multiclass_brier": 0.06296900400737454,
+            "soft_cross_entropy": 0.22210332552084475,
+            "soft_sample_count": 479,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24973821989528797,
+            "hard_sample_count": 478,
+            "multiclass_brier": 0.005961601011259598,
+            "soft_cross_entropy": 0.032174275606821776,
+            "soft_sample_count": 479,
+            "true_tie_count": 1
+          },
+          "lobulation": {
+            "mae": 0.13006870815026197,
+            "pearson": 0.5145648649193441,
+            "rmse": 0.18931688433861446,
+            "sample_count": 479,
+            "spearman": 0.5162014481369158
+          },
+          "margin": {
+            "mae": 0.14879176036176703,
+            "pearson": 0.681631928441231,
+            "rmse": 0.20117328408954901,
+            "sample_count": 479,
+            "spearman": 0.6385062068557968
+          },
+          "sphericity": {
+            "mae": 0.1385281312648173,
+            "pearson": 0.48579448314667395,
+            "rmse": 0.17482771839017844,
+            "sample_count": 479,
+            "spearman": 0.5131491486735198
+          },
+          "spiculation": {
+            "mae": 0.11876393894541157,
+            "pearson": 0.600684372084844,
+            "rmse": 0.17373595824869467,
+            "sample_count": 479,
+            "spearman": 0.4582002149404553
+          },
+          "subtlety": {
+            "mae": 0.16545040811111966,
+            "pearson": 0.5974892595381325,
+            "rmse": 0.2169372132665823,
+            "sample_count": 479,
+            "spearman": 0.5830919469162593
+          },
+          "texture": {
+            "mae": 0.11566005171475595,
+            "pearson": 0.7775311247471492,
+            "rmse": 0.1850797274055822,
+            "sample_count": 479,
+            "spearman": 0.5594680418742235
+          }
+        },
+        "fold_index": 0
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.31671827690613813,
+            "hard_sample_count": 491,
+            "multiclass_brier": 0.044552841263088554,
+            "soft_cross_entropy": 0.18253727757482405,
+            "soft_sample_count": 502,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.25,
+            "hard_sample_count": 501,
+            "multiclass_brier": 0.0010325174492089525,
+            "soft_cross_entropy": 0.012574800622161968,
+            "soft_sample_count": 502,
+            "true_tie_count": 1
+          },
+          "lobulation": {
+            "mae": 0.12513383359562946,
+            "pearson": 0.4997922485118105,
+            "rmse": 0.18154554952934512,
+            "sample_count": 502,
+            "spearman": 0.5223746330927189
+          },
+          "margin": {
+            "mae": 0.1407870518100531,
+            "pearson": 0.7031060783714911,
+            "rmse": 0.19203389454892575,
+            "sample_count": 502,
+            "spearman": 0.7006771341143936
+          },
+          "sphericity": {
+            "mae": 0.13477401467037706,
+            "pearson": 0.43873914853886375,
+            "rmse": 0.17504389478911575,
+            "sample_count": 502,
+            "spearman": 0.444110019176667
+          },
+          "spiculation": {
+            "mae": 0.11636568300900944,
+            "pearson": 0.5266603696100165,
+            "rmse": 0.18528213178316982,
+            "sample_count": 502,
+            "spearman": 0.4582888073288854
+          },
+          "subtlety": {
+            "mae": 0.1622706537702644,
+            "pearson": 0.5987231919846316,
+            "rmse": 0.22052270578425875,
+            "sample_count": 502,
+            "spearman": 0.6197094058941947
+          },
+          "texture": {
+            "mae": 0.11687786351261069,
+            "pearson": 0.7756411248885229,
+            "rmse": 0.18468825488055526,
+            "sample_count": 502,
+            "spearman": 0.6408247103676517
+          }
+        },
+        "fold_index": 1
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.3013685060729362,
+            "hard_sample_count": 523,
+            "multiclass_brier": 0.07042268204064568,
+            "soft_cross_entropy": 0.31625303424971335,
+            "soft_sample_count": 539,
+            "true_tie_count": 16
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24929971988795518,
+            "hard_sample_count": 537,
+            "multiclass_brier": 0.011299865227035214,
+            "soft_cross_entropy": 0.05460118824995807,
+            "soft_sample_count": 539,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.13171776553734574,
+            "pearson": 0.4116666522450828,
+            "rmse": 0.18818620348152182,
+            "sample_count": 539,
+            "spearman": 0.3912095493522075
+          },
+          "margin": {
+            "mae": 0.15451665995348804,
+            "pearson": 0.6482428465016896,
+            "rmse": 0.20332519768808915,
+            "sample_count": 539,
+            "spearman": 0.5864774966004749
+          },
+          "sphericity": {
+            "mae": 0.13689471702923656,
+            "pearson": 0.436792291663913,
+            "rmse": 0.17388434654417184,
+            "sample_count": 539,
+            "spearman": 0.4560754113088096
+          },
+          "spiculation": {
+            "mae": 0.12247844657243846,
+            "pearson": 0.45370946375107246,
+            "rmse": 0.18485249028626796,
+            "sample_count": 539,
+            "spearman": 0.4010694043764828
+          },
+          "subtlety": {
+            "mae": 0.17078641233026945,
+            "pearson": 0.5685952446317099,
+            "rmse": 0.22262427621863748,
+            "sample_count": 539,
+            "spearman": 0.5710941870373174
+          },
+          "texture": {
+            "mae": 0.12921637434445565,
+            "pearson": 0.7479393344742298,
+            "rmse": 0.19287454505888918,
+            "sample_count": 539,
+            "spearman": 0.5241331083455281
+          }
+        },
+        "fold_index": 2
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.31976539108322055,
+            "hard_sample_count": 538,
+            "multiclass_brier": 0.04457691809668011,
+            "soft_cross_entropy": 0.18213688830203628,
+            "soft_sample_count": 549,
+            "true_tie_count": 11
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.24954212454212454,
+            "hard_sample_count": 547,
+            "multiclass_brier": 0.008921352160473269,
+            "soft_cross_entropy": 0.052417291993545174,
+            "soft_sample_count": 549,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.13318255958082317,
+            "pearson": 0.5038989163450376,
+            "rmse": 0.19452429049647588,
+            "sample_count": 549,
+            "spearman": 0.48974797261707614
+          },
+          "margin": {
+            "mae": 0.1360487301167243,
+            "pearson": 0.7160550137056972,
+            "rmse": 0.18358822045287404,
+            "sample_count": 549,
+            "spearman": 0.6802404271604717
+          },
+          "sphericity": {
+            "mae": 0.14601528588467536,
+            "pearson": 0.4021696794000694,
+            "rmse": 0.18526224085894713,
+            "sample_count": 549,
+            "spearman": 0.4171928613113021
+          },
+          "spiculation": {
+            "mae": 0.12580430445571741,
+            "pearson": 0.4504476657194505,
+            "rmse": 0.19629633551280312,
+            "sample_count": 549,
+            "spearman": 0.3901455004297226
+          },
+          "subtlety": {
+            "mae": 0.17359535925375308,
+            "pearson": 0.5954226438861827,
+            "rmse": 0.2237613712433081,
+            "sample_count": 549,
+            "spearman": 0.5923479961719
+          },
+          "texture": {
+            "mae": 0.10789621600108792,
+            "pearson": 0.7928819139859491,
+            "rmse": 0.16805077947362043,
+            "sample_count": 549,
+            "spearman": 0.5980990488685441
+          }
+        },
+        "fold_index": 3
+      },
+      {
+        "concepts": {
+          "calcification": {
+            "hard_modal_macro_f1": 0.3265220593321371,
+            "hard_sample_count": 558,
+            "multiclass_brier": 0.025443413367870458,
+            "soft_cross_entropy": 0.13653559474399934,
+            "soft_sample_count": 564,
+            "true_tie_count": 6
+          },
+          "internalStructure": {
+            "hard_modal_macro_f1": 0.2497773820124666,
+            "hard_sample_count": 562,
+            "multiclass_brier": 0.006721495800301956,
+            "soft_cross_entropy": 0.04011592876783192,
+            "soft_sample_count": 564,
+            "true_tie_count": 2
+          },
+          "lobulation": {
+            "mae": 0.13436413270115288,
+            "pearson": 0.45107458140866163,
+            "rmse": 0.17494610938197486,
+            "sample_count": 564,
+            "spearman": 0.473406153331933
+          },
+          "margin": {
+            "mae": 0.14815630552405162,
+            "pearson": 0.7114989540750265,
+            "rmse": 0.2049631336262937,
+            "sample_count": 564,
+            "spearman": 0.6340800041314232
+          },
+          "sphericity": {
+            "mae": 0.1365104088511309,
+            "pearson": 0.4460660792513955,
+            "rmse": 0.17395345072414195,
+            "sample_count": 564,
+            "spearman": 0.4529096134213904
+          },
+          "spiculation": {
+            "mae": 0.12122177424230757,
+            "pearson": 0.5567496482992127,
+            "rmse": 0.1658953958577497,
+            "sample_count": 564,
+            "spearman": 0.48366222518198937
+          },
+          "subtlety": {
+            "mae": 0.1719329439755309,
+            "pearson": 0.5244501917541782,
+            "rmse": 0.23122608308564732,
+            "sample_count": 564,
+            "spearman": 0.5382480231729437
+          },
+          "texture": {
+            "mae": 0.11139816829128892,
+            "pearson": 0.8320047883198534,
+            "rmse": 0.17051752403701997,
+            "sample_count": 564,
+            "spearman": 0.5983050164218602
+          }
+        },
+        "fold_index": 4
+      }
+    ],
+    "pooled": {
+      "calcification": {
+        "hard_modal_macro_f1": 0.31382922250827927,
+        "hard_sample_count": 2578,
+        "multiclass_brier": 0.04911064110446913,
+        "soft_cross_entropy": 0.20717083890659907,
+        "soft_sample_count": 2633,
+        "true_tie_count": 55
+      },
+      "internalStructure": {
+        "hard_modal_macro_f1": 0.24966622162883845,
+        "hard_sample_count": 2625,
+        "multiclass_brier": 0.006894532460591853,
+        "soft_cross_entropy": 0.03895045405401969,
+        "soft_sample_count": 2633,
+        "true_tie_count": 8
+      },
+      "lobulation": {
+        "mae": 0.13103477681235587,
+        "pearson": 0.45971928212947866,
+        "rmse": 0.1857403492125993,
+        "sample_count": 2633,
+        "spearman": 0.4558621559209562
+      },
+      "margin": {
+        "mae": 0.14564441400930872,
+        "pearson": 0.6868109448648791,
+        "rmse": 0.19718683847744717,
+        "sample_count": 2633,
+        "spearman": 0.6473195989967335
+      },
+      "sphericity": {
+        "mae": 0.13860692945759964,
+        "pearson": 0.4365605428622793,
+        "rmse": 0.1767199221180028,
+        "sample_count": 2633,
+        "spearman": 0.4527853599487308
+      },
+      "spiculation": {
+        "mae": 0.12106153670595121,
+        "pearson": 0.5069319629539584,
+        "rmse": 0.18155099910029054,
+        "sample_count": 2633,
+        "spearman": 0.41637155235919837
+      },
+      "subtlety": {
+        "mae": 0.1690233659538261,
+        "pearson": 0.5672985649624334,
+        "rmse": 0.22331885771409843,
+        "sample_count": 2633,
+        "spearman": 0.573287899767748
+      },
+      "texture": {
+        "mae": 0.11613561242964089,
+        "pearson": 0.7828419861902218,
+        "rmse": 0.18018585304190687,
+        "sample_count": 2633,
+        "spearman": 0.5806171932906538
+      }
+    }
+  },
+  "status": "PASS"
+}
