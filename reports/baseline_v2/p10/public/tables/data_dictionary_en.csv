@@ -1,0 +1,75 @@
+field,definition
+model,Frozen model identifier
+concept,Canonical concept-group name
+target,Grad-CAM or prediction target name
+scope,"Fold-target, pooled-target, or pooled-model aggregation level"
+fold,Outer patient-grouped fold index
+mae,Mean absolute error on the 1–5 scale
+mae_sd,Across-permutation MAE standard deviation; blank for error-first
+mae_ci_low,2.5th percentile patient-bootstrap MAE
+mae_ci_high,97.5th percentile patient-bootstrap MAE
+rmse,Root mean squared error on the 1–5 scale
+rmse_ci_low,2.5th percentile patient-bootstrap RMSE
+rmse_ci_high,97.5th percentile patient-bootstrap RMSE
+normalized_mae,Mean absolute error on the normalized 0–1 scale
+normalized_mae_ci_low,2.5th percentile patient-bootstrap normalized MAE
+normalized_mae_ci_high,97.5th percentile patient-bootstrap normalized MAE
+pearson,Pearson correlation coefficient
+pearson_ci_low,2.5th percentile patient-bootstrap Pearson correlation
+pearson_ci_high,97.5th percentile patient-bootstrap Pearson correlation
+spearman,Spearman rank correlation coefficient
+spearman_ci_low,2.5th percentile patient-bootstrap Spearman correlation
+spearman_ci_high,97.5th percentile patient-bootstrap Spearman correlation
+prediction_min_1_to_5,Minimum unclipped prediction on the original 1-5 rating scale
+prediction_max_1_to_5,Maximum unclipped prediction on the original 1-5 rating scale
+below_one_rate,Fraction of unclipped predictions below rating 1
+above_five_rate,Fraction of unclipped predictions above rating 5
+auroc,Area under the ROC curve on extreme cases
+auroc_sd,Across-permutation AUROC standard deviation; blank for error-first
+auroc_ci_low,2.5th percentile patient-bootstrap AUROC
+auroc_ci_high,97.5th percentile patient-bootstrap AUROC
+auprc,Area under the precision-recall curve on extreme cases
+auprc_ci_low,2.5th percentile patient-bootstrap AUPRC
+auprc_ci_high,97.5th percentile patient-bootstrap AUPRC
+metric,Registered metric or paired-comparison quantity
+value,Metric value in the units defined by metric
+model_A,First model in the registered signed comparison
+model_B,Second model in the registered signed comparison
+estimate,Observed signed paired-model difference
+ci_low,2.5th percentile of the paired bootstrap difference
+ci_high,97.5th percentile of the paired bootstrap difference
+undefined_rate,Post-ReLU all-zero map fraction
+ci_crosses_zero,Whether the paired percentile CI includes zero
+mean_train_center_rating_points,Fold-train mean concept contribution on the 1–5 rating scale
+strategy,Registered concept-intervention ordering strategy
+k,Number of intervened concept groups
+expert,Local GAM expert index within a concept group
+weight,Learned softmax expert weight
+logit,Learned softmax expert logit
+gradient_l1,Recorded L1 norm of the alpha-logit gradient
+requested_maps,Requested Grad-CAM maps
+valid_maps,Persisted nonzero post-ReLU Grad-CAM maps
+undefined_maps,Explicitly recorded post-ReLU all-zero maps
+quantity,Faithfulness quantity: output_sensitivity or error_increase
+sample_count,Valid maps contributing to the aggregate
+saliency_mean,Mean saliency-mask faithfulness value
+saliency_sd,Standard deviation of saliency-mask faithfulness
+saliency_median,Median saliency-mask faithfulness value
+saliency_minus_random_mean,Mean paired saliency value minus matched-random mean
+saliency_greater_than_random_rate,Fraction where saliency exceeds its matched-random mean
+phase,Baseline-v2 execution phase
+job_id,Katana PBS job identifier
+queue,Katana PBS queue
+gpu_model,Allocated GPU model
+ncpus,Allocated CPU-core count
+memory_gb,Requested memory in GB
+walltime,Requested PBS walltime
+run_count,PBS execution count
+exit_status,Recorded scheduler exit status
+scientific_status,Scientific artifact/verifier status independent of scheduler status
+config_sha256,Frozen execution-config SHA-256
+split_sha256,Frozen fold split SHA-256
+encoder_sha256,P4 encoder-initialization SHA-256
+checkpoint_sha256,"Best-checkpoint SHA-256, composite where applicable"
+test_transaction_count,Valid committed test-evaluation transaction count
+verifier_or_recovery_evidence,Scheduler/verifier recovery interpretation

@@ -1,0 +1,75 @@
+field,definition
+model,冻结模型标识
+concept,规范概念组名称
+target,Grad-CAM或预测目标名称
+scope,折-目标、汇总目标或汇总模型的聚合层级
+fold,患者分组外层折索引
+mae,1–5量表平均绝对误差
+mae_sd,排列间MAE标准差；误差优先策略为空
+mae_ci_low,患者Bootstrap MAE第2.5百分位
+mae_ci_high,患者Bootstrap MAE第97.5百分位
+rmse,1–5量表均方根误差
+rmse_ci_low,患者Bootstrap RMSE第2.5百分位
+rmse_ci_high,患者Bootstrap RMSE第97.5百分位
+normalized_mae,归一化0–1量表平均绝对误差
+normalized_mae_ci_low,患者Bootstrap归一化MAE第2.5百分位
+normalized_mae_ci_high,患者Bootstrap归一化MAE第97.5百分位
+pearson,Pearson相关系数
+pearson_ci_low,患者Bootstrap Pearson相关系数第2.5百分位
+pearson_ci_high,患者Bootstrap Pearson相关系数第97.5百分位
+spearman,Spearman秩相关系数
+spearman_ci_low,患者Bootstrap Spearman相关系数第2.5百分位
+spearman_ci_high,患者Bootstrap Spearman相关系数第97.5百分位
+prediction_min_1_to_5,原始1-5评分量表上未经截断预测的最小值
+prediction_max_1_to_5,原始1-5评分量表上未经截断预测的最大值
+below_one_rate,未经截断预测低于评分1的比例
+above_five_rate,未经截断预测高于评分5的比例
+auroc,极端病例ROC曲线下面积
+auroc_sd,排列间AUROC标准差；误差优先策略为空
+auroc_ci_low,患者Bootstrap AUROC第2.5百分位
+auroc_ci_high,患者Bootstrap AUROC第97.5百分位
+auprc,极端病例精确率-召回率曲线下面积
+auprc_ci_low,患者Bootstrap AUPRC第2.5百分位
+auprc_ci_high,患者Bootstrap AUPRC第97.5百分位
+metric,预注册指标或配对比较量
+value,按metric字段定义单位表示的指标值
+model_A,预注册带符号比较中的第一个模型
+model_B,预注册带符号比较中的第二个模型
+estimate,观测到的带符号模型配对差异
+ci_low,配对Bootstrap差异第2.5百分位
+ci_high,配对Bootstrap差异第97.5百分位
+undefined_rate,ReLU后全零图比例
+ci_crosses_zero,配对百分位置信区间是否包含零
+mean_train_center_rating_points,折内训练集概念贡献在1–5评分量表上的均值
+strategy,预注册概念干预排序策略
+k,已干预概念组数量
+expert,概念组内局部GAM专家索引
+weight,学习得到的softmax专家权重
+logit,学习得到的softmax专家logit
+gradient_l1,已记录的alpha-logit梯度L1范数
+requested_maps,请求生成的Grad-CAM图数量
+valid_maps,已保存的非零ReLU后Grad-CAM图数量
+undefined_maps,明确记录的ReLU后全零图数量
+quantity,faithfulness量：output_sensitivity或error_increase
+sample_count,纳入聚合的有效图数量
+saliency_mean,显著区域遮罩faithfulness均值
+saliency_sd,显著区域遮罩faithfulness标准差
+saliency_median,显著区域遮罩faithfulness中位数
+saliency_minus_random_mean,显著区域值减匹配随机均值的配对均值
+saliency_greater_than_random_rate,显著区域值高于其匹配随机均值的比例
+phase,Baseline-v2执行阶段
+job_id,Katana PBS任务标识
+queue,Katana PBS队列
+gpu_model,分配的GPU型号
+ncpus,分配的CPU核心数
+memory_gb,申请内存（GB）
+walltime,申请的PBS walltime
+run_count,PBS执行次数
+exit_status,记录的调度器退出状态
+scientific_status,独立于调度器状态的科学产物/验证器状态
+config_sha256,冻结执行配置SHA-256
+split_sha256,冻结折划分SHA-256
+encoder_sha256,P4编码器初始化SHA-256
+checkpoint_sha256,最佳checkpoint SHA-256（适用时为组合哈希）
+test_transaction_count,有效已提交测试评估事务计数
+verifier_or_recovery_evidence,调度器/验证器恢复说明

@@ -1,0 +1,25 @@
+model,concept,mean_train_center_rating_points
+Standard CBM,calcification,0.40045994224407255
+Standard CBM,internalStructure,0.28106346178155117
+Standard CBM,lobulation,0.2458192328655171
+Standard CBM,margin,0.13749331452749364
+Standard CBM,sphericity,-0.07218363429933268
+Standard CBM,spiculation,0.15874690786565102
+Standard CBM,subtlety,0.2852049247048445
+Standard CBM,texture,-0.12151383321319384
+Mixed-type CEM,calcification,0.26348583493498956
+Mixed-type CEM,internalStructure,0.4860825280971527
+Mixed-type CEM,lobulation,0.27865249838674166
+Mixed-type CEM,margin,0.12337822636915134
+Mixed-type CEM,sphericity,0.15488988916575203
+Mixed-type CEM,spiculation,0.14120043577729957
+Mixed-type CEM,subtlety,0.13259886388843442
+Mixed-type CEM,texture,0.10131958988381644
+Learned-softmax GAM,calcification,0.40218558561657974
+Learned-softmax GAM,internalStructure,0.04133431992125872
+Learned-softmax GAM,lobulation,-0.01594161503553513
+Learned-softmax GAM,margin,0.3701618742378972
+Learned-softmax GAM,sphericity,0.10624390584486756
+Learned-softmax GAM,spiculation,0.3229008527974246
+Learned-softmax GAM,subtlety,0.22859590792319104
+Learned-softmax GAM,texture,0.1903608938177348

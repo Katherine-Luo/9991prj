@@ -1,0 +1,9 @@
+canonical_term,english,chinese,translation_policy
+Black-box,Black-box,Black-box,Preserve registered model name
+Standard CBM,Standard CBM,Standard CBM,Preserve registered model name
+Mixed-type CEM,Mixed-type CEM,Mixed-type CEM,Preserve project-specific model name
+Learned-softmax GAM,Learned-softmax GAM,Learned-softmax GAM,Preserve preregistered model name
+output_sensitivity,output sensitivity,输出敏感度,Keep variable name in code and tables
+error_increase,prediction error increase,预测误差增量,Keep variable name in code and tables
+undefined Grad-CAM map,undefined post-ReLU all-zero Grad-CAM map,ReLU后全零的未定义Grad-CAM图,Do not infer an unobserved gradient mechanism
+radiologist assessment,radiologist assessment,放射科医师评估,Never describe as pathology-confirmed diagnosis

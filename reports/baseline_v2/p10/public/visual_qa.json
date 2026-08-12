@@ -1,0 +1,658 @@
+{
+  "manual_checklist": {
+    "clipping": "PASS",
+    "fonts_and_missing_glyphs": "PASS",
+    "legends_and_tables": "PASS",
+    "overlap": "PASS"
+  },
+  "manual_visual_review": "PASS",
+  "pdfplumber_text_gate": "PASS",
+  "pdfs": {
+    "short_en": {
+      "page_count": 12,
+      "pdf_sha256": "56a37d8c914bf11e463aec1c38e0f3cd6aa41182e5b6d42255fb26ea873f7193",
+      "rendered_pages": [
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 1,
+          "png_sha256": "d5a86263fa2b7cdbdf89399e71e41a604c3bdca8eef2a9ddf63bbdc393e82e80",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 2,
+          "png_sha256": "f258367c48b7699d1f104042cbd4467fcf41bc307baf30a569b69bea050c2a55",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 3,
+          "png_sha256": "f6d50c374f1e5f5b08ba35e7be74e4aa16163c5eff6fce25a532b164b185e474",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 4,
+          "png_sha256": "ef299102486a38dfe7217b7613a9a2c94021ee40b2763b5517b0848889118a74",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 5,
+          "png_sha256": "60c87ba290609c8b62ecf5f3e3a9c1e0d386607dccb71c3b3363620a87284491",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 6,
+          "png_sha256": "50f9767742554bd16e1d6d53bd3165a27a35764ccfa8ef2002d33043eede215f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 7,
+          "png_sha256": "fceea5561d3b215ca1b211e7a76d07bcd1247d465fafe0f8121e931019d54cd1",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 8,
+          "png_sha256": "e927dd2fb76029acd7f6e7368ea5ec2de63eb53bb9c90b5f55936eb8ec7cb8df",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 9,
+          "png_sha256": "0d56950930b34b90d71fa9d9eecec6c4ff1c85fc2b104b47abdff4a39b93f9d4",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 10,
+          "png_sha256": "d85f1e95541c8d4431f2d2201b40591dac0b521c5747f5aad62b5494d394f1a3",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 11,
+          "png_sha256": "23ed2a2268a788c8b694b8836e5ae4c4eaaa8c1e4893a58816a7d061a1e7b45e",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 12,
+          "png_sha256": "6c1fed9853c11bab3fbaeb19b3b82c648645f79f5cc3f82e5d00a39e1cbc7deb",
+          "width": 662
+        }
+      ]
+    },
+    "short_zh": {
+      "page_count": 12,
+      "pdf_sha256": "6130319690f47058b782fc013bd647fef8601198eb1c5eb6bb045fd158db8a95",
+      "rendered_pages": [
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 1,
+          "png_sha256": "518b6658134196c6fdba2d519decace31164c9562a192c351fa8a5276b621487",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 2,
+          "png_sha256": "47ff6e6d94c10224a585ce3b3d70e6b76bcb6ff820b6b8722c88c29f704c9448",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 3,
+          "png_sha256": "a44c7448201a8b1a6c1ad23f6c2688da78335c15ed1a18982672d986dc9a6ccb",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 4,
+          "png_sha256": "ec61d8ab00cf786e4cdfa1b8dad450fe509af84cccbe26b748e420efe9471d7c",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 5,
+          "png_sha256": "b1584ce0dd56f4f0b809300d10180f561b32dd1595e5838c134d6f47de58c93b",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 6,
+          "png_sha256": "c27cb9c4c0716bfa925cf058e1e8def9438dc70af2f56d0d132d0c60126ca206",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 7,
+          "png_sha256": "27222b674e59673c43ec6d397092cd9792fd12b871c52371c4cebff9338c80e1",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 8,
+          "png_sha256": "9253f07aa5526f670e526c6f3b2c80f7a4f209d5dbe137b1f3a258a0694b47b6",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 9,
+          "png_sha256": "581c9d53ced4e4971fe86b7b31c22304628fd970b9eabdbdaad5501298476488",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 10,
+          "png_sha256": "b184ecc0330f28431f25cf122b0fd31d907944e57df9a55ef1bf5c4b36a9c17c",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 11,
+          "png_sha256": "a24379e24a5c4b3d797ce86b73cdd4c8c85a66ec5fd45564a4ce2e0e5d6dc245",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 12,
+          "png_sha256": "aeecd87ce30e56f979e3fda3c41bf4c589b53f6e12892e5edfe91cd9ae73efd2",
+          "width": 662
+        }
+      ]
+    },
+    "technical_en": {
+      "page_count": 32,
+      "pdf_sha256": "f226560cddc4a563ff22aa18b8d637007e8d0b8d829374ee1d472a85f80ee046",
+      "rendered_pages": [
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 1,
+          "png_sha256": "393020e0c26f413f39b8abdd6cb8248fa8a39a07f4bca7922104d44f160e9a62",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 2,
+          "png_sha256": "6270d09df26ae78a1944db1d1d90f1b3ce64470429b55d2830184d74d0a4f029",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 3,
+          "png_sha256": "18818a680d8fd7b3f09444a55cdc92965b400d14e44bbd39224303efe68bf043",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 4,
+          "png_sha256": "b4b7360bc816f8029eca1061e6a5f1f01580a049f35b19eb253c055652c4f84b",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 5,
+          "png_sha256": "15cffc85d2c5e96e94204fb109f84c6efc09d0097ff5925f60f50d0752d2e35d",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 6,
+          "png_sha256": "02af6ba836c03525b54f8bebb5d0f7cd65dd6a3ae90f39512a0f8f74506b0b7f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 7,
+          "png_sha256": "41de369bdac5439e134864e162640e26e002da02c6190b8eb9d73a26a4c1af2a",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 8,
+          "png_sha256": "7f2e74d03f88707d8fab5b3e24650a463c66224e023bc973bcdf05c9d1c208fe",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 9,
+          "png_sha256": "fc2093719a90b126c9c0e60ea0f0467c90dbb91eb328d1236992ef80d64eeda9",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 10,
+          "png_sha256": "47e2ee52028234af5c3060e3271c0e474af8aee28e4e5ce000aa1fed38379d25",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 11,
+          "png_sha256": "0fdb165549af9d5089abd2c867e3a3e218c0e27c1759b89cfd0936529126fbc3",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 12,
+          "png_sha256": "abebf2af220d7b10ae5786a4332de7673f893cbd4aaae6f78ff10f479324cf0c",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 13,
+          "png_sha256": "8f400c6a7b1eea8963110a98c0cbdc3f6d4853e5d6e1492b49b42b1f9a3d9c27",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 14,
+          "png_sha256": "91f4577ee08db958428039d2d8b81c98ca0451ae50c22acc044ae86e2b090ee4",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 15,
+          "png_sha256": "2fed1f67ec9541781c03140e81d0af8c41dc594d9a34838f5bacb8dc1ded4fbd",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 16,
+          "png_sha256": "9260f364e10d192029f52914cd51953bf993370bb3e5fada1c60ae79d26e9f64",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 17,
+          "png_sha256": "c60c45f777fd14faaff6e8e1c8284fe199b4640ad2bbb85dd50b5495c983104b",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 18,
+          "png_sha256": "e3ba2d7d34148839fa1aa959b22c51b34ae366724a1a095af534cb909ebaea25",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 19,
+          "png_sha256": "68e1910f76371803f5a148090c3c4113de75f2211b2bcdad01f3cc76d3d3d8db",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 20,
+          "png_sha256": "7b179121573abdd44e114570e4b9f4ba240347fa1beb086d8101b1b682293f2f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 21,
+          "png_sha256": "194aad01ec6f87c4512d861fbf70a99073e154462013b88b02087fbed659e336",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 22,
+          "png_sha256": "e057534ea50dc9a903f243814b121b6f00091fff2b3a567dcbb4ee2606fba490",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 23,
+          "png_sha256": "dbb407f6b1315953c0b5e05a5fa674f0c78a1f658088882ef7687b9bf2926df5",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 24,
+          "png_sha256": "c2ae7ca1cd5fabb0916ab54929c8c480073be0c8c6ef545e47232afae23dd2f4",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 25,
+          "png_sha256": "720fbe7955ba0b3d5ee865ef9340e7ad0c09f88c4e38efa9cb0f4503419b9fb8",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 26,
+          "png_sha256": "de6e572b532175ba91f66d72a07da922309631404350ad82d200607e0bb35db0",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 27,
+          "png_sha256": "db48bf8dcbe527d86de8ee43c7cc271b9f2a35654bf9e9908229aadf92e95bc5",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 28,
+          "png_sha256": "ecade8b4b421df83d3c2213a2c49c213efc454f2cb3b57dd2d0080f5a7110fbe",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 29,
+          "png_sha256": "ec35567c10a7b9bca40f0850a5a252f80b1189a0462bc5f0aed79a37c3d12c90",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 30,
+          "png_sha256": "35c6dead0c77acb147d5ccc540193033c4fb73485590157caedb274f50dd73d2",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 31,
+          "png_sha256": "4d02e511a0e2c7f8bf87dcf15a2b83a83b9852020a0b23803b9e6c268c09488b",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 32,
+          "png_sha256": "6af1557acca8349459fb935602d3d69ba56926908969005daa69c5d3f9df44fd",
+          "width": 662
+        }
+      ]
+    },
+    "technical_zh": {
+      "page_count": 32,
+      "pdf_sha256": "d84052ea5199a0a155c59fe4bc03c372b79d7d8b3f2da507989e63c74108d83c",
+      "rendered_pages": [
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 1,
+          "png_sha256": "1c4c38fb323bf811e509a6acc01c66a5b946e64be6d52b61cf6e2886ec9608ef",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 2,
+          "png_sha256": "872dc6780d90c8f40334185e9d66f297e28bc0255f5bed97cb3c305c9cf5dd00",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 3,
+          "png_sha256": "5914cc208ca91cee6bd12006714990fde73fe5dfcd249b12e473a3ca17e934aa",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 4,
+          "png_sha256": "ade7e858cbdf46405cd61b95388abb49078d26de5bc5edf4c6bdf0471f4ff688",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 5,
+          "png_sha256": "5b628d26e8dcee9af944d5b14c657704eaa2aec59e322f988e6f84c1a77481a7",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 6,
+          "png_sha256": "ebbf0bbd6e0e75e649d97988f1271af3172bb2777a7be8078e91a1f129f403e4",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 7,
+          "png_sha256": "b92c7e650a276d4a624e40062559b00ffeedfb45a29f3eb70b49bed6a205036c",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 8,
+          "png_sha256": "5980280c68674059d2a6bc2b5f4daa4ac9c748d798030c0e8c98c4ac4fe633f4",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 9,
+          "png_sha256": "2b2bfb6351cd3631a80ab2f032206148b9e284e394e90a90f4ce7fb6d0af44d9",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 10,
+          "png_sha256": "d12534b2d61a0986bdc1c5fa7871a5d31459fdc8f87da9951780f7851358e829",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 11,
+          "png_sha256": "f5f26e962b266d19c238294c39117cb1b9d5ee3af97cc625e9df58775d3c08f5",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 12,
+          "png_sha256": "6db6bb932fd5cec8a6c09b4367e4ee6d90c016887c28aeec15007a4f5cab1a90",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 13,
+          "png_sha256": "5622e60fa332a2265721a53263e50715208117635ef666d4761bea8943a02bba",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 14,
+          "png_sha256": "e57a127d133bd941798820fbadb24ca27c177dda425410993b45396581a55bf0",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 15,
+          "png_sha256": "1f429940d42913e4f722e95faf0b5e74b7ee94bc19b1d8e025752915405d34f9",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 16,
+          "png_sha256": "b9256bbde8f17b1f89856f6b7ecb5d553b90595eb2af279f7883e40b12ef1a6f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 17,
+          "png_sha256": "1a094bfb6c11681c8ee148e119816822fbd85eeb08681c1de2a8224cff36786e",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 18,
+          "png_sha256": "21d13bca4d719b401a84eb019a5457835cce3f7b0716c76cf1a5af8e93692f60",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 19,
+          "png_sha256": "322736eaeba7958bcfeeabf41a60b041796c580cb4220271e3052baebf4d403f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 20,
+          "png_sha256": "c2992f7b26497fcc384a4bfc70f5c82f980781296c9c442f9cecd639094f8bb0",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 21,
+          "png_sha256": "eb95684de47166edff5ea1e80a36d7a6e4fa876a5852e59ae4badce1ed8107e4",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 22,
+          "png_sha256": "08f8ac2616b2673c8346edd275d130a2ec9395364ee5c771c8e7a71a9f6cd300",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 23,
+          "png_sha256": "ed7e8ede374836831b636781f3dde317ae41ec83453feffdae854870e75234f1",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 24,
+          "png_sha256": "e84ceef7e787b4050d99d7732d6482b9c11f196c1a36947553819d67855023cd",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 25,
+          "png_sha256": "80d90326e51e253682720438f4b1eac63aee8752074aed066957c9edff13e54f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 26,
+          "png_sha256": "9092ce1f4bdfc40885cef5c9305288869014f176903afea157ae8659f9bb640f",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 27,
+          "png_sha256": "b1ee19bebf1a1754d9f19a2b56c265018441ac6846e066949062a07ade94e5f9",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 28,
+          "png_sha256": "25b9085d75023ae13cf395bec5c9ee9a928cdfbd55b1e0d086effe4af3c712c9",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 29,
+          "png_sha256": "123b7a2e68e8e50f8bc3444b825c6b2c6886b6f544c72cc7c105367f85a673d6",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 30,
+          "png_sha256": "8d42e116c36b6688c726859f85bdbcabbe158279ed9b501ed854eef87d4f9001",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 31,
+          "png_sha256": "656f3441ec12046a3b85ed87b225d87960106dd5dbbbf155b2dddab437883cdb",
+          "width": 662
+        },
+        {
+          "height": 936,
+          "nonblank": true,
+          "page": 32,
+          "png_sha256": "d40b8b80d9212a529f03b9dffa9734c2ac1fb9c2b4206da000412e1979c2458b",
+          "width": 662
+        }
+      ]
+    }
+  },
+  "render_dpi": 80,
+  "rendered_page_count": 88,
+  "renderer": "pdftoppm",
+  "renderer_version": "pdftoppm version 26.05.0",
+  "schema_version": 1,
+  "status": "PASS"
+}
