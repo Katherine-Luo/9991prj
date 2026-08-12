@@ -6,12 +6,12 @@ active_requirements: docs/LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md
 active_config: configs/baseline_v2.yaml
 supersedes_protocol: Baseline-v1
 protocol_transition: V2M
-operating_mode: NORMAL_DEVELOPMENT
-reading_scope: CURRENT_AND_NEXT
+operating_mode: BUG_MAINTENANCE
+reading_scope: FULL_DOCUMENT
 development_phase: P8
-development_phase_status: IN_PROGRESS
-maintenance_phase: null
-active_bug_ids: []
+development_phase_status: BLOCKED
+maintenance_phase: P8
+active_bug_ids: [BUG-P8-002]
 resume_phase: P8
 next_phase: P9
 last_updated: 2026-08-12
@@ -20,7 +20,7 @@ last_verified_commit: 377dbeb
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`437ce85`。用户已批准P8 End-to-end CBM + learned-softmax GAM实施计划，P8现为唯一允许开发的阶段；P9保持`NOT_STARTED`。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M、P3、P4、P5、P6与P7均已完成、获用户确认并推送；P7最终交付anchor为`437ce85`。P8五折科学执行与唯一有效committed test evaluations均已完成，但final verifier受`BUG-P8-002`的两个实现问题阻断；当前只允许verifier-only维护，P9保持`NOT_STARTED / AT_RISK`且不得启动。
 
 ## 1. 阅读规则
 
@@ -34,19 +34,19 @@ last_verified_commit: 377dbeb
 
 | 字段 | 当前值 |
 |---|---|
-| 工作模式 | `NORMAL_DEVELOPMENT` |
-| 阅读范围 | `CURRENT_AND_NEXT` |
+| 工作模式 | `BUG_MAINTENANCE` |
+| 阅读范围 | `FULL_DOCUMENT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
 | 当前开发阶段 | `P8 End-to-end CBM + Learned-softmax GAM Regression` |
-| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
-| 维护目标阶段 | 无 |
-| 活动 Bug | 无；`BUG-P8-001`已由修复后的完整H200 Stage A重跑验证并标记为`RESOLVED`。 |
-| 当前阻塞项 | 无技术阻塞；五折formal jobs已完整提交并在`csegpu100`排队，等待H200资源分配。 |
-| 恢复阶段 | `P8`（已恢复正常开发） |
-| 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED`，不得启动或详细规划） |
+| 阶段状态 | `BLOCKED / AT_RISK` |
+| 维护目标阶段 | `P8` |
+| 活动 Bug | `BUG-P8-002`（`INVESTIGATING`；仅限final verifier实现修复） |
+| 当前阻塞项 | 五折训练、checkpoint选择与唯一有效committed test evaluation均已完成；当前仅有两处verifier implementation阻断：FP32 softmax reconstruction不一致，以及Parquet读取后的NumPy array provenance comparison不正确。 |
+| 恢复阶段 | `P8`（修复后只对现有artifacts运行final verify；五折全部`PASS`后才允许CPU OOF） |
+| 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED / AT_RISK`；P8 final verify与CPU OOF完成前禁止启动或详细规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | 修复后的10-file exact manifest已完成KDM同步并通过remote integrity，internal/file SHA-256=`24ef05e1dea8abfc461ed739608613229a3f3db4d40f0603cf87acc69ac3726a`/`eda1026b5f2be74c7fe57593182b33e78925b052aaadf7a035300e775225807e`。有效Stage A job `8978425`在`csegpu12`/`k201` H200 GPU 3以`Exit_status=0`、`run_count=1`完成；8-sample/40-step overfit最近5步均值从`0.4029014229774475`降至`0.06921419948339462`，true batch 16 forward、task/concept/total loss、backward、Adam、8组alpha gradient/update/simplex及贡献重建均为`PASS`，peak reserved fraction=`0.01902019501277658`。仅有预期的pool3d deterministic warn-only warnings，Phase Compliance Reviewer为`PASS`。旧job `8978152`仍分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt。用户授权后已使用`P8_FORMAL_APPROVED=1`一次性提交唯一Fold 0–4：fold0=`8978475`、fold1=`8978478`、fold2=`8978477`、fold3=`8978474`、fold4=`8978476`；五个job目前均为`Q`/`csegpu100`，尚未开始训练。只读heartbeat `monitor-p8-gam-five-folds`已启用。P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 |
+| 状态依据 | 修复后的10-file exact manifest与有效H200 Stage A job `8978425`仍为`PASS`；旧job `8978152`仍分类为`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不计有效attempt。Formal Fold 0–4 jobs=`8978475/8978478/8978477/8978474/8978476`均已完成80 epochs；best epochs=`10/28/32/15/22`，completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`且各只有一个valid committed evaluation。Fold 1/2/4的PBS automatic rerun/hold事件保留为scheduler execution audit，不改变上述训练/test事务结论，也不授权replacement。Phase Compliance Reviewer判定科学artifacts保持有效，当前仅`BUG-P8-002`的两处final-verifier实现问题阻断；禁止重训、再次test inference或修改existing checkpoints/history/predictions/metrics/evaluation的科学值。 |
 
 ## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
 
@@ -86,21 +86,27 @@ last_verified_commit: 377dbeb
 - Stage A验证P4 encoder semantic/file SHA-256=`d7fa4604dfaa1ebee6d8653f70b9d3e97266dbbdbb0eed573a7b43cd8a12948e`/`ad1258270010942f752c3f718fe912b5421bb22dcfed0b399d9d999754edbd56`；运行保持H200、FP32、AMP/BF16/TF32关闭及deterministic warn-only，peak reserved fraction=`0.01902019501277658`，远低于`0.85`门。Warnings仅为预期的CUDA avg/max pool deterministic warn-only warnings。
 - Private Stage A SHA-256为overfit=`54eca3b186ee2ead480eebae1947b3405424a3d5910fd802eed0ade452a13630`、preflight=`c2d5e2dc9915e34aefc8eda5d6d94eab3712486c6cc3dfcbdb7b0e7aae188a7b`、log=`5d4f34c60d107b135511e0965493b16197ef8e69e484f12e68f4f28f044662cf`。Remote run目录仅有这两份Stage A JSON，没有formal checkpoint、test prediction或OOF artifact；Actual Stage A Phase Compliance Reviewer为`PASS`。
 - `BUG-P8-001`由上述有效完整重跑验证并标记为`RESOLVED`。旧job `8978152`保持`PRECOMPUTE_CLI_FAILURE / NO_GPU_COMPUTE_STARTED`且不是有效Stage A attempt，不与有效job `8978425`混计。
+- Formal Fold 0–4 jobs=`8978475/8978478/8978477/8978474/8978476`均已完成固定80 epochs；minimum-validation-`L_GAM` best epochs依次为`10/28/32/15/22`，对应validation total loss依次为`0.07589372691547717/0.08197871722659196/0.06489942763744191/0.07138819607469593/0.07566188919300593`。Existing training histories与best checkpoints保持有效，不得重训或重选checkpoint。
+- 五折completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`；test sample counts依次为`479/502/539/549/564`，每折只有一个valid committed test evaluation。禁止再次执行test inference或修改existing predictions、metrics、evaluation scientific values。
+- Fold 1、2、4在PBS层出现过automatic rerun/hold；该scheduler lifecycle作为执行审计保留。其现有80-epoch histories、best checkpoints及单次committed test事务完整，automatic rerun/hold不构成额外有效test、replacement或重新执行授权。
 
 ### 正在进行
 
-- 用户已正式批准P8 H200 Stage A；唯一Fold 0–4已一次性提交：fold0=`8978475`、fold1=`8978478`、fold2=`8978477`、fold3=`8978474`、fold4=`8978476`。五个`Job_Name`均为`p8_fold.pbs`，状态均为`Q`、queue均为`csegpu100`，统一请求H200×1、8 CPU、64 GB RAM、96小时walltime，并均设置`P8_FORMAL_APPROVED=1`；唯一参数差异为`P8_FOLD_INDEX=0..4`，没有重复或遗漏。
-- ACTIVE heartbeat automation `monitor-p8-gam-five-folds`每10分钟只读监控五折。监控期间严禁`qdel`、`qalter`、额外`qsub`、replacement、training profile变更、OOF或P9；五折全部终态后只报告并暂停。
+- `BUG-P8-002` verifier-only维护：定位并修复FP32 softmax reconstruction与Parquet NumPy-array provenance comparison两处实现问题，并补充对应positive/negative regression tests。不得触碰模型、loss、execution/scientific profile、训练、checkpoint选择或已提交scientific artifacts。
+- 修复完成后只对现有五折artifacts重新运行final verifier；不得调用train或evaluate-test。五折final verifier全部`PASS`后，才允许运行CPU-only OOF构建与完整性验证。
 
 ### 尚未完成
 
-- 五折80-epoch formal jobs已提交并排队，但尚未开始或完成；test exactly once与final verifier尚未执行，actual CPU OOF与tracked脱敏audit尚未生成。
+- `BUG-P8-002`的两处verifier implementation修复、回归测试与existing-artifact-only五折final verify。
+- 五折final verifier全部`PASS`后才执行actual CPU OOF与tracked脱敏audit；当前尚无可声明通过的P8 pooled OOF结果。
 - 完整阶段门与用户最终确认。
 - P9未制定或实施。
 
 ### 验收边界
 
 - `BUG-P8-001`修复与验证没有修改模型、loss、scientific/execution config、H200 profile、初始化、训练/验收标准或formal lifecycle；failed job `8978152`永久不得计入有效Stage A attempts。
+- `BUG-P8-002`维护禁止重训任何fold、再次执行test inference，以及修改existing checkpoints、history、predictions、metrics或test evaluation中的科学值；只允许verifier/numeric reconstruction/provenance comparison及必要diagnostic/test修复。
+- Fold 1/2/4的PBS automatic rerun/hold仅作为scheduler audit保留，不允许据此取消、替换、重复提交或改变frozen execution profile。
 - 仅实现P8-R1–P8-R3与P8阶段所需运行/完整性证据；不实现P9完整concept metrics、跨模型比较、centering、intervention curves、Grad-CAM、occlusion或bootstrap。
 - P8进入`AWAITING_USER_APPROVAL`前必须通过H200 Stage A、五折80 epochs、test exactly once、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、完整测试与双agent阶段审查。
 
@@ -108,7 +114,7 @@ last_verified_commit: 377dbeb
 
 ### 进入条件
 
-- P8必须完成全部技术验收、用户确认、完成封存、合并与GitHub推送。
+- P8必须先解决`BUG-P8-002`、以现有artifacts通过五折final verifier、完成CPU OOF及全部技术验收，并经用户确认、完成封存、合并与GitHub推送。当前P9为`NOT_STARTED / AT_RISK`。
 
 ### 第一批任务
 
@@ -118,7 +124,7 @@ last_verified_commit: 377dbeb
 
 ## 5. P7 完成前开发快照
 
-> 本节是P7交付完成前的历史快照；其中关于P8尚未启动的表述已由第3节当前P8 `IN_PROGRESS`状态取代，不代表当前生命周期。
+> 本节是P7交付完成前的历史快照；其中关于P8尚未启动的表述已由第2–3节当前P8生命周期取代，不代表当前状态。
 
 ### 阶段目标
 
@@ -451,19 +457,39 @@ Bug 修复后：
 | P5 | Black-box DenseNet regression | `COMPLETED` | `ON_TRACK` | 五折 80 epochs、minimum-validation-MSE checkpoints、test exactly once、final verifies、2,633/868 OOF、0 leakage、tracked audit、direct `8 passed`、合并后完整 `173 passed`、阶段级与 post-delivery 审查及用户 2026-08-11 确认均为 `PASS`；completion `147f8f0` 与 post-delivery sync `c392c04` 均已推送，P6 未开始 | 0 | 0 |
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
-| P8 | CBM + GAM | `IN_PROGRESS` | `ON_TRACK` | `BUG-P8-001`修复`377dbeb`及回归/完整测试均`PASS`；更新manifest已remote验证。H200 Stage A job `8978425` Exit 0，overfit、true-batch-16、alpha、reconstruction、precision与memory gates及Phase Compliance均`PASS`；旧`8978152`仍为precompute invalid/non-attempt。唯一Fold 0–4 formal jobs已提交且均在`csegpu100`排队，训练/OOF尚未开始 | 0 | 0 |
-| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；P8完成确认与交付前禁止启动或规划 | 0 | 0 |
+| P8 | CBM + GAM | `BLOCKED` | `AT_RISK` | Stage A保持`PASS`。五折均完成80 epochs，best epochs=`10/28/32/15/22`；completion=`TRAINING_COMPLETE_TEST_EVALUATED`，test status=`TEST_EVALUATED_ONCE`、transaction=`1`且每折只有一个valid committed evaluation。当前仅`BUG-P8-002`的FP32 softmax reconstruction与Parquet NumPy-array provenance comparison两处verifier implementation问题阻断；禁止重训/重测/修改既有scientific artifacts，修后只做existing-artifact final verify，全部`PASS`后才CPU OOF | 1 | 0 |
+| P9 | 统一评估 | `NOT_STARTED` | `AT_RISK` | 未执行；`BUG-P8-002`解决、P8五折final verify、CPU OOF、完成确认与交付前禁止启动或规划 | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P8-001`已通过更新manifest remote integrity与完整H200 Stage A重跑验证并标记为`RESOLVED`；P8恢复`NORMAL_DEVELOPMENT / IN_PROGRESS / ON_TRACK`。P9保持`NOT_STARTED`且不得启动或规划。既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前活动Bug为`BUG-P8-002`。P8进入`BUG_MAINTENANCE / FULL_DOCUMENT`并标记为`BLOCKED / AT_RISK`；唯一允许工作是两处final-verifier实现修复、对应回归测试与existing-artifact-only重新验证。P9保持`NOT_STARTED / AT_RISK`且不得启动或规划。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
 `OPEN` → `INVESTIGATING` → `FIXING` → `VERIFYING` → `RESOLVED`
+
+### BUG-P8-002：Final verifier 的 FP32 softmax reconstruction 与 Parquet provenance comparison 误报
+
+- 状态：`INVESTIGATING`
+- 严重度：`HIGH`
+- 发现日期：2026-08-12
+- 影响阶段：P8
+- 影响验收标准：是；五折科学训练与唯一valid committed test evaluations均已完成，但P8必须在CPU OOF前通过每折final verifier。
+- 恢复阶段：P8
+- 受影响下游阶段：P9（保持`NOT_STARTED / AT_RISK`，不得启动或规划）
+- 现象：五折既有formal artifacts在final verification遇到两类implementation false failure：一处是verifier未按生成侧的FP32 softmax数值路径重建alpha weights/contributions，另一处是Parquet反序列化后的NumPy array provenance字段使用了不适当的直接比较语义。
+- 科学执行证据：Fold 0–4均完成80 epochs，minimum-validation-`L_GAM` best epochs=`10/28/32/15/22`；completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test evaluation均为`TEST_EVALUATED_ONCE`、transaction count=`1`，各自只有一个valid committed evaluation。Existing checkpoints、histories、predictions、metrics与evaluations的科学值保持有效。
+- PBS执行审计：Fold 1/2/4发生过PBS automatic rerun/hold；该scheduler lifecycle必须保留，不改写成独立人工重提或第二次有效test。现有artifacts仍证明每折一个valid committed evaluation，automatic rerun/hold不授权replacement、重训或重测。
+- 根因边界：当前阻断仅属于verifier/numeric reconstruction/provenance comparison实现，不来自数据、模型、loss、P4 initialization、H200 profile、augmentation、optimizer、80-epoch budget、checkpoint选择或test scientific execution。
+- 维护授权边界：禁止重训任何fold、再次执行test inference、修改execution/scientific profile，以及修改existing checkpoint/history/predictions/metrics/evaluation的科学值。只允许修复FP32 softmax reconstruction、Parquet NumPy-array provenance comparison、必要的匿名diagnostic logging与positive/negative regression tests。
+- 验证要求：修复后只对现有Fold 0–4 artifacts运行final verifier，不调用train或evaluate-test。五折全部`PASS`后才允许CPU-only OOF；在此之前不得构建/宣称actual P8 OOF，也不得启动P9。
+- 修复：尚未实施。
+- 验证命令与结果：Phase Compliance Reviewer对上述verifier-only维护边界为`PASS`；代码修复、direct/full tests与existing-artifact final verify尚未执行。
+- 未解决事项：两处verifier implementation问题、五折existing-artifact final verify、随后CPU OOF及P8阶段门。
+- 修复commit：待创建。
 
 ### BUG-P8-001：Stage A CLI 传递不支持的 output_root 参数
 
@@ -950,3 +976,4 @@ Bug 修复后：
 | 2026-08-12 | `BUG_RESOLVED` / `STAGE_A_PASS` | P8 | 更新后的10-file manifest已完成KDM与remote integrity。有效H200 Stage A job `8978425`在`csegpu12`/`k201` GPU 3以Exit 0、run count 1完成；8-sample/40-step overfit最近5步均值`0.4029014229774475→0.06921419948339462`，true batch 16 forward/task+concept+total loss/backward/Adam、八组alpha gradient/update/simplex、encoder、FP32/no-AMP/BF16/TF32、reconstruction和peak-memory gates均PASS，warnings仅为预期pool3d warn-only。旧`8978152`保持precompute invalid/non-attempt。Remote仅有两份Stage A JSON，无formal/test/OOF；`P8_FORMAL_APPROVED=0`。Phase Compliance Reviewer为`PASS`，`BUG-P8-001`标记`RESOLVED`，P8恢复`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Job `8978425`；overfit `54eca3b1...a13630`；preflight `c2d5e2dc...188a7b`；log `5d4f34c6...662cf`；本次状态同步commit待创建 |
 | 2026-08-12 | `FORMAL_EXECUTION_APPROVED` | P8 | 用户正式批准P8 H200 Stage A并授权一次性提交Fold 0–4及创建只读后台定时监控。正式提交必须保持冻结scientific/execution profile，五个`qsub`参数均设置`P8_FORMAL_APPROVED=1`。本记录形成时尚未实际提交任何formal job，未生成training/test/OOF产物；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | 用户明确授权；本次状态同步commit待创建 |
 | 2026-08-12 | `FORMAL_FOLDS_QUEUED` | P8 | 使用同一`p8_fold.pbs`和`P8_FORMAL_APPROVED=1`一次性提交唯一Fold 0–4：`8978475→0`、`8978478→1`、`8978477→2`、`8978474→3`、`8978476→4`。五个jobs均为`Q`/`csegpu100`，统一请求H200×1、8 CPU、64 GB、96h，只有`P8_FOLD_INDEX`不同，无重复或遗漏。ACTIVE heartbeat `monitor-p8-gam-five-folds`每10分钟只读监控，禁止取消、修改、重提、替换、改profile、运行OOF或启动P9。当前训练尚未开始或完成；P8保持`IN_PROGRESS / ON_TRACK`，P9保持`NOT_STARTED`。 | Jobs `8978474`–`8978478`；本次状态同步commit待创建 |
+| 2026-08-12 | `FORMAL_SCIENTIFIC_EXECUTION_COMPLETE` / `BUG_DISCOVERED` / `PHASE_BLOCKED` | P8 | 先前排队快照已由终态证据取代：Fold 0–4均完成80 epochs，best epochs=`10/28/32/15/22`；completion均为`TRAINING_COMPLETE_TEST_EVALUATED`，test status均为`TEST_EVALUATED_ONCE`、transaction=`1`且每折只有一个valid committed evaluation。Fold 1/2/4的PBS automatic rerun/hold作为scheduler audit保留，未形成第二个valid test或replacement。Final verify当前仅被FP32 softmax reconstruction与Parquet NumPy-array provenance comparison两处implementation问题阻断，登记`BUG-P8-002`并切换`BUG_MAINTENANCE / FULL_DOCUMENT`；禁止重训、再次test inference或修改既有scientific artifacts，修后只对现有artifacts final verify，五折全PASS后才CPU OOF。P8为`BLOCKED / AT_RISK`，P9为`NOT_STARTED / AT_RISK`且不得启动。 | `BUG-P8-002`；Jobs `8978474`–`8978478`；Phase Compliance Reviewer `PASS`；本次状态同步commit待创建 |
