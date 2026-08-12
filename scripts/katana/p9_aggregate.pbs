@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:mem=64gb
+#PBS -l walltime=04:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+code_directory="${KATANA_P9_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+approval_record="artifacts/baseline_v2/audit/p9/spatial_execution_approval.json"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+"$python_binary" -m lidc_baseline.p9_katana verify-stage-a \
+  --repository-root "$code_directory"
+"$python_binary" -m lidc_baseline.p9_spatial verify \
+  --scope all --p9-root runs/baseline_v2/p9 \
+  --approval-record "$approval_record"
+"$python_binary" -m lidc_baseline.p9_audit build

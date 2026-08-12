@@ -1,0 +1,41 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb:gpu_model=H200
+#PBS -l walltime=11:00:00
+#PBS -q csegpu12
+#PBS -j oe
+
+set -euo pipefail
+
+model="${P9_MODEL:?Set P9_MODEL to an explicitly approved model}"
+fold_index="${P9_FOLD_INDEX:?Set P9_FOLD_INDEX to an explicitly approved fold}"
+case "$model" in
+  blackbox|standard_cbm|mixed_cem|learned_softmax_gam) ;;
+  *) echo "Invalid P9_MODEL: $model" >&2; exit 2;;
+esac
+case "$fold_index" in
+  0|1|2|3|4) ;;
+  *) echo "Invalid P9_FOLD_INDEX: $fold_index" >&2; exit 2;;
+esac
+if [[ "${P9_SPATIAL_APPROVED:-0}" != "1" ]]; then
+  echo "P9 formal spatial jobs require explicit post-Stage-A user approval." >&2
+  exit 2
+fi
+
+code_directory="${KATANA_P9_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+approval_record="artifacts/baseline_v2/audit/p9/spatial_execution_approval.json"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+nvidia-smi
+"$python_binary" -m lidc_baseline.p9_katana verify-stage-a \
+  --repository-root "$code_directory"
+"$python_binary" -m lidc_baseline.p9_spatial run \
+  --model "$model" --fold "$fold_index" --resume \
+  --p9-root runs/baseline_v2/p9 \
+  --approval-record "$approval_record"
+"$python_binary" -m lidc_baseline.p9_spatial verify \
+  --model "$model" --fold "$fold_index" \
+  --p9-root runs/baseline_v2/p9 \
+  --approval-record "$approval_record"

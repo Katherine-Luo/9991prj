@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb:gpu_model=H200
+#PBS -l walltime=04:00:00
+#PBS -q csegpu12
+#PBS -j oe
+
+set -euo pipefail
+
+if [[ "${P9_SPATIAL_APPROVED:-0}" != "0" ]]; then
+  echo "P9 Stage A must run with P9_SPATIAL_APPROVED=0." >&2
+  exit 2
+fi
+
+code_directory="${KATANA_P9_DIR:-/srv/scratch/z5448417/lidc-baseline-v2}"
+environment_prefix="${KATANA_ENV_PREFIX:-/srv/scratch/z5448417/conda/envs/lidc-baseline-v1}"
+python_binary="$environment_prefix/bin/python"
+
+cd "$code_directory"
+export PYTHONPATH="$code_directory/src${PYTHONPATH:+:$PYTHONPATH}"
+export P9_SPATIAL_APPROVED=0
+nvidia-smi
+"$python_binary" -m lidc_baseline.p9_katana verify-stage-a \
+  --repository-root "$code_directory"
+"$python_binary" -m lidc_baseline.p9_spatial preflight \
+  --fold 0 \
+  --p9-root runs/baseline_v2/p9 \
+  --output runs/baseline_v2/p9/stage_a/preflight.json
