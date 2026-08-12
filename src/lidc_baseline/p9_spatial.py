@@ -287,12 +287,13 @@ def _map_row(record: dict[str, Any]) -> dict[str, Any]:
         "target",
         "checkpoint_sha256",
         "config_sha256",
+        "implementation_sha256",
     )
     if any(key not in record for key in required):
         raise ValueError("P9_MAP_SHARD_METADATA_MISSING")
     if record["model"] not in MODEL_ORDER or int(record["fold_index"]) not in range(5):
         raise ValueError("P9_MAP_SHARD_MODEL_OR_FOLD_INVALID")
-    return {
+    row = {
         **{key: record[key] for key in required},
         "shape": list(MAP_SHAPE),
         "dtype": "float32_le",
@@ -302,9 +303,23 @@ def _map_row(record: dict[str, Any]) -> dict[str, Any]:
             map_value.astype("<f4", copy=False).tobytes(order="C")
         ).hexdigest(),
     }
+    if "faithfulness" in record:
+        row["faithfulness_json"] = json.dumps(
+            record["faithfulness"], sort_keys=True, separators=(",", ":"), allow_nan=False
+        )
+    else:
+        row["faithfulness_json"] = None
+    if "predicted_class_index" in record:
+        row["predicted_class_index"] = int(record["predicted_class_index"])
+    else:
+        row["predicted_class_index"] = None
+    return row
 
 
 def write_map_shard(path: Path, records: list[dict[str, Any]]) -> dict[str, Any]:
+    seal_path = path.with_suffix(path.suffix + ".json")
+    if seal_path.exists():
+        raise FileExistsError("P9_COMMITTED_MAP_SHARD_OVERWRITE_FORBIDDEN")
     nodule_uids = {str(record.get("nodule_uid")) for record in records}
     if not records or len(nodule_uids) > 16:
         raise ValueError("P9_MAP_SHARD_NODULE_COUNT_INVALID")
@@ -345,7 +360,6 @@ def write_map_shard(path: Path, records: list[dict[str, Any]]) -> dict[str, Any]
         "file_sha256": file_sha256,
         "map_sha256": [row["map_sha256"] for row in rows],
     }
-    seal_path = path.with_suffix(path.suffix + ".json")
     descriptor, seal_temporary_name = tempfile.mkstemp(
         dir=seal_path.parent, prefix=f".{seal_path.name}.", suffix=".tmp"
     )
@@ -423,28 +437,72 @@ def _parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     preflight = subparsers.add_parser("preflight")
     preflight.add_argument("--fold", type=int, required=True)
+    preflight.add_argument(
+        "--output",
+        type=Path,
+        default=Path("runs/baseline_v2/p9/stage_a/preflight.json"),
+    )
+    preflight.add_argument("--p9-root", type=Path, default=Path("runs/baseline_v2/p9"))
     run = subparsers.add_parser("run")
     run.add_argument("--model", choices=MODEL_ORDER, required=True)
     run.add_argument("--fold", type=int, required=True)
     run.add_argument("--resume", action="store_true")
+    run.add_argument("--p9-root", type=Path, default=Path("runs/baseline_v2/p9"))
+    run.add_argument(
+        "--approval-record",
+        type=Path,
+        default=Path("artifacts/baseline_v2/audit/p9/spatial_execution_approval.json"),
+    )
     verify = subparsers.add_parser("verify")
     verify.add_argument("--model", choices=MODEL_ORDER)
     verify.add_argument("--fold", type=int)
     verify.add_argument("--scope", choices=("all",))
+    verify.add_argument("--p9-root", type=Path, default=Path("runs/baseline_v2/p9"))
+    verify.add_argument(
+        "--approval-record",
+        type=Path,
+        default=Path("artifacts/baseline_v2/audit/p9/spatial_execution_approval.json"),
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
     validate_p9_execution_config(arguments.config)
+    from lidc_baseline import p9_spatial_lifecycle as lifecycle
+
     if arguments.command == "preflight":
-        if arguments.fold != 0:
-            raise ValueError("P9_STAGE_A_FOLD_MUST_BE_ZERO")
-        raise RuntimeError("P9_SPATIAL_PREFLIGHT_LIFECYCLE_NOT_IMPLEMENTED")
-    if arguments.command == "run":
-        require_formal_spatial_approval()
-        raise RuntimeError("P9_SPATIAL_FORMAL_LIFECYCLE_NOT_IMPLEMENTED")
-    raise RuntimeError("P9_SPATIAL_VERIFY_LIFECYCLE_NOT_IMPLEMENTED")
+        report = lifecycle.preflight(
+            fold_index=arguments.fold,
+            output_path=arguments.output,
+            p9_root=arguments.p9_root,
+        )
+    elif arguments.command == "run":
+        report = lifecycle.run_model_fold(
+            model_name=arguments.model,
+            fold_index=arguments.fold,
+            p9_root=arguments.p9_root,
+            resume=arguments.resume,
+            approval_path=arguments.approval_record,
+        )
+    elif arguments.scope == "all":
+        if arguments.model is not None or arguments.fold is not None:
+            raise ValueError("P9_SPATIAL_VERIFY_SCOPE_CONFLICT")
+        report = lifecycle.verify_all(
+            p9_root=arguments.p9_root,
+            approval_path=arguments.approval_record,
+        )
+    else:
+        if arguments.model is None or arguments.fold is None:
+            raise ValueError("P9_SPATIAL_VERIFY_MODEL_AND_FOLD_REQUIRED")
+        report = lifecycle.verify_model_fold(
+            arguments.model,
+            arguments.fold,
+            p9_root=arguments.p9_root,
+            approval_path=arguments.approval_record,
+        )
+    print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
+    return 0
 
 
 if __name__ == "__main__":

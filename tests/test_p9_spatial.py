@@ -117,6 +117,7 @@ def _map_record(value: float = 1.0) -> dict[str, object]:
         "target": "malignancy",
         "checkpoint_sha256": "a" * 64,
         "config_sha256": "b" * 64,
+        "implementation_sha256": "c" * 64,
         "map": np.full(spatial.MAP_SHAPE, value, dtype=np.float32),
     }
 
