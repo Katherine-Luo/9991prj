@@ -14,8 +14,8 @@ maintenance_phase: null
 active_bug_ids: []
 resume_phase: P9
 next_phase: P10
-last_updated: 2026-08-12
-last_verified_commit: 4f2703b
+last_updated: 2026-08-13
+last_verified_commit: 5c422aa
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
@@ -42,11 +42,11 @@ last_verified_commit: 4f2703b
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P8-002`已由supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`。 |
-| 当前阻塞项 | 无技术阻塞；P9 Katana/audit interfaces已完成本地实现与验证，尚待状态commit、KDM sync/remote verify及单个H200 Stage A。Formal 20 jobs仍受Stage A后显式用户门约束。 |
+| 当前阻塞项 | 无技术阻塞；exact KDM transfer与标准库remote integrity已通过，唯一H200 Stage A job `8986164`正在排队。Formal 20 jobs仍受Stage A `PASS`后显式用户门约束。 |
 | 恢复阶段 | `P9` |
 | 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / NOT_APPLICABLE`；P9完成、确认并交付前禁止启动或规划） |
-| 最近更新 | 2026-08-12 |
-| 状态依据 | P9 Katana/audit interfaces已由本地功能commit `4f2703b`封存。实现H200 Stage A、20个model×fold formal spatial及CPU aggregate PBS模板、KDM exact-whitelist/remote integrity接口，以及覆盖task/concept/centering/intervention/bootstrap/GAM alpha/spatial双faithfulness的最终deidentified aggregate audit接口。Exact P9 manifest本地验证为11 files / `191,736` bytes，internal/file SHA-256=`05ff65406527aa122268b9907a4dbe647833c0326fc06d3be9f13339ab50a693`/`d0c287dae9cc37884911182053cc62d2bd440b47eb21c964350c97bcf8ef626d`，P8 immutable base为`PASS`。Direct P9 `62 passed`，完整测试`342 passed`且仅有3条既有dependency warnings；Git diff/Bash/AST/frozen checks与Phase Compliance Reviewer均为`PASS`。尚未执行remote sync或Stage A，`P9_SPATIAL_APPROVED=0`且无approval record、formal jobs或最终OOF aggregate/audit；P10未启动。 |
+| 最近更新 | 2026-08-13 |
+| 状态依据 | 用户明确批准仅传输exact 11-file P9 delta并只提交一个`P9_SPATIAL_APPROVED=0` Stage A。KDM仅传输manifest及其登记的11个文件；remote标准库exact integrity为`PASS`：11 files / `191,736` bytes，internal SHA-256=`05ff65406527aa122268b9907a4dbe647833c0326fc06d3be9f13339ab50a693`，P8 base binding=`PASS`。Login node导入完整科学栈时被静默终止，因此完整`p9_katana verify-stage-a`保留给H200 PBS allocation执行；这不否定已通过的标准库hash证据。Precheck确认无既有P9 preflight artifact、无approval record且无duplicate P9 job。唯一job `8986164`当前为`Q`/`csegpu12`，请求H200×1、8 CPU、64 GB、4h，workdir正确且`P9_SPATIAL_APPROVED=0`。Stage A尚未运行或通过；无formal jobs或P10工作。 |
 
 ## 3. 当前阶段：P9 统一评估、干预与空间解释
 
@@ -117,17 +117,20 @@ last_verified_commit: 4f2703b
 - P9 Katana/audit interfaces已由本地功能commit `4f2703b`封存。PBS模板分别提供单个H200 validation-only Stage A、显式批准后的20个model×fold H200 spatial jobs及全部formal artifacts完成后的CPU aggregate；formal模板与orchestration均保持`P9_SPATIAL_APPROVED=1`和exact approval-record门。
 - KDM接口使用exact whitelist，只同步P9代码/config、既有immutable P4/P5–P8 inputs及Stage A所需private workset；remote integrity必须先验证P8 base和P9 delta。Exact P9 manifest本地为11 files / `191,736` bytes，internal SHA-256=`05ff65406527aa122268b9907a4dbe647833c0326fc06d3be9f13339ab50a693`，manifest file SHA-256=`d0c287dae9cc37884911182053cc62d2bd440b47eb21c964350c97bcf8ef626d`，P8 base check=`PASS`。
 - Final audit接口聚合四模型task/secondary、三concept模型的concept quality/ties、train-fold centering、random/error-first intervention与正向deltas、2,000 patient bootstrap/6 paired comparisons、GAM learned alpha，以及spatial双faithfulness；tracked输出只允许deidentified aggregate evidence并阻断patient/nodule identifiers与绝对路径。
-- P9 direct测试`62 passed`，完整测试`342 passed`且仅有3条既有dependency warnings；Git diff/Bash/AST/frozen checks与Phase Compliance Reviewer均为`PASS`。以上接口尚未KDM同步或远程执行，actual Stage A与final aggregate均不存在。
+- P9 direct测试`62 passed`，完整测试`342 passed`且仅有3条既有dependency warnings；Git diff/Bash/AST/frozen checks与Phase Compliance Reviewer均为`PASS`。该本地接口批次形成时尚未KDM同步或远程执行；后续actual transfer与当前Stage A排队证据如下，final aggregate仍不存在。
+- 用户于2026-08-13明确批准exact 11-file P9 delta传输至Katana，并仅授权提交一个保持`P9_SPATIAL_APPROVED=0`的Stage A job；该授权不包含approval record、20个formal jobs、CPU aggregate或P10。
+- Exact KDM transfer已完成且只包含manifest及11个登记文件。Remote标准库exact integrity为`PASS`：11 files / `191,736` bytes，internal SHA-256=`05ff65406527aa122268b9907a4dbe647833c0326fc06d3be9f13339ab50a693`，P8 immutable base binding=`PASS`。Login node完整科学栈导入被静默终止，故完整`p9_katana verify-stage-a`将在H200 allocation内执行；不得把当前证据写成完整remote verify或Stage A `PASS`。
+- Stage A提交前只读precheck确认不存在P9 preflight artifact、approval record或duplicate P9 job。唯一job `8986164`已提交至`csegpu12`并处于`Q`，固定请求H200×1、8 CPU、64 GB、4h，workdir正确且`P9_SPATIAL_APPROVED=0`；尚未开始运行。
 
 ### 正在进行
 
-- P9本地分支`p9-unified-evaluation`现位于功能commit `4f2703b`；P9为`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。
-- P9 execution supplement、evaluation、spatial lifecycle及Katana/audit interface本地批次已完成。下一步固定为：先创建本地状态commit，再执行KDM exact-whitelist sync与remote verify，随后只提交一个H200 Stage A job。
+- P9本地分支`p9-unified-evaluation`当前status anchor为`5c422aa`；P9为`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。
+- 只读监控唯一Stage A job `8986164`；待其实际运行后核对H200 allocation、完整remote verify、28 targets、runtime/storage/faithfulness gates和Stage A artifact。
 - `P9_SPATIAL_APPROVED`保持`0`。只有实际H200 Stage A、runtime/storage gate、完整测试和双agent审查全部通过、向用户汇报完整证据并再次获得明确批准后，才允许一次性提交20个model×fold jobs。
 
 ### 尚未完成
 
-- 尚未执行KDM sync或remote integrity，actual H200 Stage A尚未提交或运行；当前只有local interface/test与manifest证据。
+- Actual H200 Stage A尚未运行或`PASS`；当前job `8986164`仅为排队状态，完整科学栈remote verify亦尚待该PBS allocation执行。
 - `P9_SPATIAL_APPROVED=0`且不存在approval record、formal 20-job execution、CPU OOF aggregate或最终P9 audit。Stage A `PASS`后仍必须先向用户报告完整runtime/storage/faithfulness证据并等待明确授权，不得自动提交20 jobs。
 - 20个formal spatial jobs、CPU aggregate、P9 audit、阶段级双agent审查和用户最终确认均尚未完成；不得提前启动P10。
 
@@ -490,7 +493,7 @@ Bug 修复后：
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
-| P9 | 统一评估、干预与空间解释 | `IN_PROGRESS` | `ON_TRACK` | Katana/audit interfaces=`4f2703b`：Stage A/formal/aggregate PBS、KDM exact whitelist与完整deidentified audit已实现；manifest=11 files/191,736 bytes，direct/full=`62/342 passed`、3条既有warnings，Phase Compliance `PASS`。Remote sync/Stage A尚未执行；无approval record/formal jobs/final aggregate，`P9_SPATIAL_APPROVED=0` | 0 | 0 |
+| P9 | 统一评估、干预与空间解释 | `IN_PROGRESS` | `ON_TRACK` | Exact KDM transfer与标准库remote integrity已`PASS`；唯一Stage A job `8986164`为`Q`/`csegpu12`，H200×1、8 CPU、64 GB、4h，`P9_SPATIAL_APPROVED=0`。Stage A尚未运行或PASS；无approval record/formal jobs/final aggregate | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
@@ -1044,3 +1047,4 @@ Bug 修复后：
 | 2026-08-12 | `LOCAL_SPATIAL_CORE_VERIFIED` | P9 | 28个target paths、strict FP32 raw Grad-CAM formula、undefined-map exclusion、stable 26,215-voxel saliency、model-independent 20 matched-random masks、no-inplace occlusion、双faithfulness两类20-value arrays/aggregates及16-nodule/144-row ZSTD Parquet atomic shard seal/tamper checks已实现。Direct config+evaluation+spatial/full=`35/315 passed`、3条既有warnings，Phase Compliance `PASS`。CLI lifecycle仍故意`NOT_IMPLEMENTED`且run先gate；真实loader、Stage A、Katana/audit/jobs未实现或执行。P9保持`IN_PROGRESS / ON_TRACK`、`P9_SPATIAL_APPROVED=0`，P10保持`NOT_STARTED`。 | `ecdb692`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_SPATIAL_LIFECYCLE_VERIFIED` | P9 | 四模型strict frozen best-checkpoint loaders、P6 composite checkpoint SHA、P4 encoder/implementation/source-OOF binding、validation auxiliary predictions、P6 cache与P7/P8 best-checkpoint train-forward centering、28-target actual Grad-CAM/occlusion、16-nodule atomic shard resume/no-overwrite、strict final verifier、actual-H200 Stage A runtime/storage/faithfulness gate及formal approval-record gate已实现。Direct/full=`46/326 passed`、3条既有warnings，Phase Compliance `PASS`。Actual Stage A、Katana/PBS、formal jobs与最终OOF/audit均未执行；P9保持`IN_PROGRESS / ON_TRACK`、`P9_SPATIAL_APPROVED=0`，P10保持`NOT_STARTED`。 | `c1f80e5`（local, unpushed）；本次状态同步commit待创建 |
 | 2026-08-12 | `LOCAL_KATANA_AUDIT_INTERFACES_VERIFIED` | P9 | H200 Stage A/formal spatial/CPU aggregate PBS、KDM exact-whitelist/remote verify及最终deidentified aggregate audit接口已实现。Audit覆盖task/concept/centering/intervention/bootstrap/GAM alpha/spatial双faithfulness。Exact P9 manifest为11 files / `191,736` bytes，internal/file SHA=`05ff6540...a693`/`d0c287da...626d`，P8 base `PASS`；direct/full=`62/342 passed`、3条既有warnings，Git/Bash/AST/frozen checks与Phase Compliance均`PASS`。Remote sync/Stage A未执行，`P9_SPATIAL_APPROVED=0`且无approval record、formal jobs或final aggregate；下一步为状态commit→KDM/remote verify→单个H200 Stage A，PASS后仍须用户再授权。P10保持`NOT_STARTED`。 | `4f2703b`（local, unpushed）；本次状态同步commit待创建 |
+| 2026-08-13 | `REMOTE_STAGE_A_INPUT_READY` / `STAGE_A_QUEUED` | P9 | 用户仅批准exact 11-file P9 delta传输与单个`P9_SPATIAL_APPROVED=0` Stage A。KDM只传manifest及11个登记文件；标准库remote exact integrity为11 files / `191,736` bytes、internal SHA=`05ff6540...a693`且P8 base binding `PASS`。Login node完整科学栈导入被静默终止，完整`verify-stage-a`留在H200 PBS内执行。Precheck无preflight artifact、approval record或duplicate job；唯一job `8986164`为`Q`/`csegpu12`，请求H200×1、8 CPU、64 GB、4h且workdir正确。Stage A尚未运行或PASS；无formal jobs/P10。 | `5c422aa`；Katana job `8986164`；本次状态同步commit待创建 |
