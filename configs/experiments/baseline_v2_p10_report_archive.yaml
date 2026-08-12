@@ -1,0 +1,197 @@
+schema_version: 1
+protocol_version: Baseline-v2
+phase: P10
+model: final_bilingual_reporting_execution_provenance_and_private_archive
+method_declaration:
+  statement: Baseline-v2 P10 final reporting and retention choices.
+  scope: read_only_reconstruction_from_frozen_P5_through_P9_evidence
+scientific_config:
+  path: configs/baseline_v2.yaml
+  sha256: 07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce
+p9_evaluation_config:
+  path: configs/experiments/baseline_v2_p9_evaluation_h200.yaml
+  resolved_sha256: a52d559cb241e8e5cb0f834f41fc171dca63ba2fcfda2164f251e48f4dfc4906
+p9_tracked_audit:
+  root: artifacts/baseline_v2/audit/p9
+  reports: [task, concept, contribution_centering, intervention, bootstrap, learned_alpha, spatial, integrity, summary]
+  summary_file_sha256: 16626aa6e6a8fe711fd66766145aad2d4646c8dfd22cc0d926f90558d2af2294
+project_preregistered:
+  frozen_inputs:
+    phases: [P5, P6, P7, P8, P9]
+    model_order: [blackbox, standard_cbm, mixed_cem, learned_softmax_gam]
+    folds: [0, 1, 2, 3, 4]
+    fold_test_counts: [479, 502, 539, 549, 564]
+    unique_nodules: 2633
+    unique_patients: 868
+    patient_leakage: 0
+    access: read_only
+    retraining: forbidden
+    test_inference: forbidden
+    second_committed_test_evaluation: forbidden
+    artifact_rewrite: forbidden
+    new_h200_jobs: forbidden
+    new_cpu_scientific_jobs: forbidden
+    p11: forbidden
+  execution_provenance:
+    source: existing_P5_through_P9_Katana_jobs_and_tracked_audits
+    new_jobs: forbidden
+    scheduler_terminal_status_distinct_from_scientific_status: true
+    preserve_verifier_recovery_and_hold_history: true
+    registry_fields:
+      - phase
+      - model
+      - fold
+      - job_id
+      - queue
+      - gpu_model
+      - ncpus
+      - memory_gb
+      - walltime
+      - run_count
+      - exit_status
+      - scientific_status
+      - config_sha256
+      - split_sha256
+      - encoder_sha256
+      - checkpoint_sha256
+      - test_transaction_count
+      - verifier_or_recovery_evidence
+  private_archive:
+    transfer_mode: read_only_resumable_rsync_over_ssh
+    remote_host: kdm.restech.unsw.edu.au
+    remote_root: /srv/scratch/z5448417/lidc-baseline-v2/runs/baseline_v2
+    remote_whitelist: [blackbox, standard_cbm, cem, gam, p9]
+    local_root: /Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2
+    local_free_space_ratio_minimum: 1.2
+    preserve_relative_paths: true
+    partial_transfer_resume: true
+    remote_delete: forbidden
+    local_delete: forbidden
+    remote_write: forbidden
+    forbidden_content: [raw_DICOM, XML, Git_metadata, non_whitelisted_Katana_worksets]
+    per_file_manifest_fields: [relative_path, size_bytes, sha256]
+    completion_marker: ARCHIVE_COMPLETE.json
+    completion_marker_write: atomic
+    tracked_archive_evidence: aggregate_file_count_bytes_manifest_sha_only
+    tracked_private_file_list: forbidden
+  public_outputs:
+    root: reports/baseline_v2/p10/public
+    variants:
+      - id: short_en
+        language: en
+        length_pages: [8, 12]
+      - id: short_zh
+        language: zh
+        length_pages: [8, 12]
+      - id: technical_en
+        language: en
+        length_pages: [25, 35]
+      - id: technical_zh
+        language: zh
+        length_pages: [25, 35]
+    formats: [markdown, pdf]
+    figures:
+      languages: [en, zh]
+      formats: [png, svg]
+      source: shared_structured_report_data_model
+    tables:
+      format: csv
+      stable_column_language: en
+      data_dictionaries: [en, zh]
+    references:
+      style: IEEE_numeric
+      numbering_identical_across_languages: true
+      primary_sources_only: true
+  bilingual_contract:
+    authoritative_numeric_source: single_structured_report_data_model
+    recompute_during_translation: forbidden
+    aligned_components: [sections, tables, figures, references, scientific_conclusion_codes]
+    exact_numeric_token_parity: true
+    exact_table_cell_parity: true
+    ci_zero_crossing_parity: true
+    model_labels_preserved: [Black-box, Standard CBM, Mixed-type CEM, Learned-softmax GAM]
+    terminology_table_required: true
+    chinese_font:
+      path: /System/Library/Fonts/Supplemental/Songti.ttc
+      regular_subfont_index: 6
+      bold_subfont_index: 1
+      embed: true
+      sha256_recorded_in_audit: true
+    missing_glyphs: forbidden
+  scientific_content:
+    cohort_flow: true
+    primary_regression: true
+    patient_cluster_bootstrap_draws: 2000
+    paired_mae_model_pairs: 6
+    secondary_extreme_auroc_auprc: true
+    paired_auroc_model_pairs: 6
+    concept_metrics_models: [standard_cbm, mixed_cem, learned_softmax_gam]
+    concept_groups: [subtlety, internalStructure, calcification, sphericity, margin, lobulation, spiculation, texture]
+    intervention_k: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    contribution_centering: true
+    learned_gam_alpha: true
+    gradcam_accounting:
+      requested: 73724
+      valid: 66769
+      undefined: 6955
+    spatial_faithfulness_quantities: [output_sensitivity, error_increase]
+    matched_random_values_per_valid_map: 20
+    mandatory_limitations:
+      - primary_scores_are_unclipped
+      - radiologist_assessment_not_pathology_confirmed_diagnosis
+      - not_a_clinical_diagnostic_system
+      - mixed_type_CEM_is_project_specific
+      - learned_softmax_GAM_is_project_preregistered
+      - undefined_maps_are_finite_FP32_post_ReLU_exact_zero
+      - pre_ReLU_and_gradient_mechanism_not_persisted_and_not_recomputed
+      - undefined_RCA_conclusion_SYSTEMATIC_MODEL_TARGET_ISSUE
+  report_figures:
+    required:
+      - cohort_flow
+      - primary_performance_with_bootstrap_ci
+      - paired_mae_ci
+      - secondary_performance_and_paired_auroc_ci
+      - concept_metric_heatmap
+      - intervention_iMAE_iAUC_curves
+      - centered_contribution_summary
+      - learned_gam_alpha
+      - gradcam_undefined_rates
+      - spatial_faithfulness_saliency_vs_random
+  private_qualitative_appendix:
+    root: /Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2/p10_private_report
+    languages: [en, zh]
+    tracked_in_git: false
+    total_cases: 14
+    task_cases_per_model:
+      median_absolute_error_representative: 1
+      maximum_absolute_error_failure: 1
+    concept_cases_per_concept_model:
+      maximum_positive_error_worsening: 1
+      highest_undefined_rate_target_zero_map: 1
+    tie_break: fold_then_target_then_stable_uid_hash
+    allowed_inputs: [existing_GradCAM, existing_OOF, frozen_normalized_64_cubed_ROI]
+    model_forward: forbidden
+    case_label_pattern: CASE-####
+    public_case_index: forbidden
+    private_case_index_permissions: user_read_only
+    image_metadata_identifiers: forbidden
+    same_cases_slices_maps_layout_and_numbers_across_languages: true
+    combined_outputs: [technical_en_with_appendix_pdf, technical_zh_with_appendix_pdf]
+  privacy:
+    public_forbidden_content: [nodule_uid, patient_key, absolute_private_path, raw_map_bytes, CT_or_ROI_panels, approval_records, checkpoints, private_predictions]
+    public_raw_medical_images: forbidden
+    public_private_archive: forbidden
+    github_lfs: forbidden
+    exact_git_whitelist_required: true
+  quality_gates:
+    source_hashes_verified: true
+    p5_through_p9_immutable_before_after: true
+    csv_logical_verification: true
+    pdf_generator: reportlab
+    pdf_text_verifiers: [pypdf, pdfplumber]
+    pdf_page_renderer: pdftoppm
+    every_pdf_page_rendered_and_visually_inspected: true
+    clipped_overlapped_or_missing_glyph_content: forbidden
+    phase_compliance_reviewer_pass: required
+    status_synchronization_reviewer: required
+    final_phase_state_before_user_confirmation: AWAITING_USER_APPROVAL

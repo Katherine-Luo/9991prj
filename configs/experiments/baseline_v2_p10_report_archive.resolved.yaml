@@ -1,0 +1,301 @@
+method_declaration:
+  scope: read_only_reconstruction_from_frozen_P5_through_P9_evidence
+  statement: Baseline-v2 P10 final reporting and retention choices.
+model: final_bilingual_reporting_execution_provenance_and_private_archive
+p9_evaluation_config:
+  path: configs/experiments/baseline_v2_p9_evaluation_h200.yaml
+  resolved_sha256: a52d559cb241e8e5cb0f834f41fc171dca63ba2fcfda2164f251e48f4dfc4906
+p9_tracked_audit:
+  reports:
+  - task
+  - concept
+  - contribution_centering
+  - intervention
+  - bootstrap
+  - learned_alpha
+  - spatial
+  - integrity
+  - summary
+  root: artifacts/baseline_v2/audit/p9
+  summary_file_sha256: 16626aa6e6a8fe711fd66766145aad2d4646c8dfd22cc0d926f90558d2af2294
+phase: P10
+project_preregistered:
+  bilingual_contract:
+    aligned_components:
+    - sections
+    - tables
+    - figures
+    - references
+    - scientific_conclusion_codes
+    authoritative_numeric_source: single_structured_report_data_model
+    chinese_font:
+      bold_subfont_index: 1
+      embed: true
+      path: /System/Library/Fonts/Supplemental/Songti.ttc
+      regular_subfont_index: 6
+      sha256_recorded_in_audit: true
+    ci_zero_crossing_parity: true
+    exact_numeric_token_parity: true
+    exact_table_cell_parity: true
+    missing_glyphs: forbidden
+    model_labels_preserved:
+    - Black-box
+    - Standard CBM
+    - Mixed-type CEM
+    - Learned-softmax GAM
+    recompute_during_translation: forbidden
+    terminology_table_required: true
+  execution_provenance:
+    new_jobs: forbidden
+    preserve_verifier_recovery_and_hold_history: true
+    registry_fields:
+    - phase
+    - model
+    - fold
+    - job_id
+    - queue
+    - gpu_model
+    - ncpus
+    - memory_gb
+    - walltime
+    - run_count
+    - exit_status
+    - scientific_status
+    - config_sha256
+    - split_sha256
+    - encoder_sha256
+    - checkpoint_sha256
+    - test_transaction_count
+    - verifier_or_recovery_evidence
+    scheduler_terminal_status_distinct_from_scientific_status: true
+    source: existing_P5_through_P9_Katana_jobs_and_tracked_audits
+  frozen_inputs:
+    access: read_only
+    artifact_rewrite: forbidden
+    fold_test_counts:
+    - 479
+    - 502
+    - 539
+    - 549
+    - 564
+    folds:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    model_order:
+    - blackbox
+    - standard_cbm
+    - mixed_cem
+    - learned_softmax_gam
+    new_cpu_scientific_jobs: forbidden
+    new_h200_jobs: forbidden
+    p11: forbidden
+    patient_leakage: 0
+    phases:
+    - P5
+    - P6
+    - P7
+    - P8
+    - P9
+    retraining: forbidden
+    second_committed_test_evaluation: forbidden
+    test_inference: forbidden
+    unique_nodules: 2633
+    unique_patients: 868
+  privacy:
+    exact_git_whitelist_required: true
+    github_lfs: forbidden
+    public_forbidden_content:
+    - nodule_uid
+    - patient_key
+    - absolute_private_path
+    - raw_map_bytes
+    - CT_or_ROI_panels
+    - approval_records
+    - checkpoints
+    - private_predictions
+    public_private_archive: forbidden
+    public_raw_medical_images: forbidden
+  private_archive:
+    completion_marker: ARCHIVE_COMPLETE.json
+    completion_marker_write: atomic
+    forbidden_content:
+    - raw_DICOM
+    - XML
+    - Git_metadata
+    - non_whitelisted_Katana_worksets
+    local_delete: forbidden
+    local_free_space_ratio_minimum: 1.2
+    local_root: /Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2
+    partial_transfer_resume: true
+    per_file_manifest_fields:
+    - relative_path
+    - size_bytes
+    - sha256
+    preserve_relative_paths: true
+    remote_delete: forbidden
+    remote_host: kdm.restech.unsw.edu.au
+    remote_root: /srv/scratch/z5448417/lidc-baseline-v2/runs/baseline_v2
+    remote_whitelist:
+    - blackbox
+    - standard_cbm
+    - cem
+    - gam
+    - p9
+    remote_write: forbidden
+    tracked_archive_evidence: aggregate_file_count_bytes_manifest_sha_only
+    tracked_private_file_list: forbidden
+    transfer_mode: read_only_resumable_rsync_over_ssh
+  private_qualitative_appendix:
+    allowed_inputs:
+    - existing_GradCAM
+    - existing_OOF
+    - frozen_normalized_64_cubed_ROI
+    case_label_pattern: CASE-####
+    combined_outputs:
+    - technical_en_with_appendix_pdf
+    - technical_zh_with_appendix_pdf
+    concept_cases_per_concept_model:
+      highest_undefined_rate_target_zero_map: 1
+      maximum_positive_error_worsening: 1
+    image_metadata_identifiers: forbidden
+    languages:
+    - en
+    - zh
+    model_forward: forbidden
+    private_case_index_permissions: user_read_only
+    public_case_index: forbidden
+    root: /Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2/p10_private_report
+    same_cases_slices_maps_layout_and_numbers_across_languages: true
+    task_cases_per_model:
+      maximum_absolute_error_failure: 1
+      median_absolute_error_representative: 1
+    tie_break: fold_then_target_then_stable_uid_hash
+    total_cases: 14
+    tracked_in_git: false
+  public_outputs:
+    figures:
+      formats:
+      - png
+      - svg
+      languages:
+      - en
+      - zh
+      source: shared_structured_report_data_model
+    formats:
+    - markdown
+    - pdf
+    references:
+      numbering_identical_across_languages: true
+      primary_sources_only: true
+      style: IEEE_numeric
+    root: reports/baseline_v2/p10/public
+    tables:
+      data_dictionaries:
+      - en
+      - zh
+      format: csv
+      stable_column_language: en
+    variants:
+    - id: short_en
+      language: en
+      length_pages:
+      - 8
+      - 12
+    - id: short_zh
+      language: zh
+      length_pages:
+      - 8
+      - 12
+    - id: technical_en
+      language: en
+      length_pages:
+      - 25
+      - 35
+    - id: technical_zh
+      language: zh
+      length_pages:
+      - 25
+      - 35
+  quality_gates:
+    clipped_overlapped_or_missing_glyph_content: forbidden
+    csv_logical_verification: true
+    every_pdf_page_rendered_and_visually_inspected: true
+    final_phase_state_before_user_confirmation: AWAITING_USER_APPROVAL
+    p5_through_p9_immutable_before_after: true
+    pdf_generator: reportlab
+    pdf_page_renderer: pdftoppm
+    pdf_text_verifiers:
+    - pypdf
+    - pdfplumber
+    phase_compliance_reviewer_pass: required
+    source_hashes_verified: true
+    status_synchronization_reviewer: required
+  report_figures:
+    required:
+    - cohort_flow
+    - primary_performance_with_bootstrap_ci
+    - paired_mae_ci
+    - secondary_performance_and_paired_auroc_ci
+    - concept_metric_heatmap
+    - intervention_iMAE_iAUC_curves
+    - centered_contribution_summary
+    - learned_gam_alpha
+    - gradcam_undefined_rates
+    - spatial_faithfulness_saliency_vs_random
+  scientific_content:
+    cohort_flow: true
+    concept_groups:
+    - subtlety
+    - internalStructure
+    - calcification
+    - sphericity
+    - margin
+    - lobulation
+    - spiculation
+    - texture
+    concept_metrics_models:
+    - standard_cbm
+    - mixed_cem
+    - learned_softmax_gam
+    contribution_centering: true
+    gradcam_accounting:
+      requested: 73724
+      undefined: 6955
+      valid: 66769
+    intervention_k:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    learned_gam_alpha: true
+    mandatory_limitations:
+    - primary_scores_are_unclipped
+    - radiologist_assessment_not_pathology_confirmed_diagnosis
+    - not_a_clinical_diagnostic_system
+    - mixed_type_CEM_is_project_specific
+    - learned_softmax_GAM_is_project_preregistered
+    - undefined_maps_are_finite_FP32_post_ReLU_exact_zero
+    - pre_ReLU_and_gradient_mechanism_not_persisted_and_not_recomputed
+    - undefined_RCA_conclusion_SYSTEMATIC_MODEL_TARGET_ISSUE
+    matched_random_values_per_valid_map: 20
+    paired_auroc_model_pairs: 6
+    paired_mae_model_pairs: 6
+    patient_cluster_bootstrap_draws: 2000
+    primary_regression: true
+    secondary_extreme_auroc_auprc: true
+    spatial_faithfulness_quantities:
+    - output_sensitivity
+    - error_increase
+protocol_version: Baseline-v2
+schema_version: 1
+scientific_config:
+  path: configs/baseline_v2.yaml
+  sha256: 07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce
