@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P9
-development_phase_status: COMPLETED
+development_phase: P10
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P9
-next_phase: P10
+resume_phase: P10
+next_phase: null
 last_updated: 2026-08-13
-last_verified_commit: 2223aea
+last_verified_commit: 0b92e76
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P9均已完成、获用户确认并推送。P9 completion commit `2223aea`已fast-forward合并至`main`并推送GitHub；合并后完整测试为`348 passed`且仅有3条既有dependency warnings，冻结文件检查通过，`HEAD=main=origin/main=2223aea1a7d63bf0c93c8460e075fece841bbe18`且ahead/behind=`0/0`。P9现为`COMPLETED / ON_TRACK / DELIVERED`；P10保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获批实施计划后才能启动。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P9均已完成、获用户确认并推送。P9 completion commit `2223aea`及post-delivery状态commit `0b92e76`已fast-forward合并至`main`并推送GitHub；P9为`COMPLETED / ON_TRACK / DELIVERED`。用户已批准P10中英双版本最终报告、既有执行溯源与Mac私有备份实施计划；P10在本地分支`p10-final-report`进入`IN_PROGRESS / ON_TRACK`，不得运行新的训练、test inference或scientific jobs。
 
 ## 1. 阅读规则
 
@@ -38,21 +38,21 @@ last_verified_commit: 2223aea
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P9 统一评估、干预与空间解释` |
-| 阶段状态 | `COMPLETED / ON_TRACK / DELIVERED` |
+| 当前开发阶段 | `P10 Katana正式实验与报告` |
+| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P9-001`已`RESOLVED`。 |
-| 当前阻塞项 | 无P9阻塞；P9已完成交付。 |
-| 恢复阶段 | `P9` |
-| 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / NOT_APPLICABLE`；须另行制定并获用户批准实施计划后才能启动） |
+| 当前阻塞项 | 无P10启动阻塞；Mac私有备份、四份中英文公开报告、两份私有定性附录、执行溯源与最终双agent阶段门尚未完成。 |
+| 恢复阶段 | `P10` |
+| 下一阶段 | 无；P10为当前Baseline-v2协议的最终阶段，不创建未定义的P11。 |
 | 最近更新 | 2026-08-13 |
-| 状态依据 | 20个formal jobs `8986218`–`8986237`均为`F / Exit_status=0 / run_count=1`，每个model×fold strict verifier均`PASS`。Verifier-only commits `78e34d5`与`b4bc6a6`通过本地与remote exact integrity；唯一CPU recovery `8987554`在`k128`以`ngpus=0`、`run_count=1`、walltime=`00:37:06`、`F / Exit_status=0`完成，remote exact integrity、spatial verify与audit均`PASS`。OOF精确覆盖2,633 nodules / 868 patients，fold counts=`479/502/539/549/564`、patient leakage=0；map accounting=`73,724 = 66,769 valid + 6,955 undefined`。P5–P8 artifacts modified=`false`、second committed test=`false`、P10 started=`false`。Private P9 storage=`8,821,543,077` bytes / 1,426 files。九份deidentified aggregate reports由commit `d0fa7e2`封存，summary SHA-256=`16626aa6e6a8fe711fd66766145aad2d4646c8dfd22cc0d926f90558d2af2294`且内含其余八份report hashes；approval record继续Git ignored。Completion commit `2223aea`已fast-forward合并并推送；`main`完整测试=`348 passed`且仅3条既有warnings，Phase Compliance、frozen与deidentification checks均`PASS`；三方SHA一致且ahead/behind=`0/0`。 |
+| 状态依据 | `main`与`origin/main`在P9 post-delivery anchor `0b92e76`一致且启动前工作区clean。用户批准P10只读使用P5–P9既有科学产物，生成中英短论文与中英技术报告、Mac私有中英文定性附录、existing-job execution registry及约14.4GB P5–P9私有备份；GitHub仅允许脱敏aggregate reports/figures/tables。P10禁止新训练、test inference、H200/CPU scientific jobs、P5–P9 artifact rewrite及P11。当前仅完成分支创建与阶段启动状态同步，P10 config/code/tests/archive/report尚未生成。 |
 
-## 3. 当前阶段：P9 统一评估、干预与空间解释
+## 3. 当前阶段：P10 Katana正式实验与报告
 
 ### 阶段目标
 
-在冻结的P4 splits及P5–P8既有best checkpoints/OOF/test artifacts上，统一计算primary/secondary task metrics、concept metrics、train-fold centered contributions、随机与error-first interventions、2,000次patient bootstrap、Grad-CAM与双faithfulness occlusion。不得重训或改写P5–P8科学产物；P10最终报告不在本阶段实现。
+只读核验P5–P9既有Katana execution与科学audit，生成可由OOF evidence重建的中英双版本短论文和完整技术报告，并将P5–P9 private runs以精确SHA-256 manifest备份至Mac。不得重新训练、重新执行test inference、形成第二个committed test evaluation、修改任何P4–P9科学产物或把private artifacts上传GitHub。
 
 ### 已完成前置条件
 
@@ -138,13 +138,16 @@ last_verified_commit: 2223aea
 
 ### 正在进行
 
-- P9 completion commit `2223aea`已fast-forward合并至`main`并推送GitHub；`main`完整测试`348 passed`、冻结检查与三方SHA核对均通过，P9为`COMPLETED / ON_TRACK / DELIVERED`，无活动Bug。
-- 当前仅进行post-delivery状态同步，不开展新的P9功能或P10开发。
+- P9 completion与post-delivery commits `2223aea`/`0b92e76`已推送；P9保持`COMPLETED / ON_TRACK / DELIVERED`。
+- 用户已批准P10实施计划；`p10-final-report`从最新交付`main`创建，当前仅封存P10=`IN_PROGRESS / ON_TRACK`启动状态。
+- P10将复用P9九份deidentified audit及P5–P8 tracked evidence，existing execution事实与private runs均保持只读；P10-R1不触发任何replacement或新scientific job。
 
 ### 尚未完成
 
-- P9无尚未完成项。
-- P10仍为`NOT_STARTED / NOT_APPLICABLE`；须另行制定并获用户批准实施计划后才能启动或实现。
+- P10 report/archive execution supplement、双语术语表、input verifier、existing-job registry、archive/report/audit CLIs与自动测试尚未实现。
+- `/Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2/`尚未完成P5–P9约14.4GB只读备份及SHA-256验证。
+- 四份public中英文Markdown/PDF、共享CSV/图表及两份Mac-private中英文定性附录尚未生成或视觉验收。
+- P10完整测试、Phase Compliance Reviewer、Status Synchronization Reviewer与`AWAITING_USER_APPROVAL`阶段门尚未执行。
 
 ### 验收边界
 
@@ -157,16 +160,10 @@ last_verified_commit: 2223aea
 - Spatial Stage A只使用fold 0 validation；formal spatial gate在CLI与PBS两层默认阻断。本次只在Stage A `PASS`、exact approval record与用户再次明确批准后，对已核验的20个formal jobs设置`P9_SPATIAL_APPROVED=1`；该值不授权replacement或P10。
 - `BUG-P9-001`不改变20个formal jobs的成功终态或spatial artifacts有效性。Validation auxiliary predictions可合法在不同outers folds间出现同一UID，必须按fold精确验证；outer test/canonical OOF仍必须全局exactly once。
 
-## 4. 下一阶段：P10 Katana正式实验与报告
+## 4. 下一阶段
 
-### 进入条件
-
-- P9的20个formal spatial jobs、CPU aggregate、完整测试、阶段级双agent审查、用户最终确认与Git交付均已通过。
-- P10保持`NOT_STARTED / NOT_APPLICABLE`；进入P10前须另行制定并获用户批准实施计划。
-
-### 第一批任务
-
-- 尚未制定或批准；P10保持`NOT_STARTED`。
+- P10为当前Baseline-v2协议定义的最终阶段；没有已定义或已批准的P11。
+- P10阶段确认与交付前不得创建、规划或启动额外阶段。
 
 <!-- NORMAL_READING_END -->
 
@@ -507,13 +504,13 @@ Bug 修复后：
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
 | P9 | 统一评估、干预与空间解释 | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：20个formal jobs、唯一CPU recovery `8987554`、2,633/868 aggregate、map accounting、九份deidentified reports、完整`348 passed`及阶段级双agent审查均`PASS`；`BUG-P9-001`已解决，用户于2026-08-13明确确认。Completion commit `2223aea`已fast-forward合并并推送；合并后完整测试`348 passed`，三方SHA一致 | 0 | 0 |
-| P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | P9已交付；P10须另行制定并获用户批准实施计划后才能启动 | 0 | 1 |
+| P10 | Katana 正式实验与报告 | `IN_PROGRESS` | `ON_TRACK` | 用户已批准P10中英双版本最终报告、existing execution provenance与Mac private backup计划；当前仅完成启动状态，报告/备份/测试/阶段门尚待 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9为`COMPLETED / ON_TRACK / DELIVERED`，P10为`NOT_STARTED / NOT_APPLICABLE`。
+当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9为`COMPLETED / ON_TRACK / DELIVERED`；P10已获独立实施计划批准并为`IN_PROGRESS / ON_TRACK`。
 
 ### Bug 状态
 
@@ -527,7 +524,7 @@ Bug 修复后：
 - 影响阶段：P9
 - 影响验收标准：是；20个formal spatial jobs均已成功并且existing artifacts有效，但final P9 audit/summary必须由CPU aggregate成功构建与验证。
 - 恢复阶段：P9
-- 受影响下游阶段：风险已解除；P9已完成确认与交付，P10保持`NOT_STARTED / NOT_APPLICABLE`并须另行制定、批准实施计划。
+- 受影响下游阶段：风险已解除；P9已完成确认与交付。P10后续已由用户独立批准并进入`IN_PROGRESS / ON_TRACK`，其启动不改变本Bug的历史recovery事实。
 - 现象：CPU-only aggregate job `8987452`以`ngpus=0`、8 CPU、64 GB、`run_count=1`运行。`p9_katana verify-stage-a`和`p9_spatial verify --scope all`均`PASS`；`p9_audit build`调用`build_task_results`时，`_p9_evaluation._validation_frame`对Black-box pooled validation frame抛出`P9_VALIDATION_FRAME_INVALID:blackbox`，job终态`F / Exit_status=1`。Final audit与summary未生成。
 - 科学执行证据：jobs `8986218`–`8986237`全部`F / Exit_status=0 / run_count=1`，每个model×fold strict verifier已通过。原始20份spatial artifacts、Grad-CAM、occlusion、intervention与faithfulness证据保持有效且只读；本Bug不是model、checkpoint、spatial execution或scientific result失败。
 - 诊断：pooled validation共1,315 rows与226个cross-fold repeated UIDs。四模型的每fold内duplicate=0，每fold UID set精确等于P4 validation membership，所有数值finite。同一patient/nodule在不同outer development folds中合法可进入多个validation partitions，因此pooled validation不应全局UID唯一。
@@ -767,9 +764,9 @@ Bug 修复后：
 - 状态：`OPEN`
 - 所属阶段：P10
 - 首次记录：2026-08-08
-- 影响：正式训练、Grad-CAM 和中间产物可能超过当前 scratch 的安全容量。
-- 当前结论：不阻塞 P0–P9。P5–P8四模型训练/OOF及P9 Grad-CAM、intervention与aggregate audit均已完成实测；P10最终报告与长期保留工作集仍须结合当前scratch配额评估。
-- 缓解措施：不上传原始 DICOM；通过 KDM 传输；正式 job 使用 `$TMPDIR`；重要数据和证据保留本地副本。
+- 影响：P5–P9 private runs当前位于未备份的Katana scratch；P10必须在不新增scientific compute的前提下完成长期保留与本地空间验证。
+- 当前结论：不阻塞P0–P9历史验收，也不阻塞P10本地实现。P5–P8四模型训练/OOF及P9 Grad-CAM、intervention与aggregate audit均已完成实测；P10以既有约14.4GB private runs只读备份、SHA-256 manifest和Mac剩余空间120%门关闭长期保留风险，不等待或依赖新的formal training/Grad-CAM容量。
+- 缓解措施：不上传原始DICOM/XML；通过KDM/SSH可续传读取既有白名单；不使用`--delete`且不修改Katana；完整private artifacts仅保存Mac副本，GitHub只保存脱敏aggregate evidence与archive manifest摘要。
 - P3 测量证据：P3 technical gate 已生成 2,633 个私有 ROI，合计 `1,002,688,586` bytes（约 `0.93 GiB`）；不含 private manifest、future checkpoints、predictions、Grad-CAM 和 `$TMPDIR` 运行时空间。
 - P4 远程证据：explicit KDM workset 为约 `1.2 GiB`，Katana scratch 为 128 GiB total / 7.6 GiB used / 121 GiB available；job `8962963.kman.restech.unsw.edu.au` 已在 L40S 上 Exit 0。该证据满足 P4 smoke，但不代表 P10 正式实验工作集已完成估算。
 - P5 测量证据：五折 Black-box private run files 合计 `1,360,388,058` bytes / 57 files；每折包含 `best.pt`、`last.pt`、80-epoch history、test predictions、metrics、runtime、test transaction evidence 和 plots。Private OOF Parquet 仅保留在 Katana，SHA-256 为 `6f7e8b840638cfcce3427a1a1e63155860f1067ac6d09f10e7c43aa74a2763e8`。该证据可用于后续估算，但仍不能代表 P6–P8 三种 concept models、P9 Grad-CAM/intervention 或全部解释产物的总工作集。
@@ -777,8 +774,8 @@ Bug 修复后：
 - P7 测量证据：五折 Mixed-type CEM private runs与OOF合计 `1,425,996,600` bytes / 50 files；包含checkpoints、histories、test predictions、runtime、受控Fold 4 recovery transaction及OOF。Private OOF SHA-256为`a42350e63908b2fa8fdfdd5c952428efe60f1ae5d6dbeccfe531f0ce121b996f`。该证据进一步缩小正式工作集估计的不确定性，但仍不能代表GAM、P9 Grad-CAM/intervention或最终报告产物。
 - P8 测量证据：五折 GAM private runs与OOF合计 `1,374,513,236` bytes / 47 files；包含checkpoints、histories、test predictions、metrics、runtime、test transactions及OOF。Private OOF SHA-256为`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。该证据完成P5–P8四模型训练产物实测，但仍不能代表P9 Grad-CAM/intervention或最终报告产物。
 - P9 测量证据：四模型20个formal spatial jobs、Grad-CAM/occlusion/intervention及aggregate private artifacts合计`8,821,543,077` bytes / 1,426 files；九份deidentified aggregate reports已tracked封存。该证据完成P9解释工作集实测，但不等同于P10最终报告、导出和长期保留空间需求。
-- 下一步：等待扩容回复；在 P10 前以已测量 ROI 大小加上 checkpoint、predictions、contributions、Grad-CAM 和临时文件估算正式总工作集。
-- 解除条件：Katana 可用存储不少于预计正式工作集的 120%，或学校批准足够的扩容空间。
+- 下一步：P10从Katana只读复制`blackbox/standard_cbm/cem/gam/p9`五个既有run目录至`/Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2/`，验证逐文件SHA-256、总字节数、文件数与本地剩余空间，并原子写入`ARCHIVE_COMPLETE.json`；不提交新job。
+- 解除条件：Mac目标在复制前具有预计archive大小至少120%的可用空间，五个白名单目录全部完成逐文件SHA-256校验且tracked P10 audit仅保存脱敏manifest摘要；Katana原文件保持不变。
 - 关联 Bug：无。
 
 ## 9. 阶段永久记录
@@ -1096,3 +1093,4 @@ Bug 修复后：
 | 2026-08-13 | `BUG_RESOLVED` / `CPU_AGGREGATE_RECOVERY_PASS` / `PHASE_AWAITING_APPROVAL` | P9 | 唯一CPU recovery `8987554`在`k128`以ngpus0、run count 1、walltime `00:37:06`、Exit 0完成；remote exact integrity、20-job spatial verify、aggregate audit与deidentification均PASS。Final OOF为2,633/868、fold counts=`479/502/539/549/564`、0 leakage；map accounting=`73,724=66,769 valid+6,955 undefined`，P5–P8 modified=false、second test=false、P10 started=false。九份deidentified reports由`d0fa7e2`封存，summary SHA=`16626aa...2294`；full=`348 passed`/3条既有warnings，Phase Compliance PASS。Undefined maps被严格验证为finite FP32 post-ReLU exact-zero，分布支持`SYSTEMATIC_MODEL/TARGET_ISSUE`而非implementation bug；因未持久化pre-ReLU/gradient等中间量且禁止额外forward，精确gradient/sign机制保持未解析限制。`BUG-P9-001`转为RESOLVED，P9恢复`AWAITING_USER_APPROVAL / ON_TRACK`，P10为`NOT_STARTED / NOT_APPLICABLE`。 | Job `8987554`；`d0fa7e2`（local, unpushed）；Phase Compliance `PASS`；本次状态同步commit待创建 |
 | 2026-08-13 | `PHASE_COMPLETED` | P9 | 用户明确确认P9；Stage A、20个formal spatial jobs、唯一CPU aggregate recovery、2,633 nodules / 868 patients aggregate、0 leakage、`73,724=66,769 valid+6,955 undefined` map accounting、task/concept/intervention/contribution/bootstrap/spatial results、九份脱敏audit、完整`348 passed`与阶段级双agent审查证据均已封存。P9转为`COMPLETED / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。Completion状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称P9已交付或启动P10。 | 用户确认；`4e9c921`；本次completion状态commit待创建 |
 | 2026-08-13 | `DELIVERED` | P9 | Completion commit `2223aea`已fast-forward合并至`main`并推送GitHub。合并后完整测试`348 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config、common H200 profile与P9 execution supplement检查均`PASS`。首次交付核对`HEAD=main=origin/main=2223aea1a7d63bf0c93c8460e075fece841bbe18`且ahead/behind=`0/0`。P9为`COMPLETED / ON_TRACK / DELIVERED`；P10保持`NOT_STARTED / NOT_APPLICABLE`，未制定或实施。 | `2223aea`；本次post-delivery状态同步commit待创建 |
+| 2026-08-13 | `PHASE_STARTED` | P10 | 用户批准P10中英双版本最终报告、existing execution provenance与Mac私有备份实施计划；P10在`p10-final-report`进入`IN_PROGRESS / ON_TRACK`。本阶段只读复用P5–P9既有scientific artifacts，不运行训练、test inference或新scientific jobs；GitHub仅允许脱敏报告/图表/表格，约14.4GB private runs只备份至Mac。当前仅完成分支与启动状态，P10 config/code/tests/archive/report均尚未生成；P9保持`COMPLETED / DELIVERED`，不创建P11。 | `p10-final-report`；基线`0b92e76`；本次启动状态commit待创建 |
