@@ -1,0 +1,211 @@
+schema_version: 1
+protocol_version: Baseline-v2
+phase: P9
+model: unified_evaluation_intervention_and_spatial_explanation
+method_declaration:
+  statement: Baseline-v2 P9 project pre-registered evaluation and explanation choices.
+  scope: read_only_evaluation_of_frozen_P5_through_P8_artifacts
+scientific_config:
+  path: configs/baseline_v2.yaml
+  sha256: 07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce
+common_execution_profile:
+  path: configs/experiments/baseline_v2_reference_training_h200_warn_only.yaml
+  resolved_sha256: 66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb
+  formal_gpu_model: H200
+project_preregistered:
+  frozen_inputs:
+    model_order: [blackbox, standard_cbm, mixed_cem, learned_softmax_gam]
+    folds: [0, 1, 2, 3, 4]
+    fold_test_counts: [479, 502, 539, 549, 564]
+    unique_nodules: 2633
+    unique_patients: 868
+    patient_leakage: 0
+    artifacts: P5_through_P8_best_checkpoints_histories_test_predictions_metrics_evaluations_and_OOF
+    access: read_only
+    retraining: forbidden
+    second_committed_test_evaluation: forbidden
+    artifact_rewrite: forbidden
+  task_evaluation:
+    authoritative_score: persisted_unclipped_OOF_raw_task_score
+    original_scale_metrics: [mae, rmse]
+    normalized_metrics: [mae]
+    correlations: [pearson, spearman]
+    diagnostics: [prediction_range, below_zero_rate, above_one_rate]
+    secondary_extreme:
+      low_condition: mean_malignancy_le_2
+      high_condition: mean_malignancy_ge_4
+      middle_samples_in_primary_regression: true
+      middle_samples_in_threshold_selection: false
+      youden_selection_partition: fold_specific_validation_extreme_subset_only
+      threshold_candidates: finite_validation_extreme_scores
+      objective: maximum_youden_j
+      tie_break: largest_threshold
+      pooled_continuous_score_metrics: [auroc, auprc]
+      thresholded_test_metrics: [accuracy, balanced_accuracy, sensitivity, specificity, macro_f1]
+      fixed_normalized_threshold: 0.5
+      fixed_threshold_metric: sensitivity
+      binary_head: forbidden
+      calibration: forbidden
+      brier_or_ece: forbidden
+  concept_evaluation:
+    models: [standard_cbm, mixed_cem, learned_softmax_gam]
+    group_order: [subtlety, internalStructure, calcification, sphericity, margin, lobulation, spiculation, texture]
+    continuous_groups: [subtlety, sphericity, margin, lobulation, spiculation, texture]
+    continuous_metrics: [mae, rmse, pearson, spearman]
+    categorical_groups: [internalStructure, calcification]
+    categorical_metrics: [soft_cross_entropy, multiclass_brier, hard_modal_macro_f1]
+    hard_modal_true_ties: exclude
+    report_actual_n_and_tie_counts: true
+    scopes: [fold, pooled]
+  contribution_centering:
+    source_partition: fold_specific_train_only
+    augmentation: false
+    intervention: false
+    standard_cbm_source: existing_train_cache_plus_task_best_head
+    mixed_cem_source: best_checkpoint_train_forward
+    learned_softmax_gam_source: best_checkpoint_train_forward
+    normalized_reconstruction_tolerance: 1.0e-6
+    rating_reconstruction_tolerance: 1.0e-6
+  intervention:
+    models: [standard_cbm, mixed_cem, learned_softmax_gam]
+    permutations_per_fold: 100
+    shared_order_across_models: true
+    permutation_seed_material: Baseline-v2/P9/intervention-permutation || base_seed || fold_index || permutation_index || schema_version
+    permutation_seed_excludes_model: true
+    standard_cbm: replace_activated_concept_group
+    mixed_cem: replace_mixture_weights_keep_sample_conditioned_states
+    learned_softmax_gam: ground_truth_concept_through_local_experts_keep_learned_alpha
+    error_first:
+      continuous_distance: absolute_error
+      categorical_distance: total_variation_distance
+      tie_break: canonical_concept_order
+      malignancy_target_in_ranking: forbidden
+    k_zero:
+      source: persisted_OOF_score
+      exact_baseline_reproduction: required
+    k_full: 8
+    delta_iMAE: baseline_MAE_minus_iMAE
+    delta_iAUC: iAUC_minus_baseline_AUROC
+    positive_delta_means_improvement: true
+  bootstrap:
+    draws: 2000
+    unit: patient_cluster
+    selected_patient_carries_all_nodules: true
+    primary_shared_draws_across_models: true
+    secondary_extreme_patients: 578
+    secondary_single_class_draw: discard_and_redraw
+    secondary_valid_draws_required: 2000
+    interval: percentile_95
+    paired_model_pairs: 6
+    paired_mae_difference: MAE_A_minus_MAE_B
+    paired_auroc_difference: AUROC_B_minus_AUROC_A
+    preregistered_p_values: false
+  gradcam:
+    target_layer: encoder.denseblock4.denselayer16.layers.conv2
+    gradient_weights: spatial_mean
+    activation_combination: weighted_sum
+    post_combination_activation: relu
+    upsample:
+      mode: trilinear
+      output_shape: [64, 64, 64]
+      align_corners: false
+    maps:
+      dtype: float32
+      normalization: none
+      fp16: forbidden
+      all_zero_status: undefined
+      undefined_in_occlusion_denominator: false
+    targets:
+      malignancy: raw_task_score
+      continuous_concept: pre_sigmoid_logit
+      categorical_concept: predicted_class_logit
+      categorical_prediction_tie_break: smaller_class_index
+    maps_per_nodule:
+      blackbox: 1
+      standard_cbm: 9
+      mixed_cem: 9
+      learned_softmax_gam: 9
+  spatial_storage:
+    root: runs/baseline_v2/p9
+    format: parquet
+    compression: zstd
+    nodules_per_shard: 16
+    map_encoding: raw_little_endian_float32_bytes
+    atomic_boundary: shard
+    required_metadata: [shape, target, checkpoint_sha256, config_sha256, file_sha256]
+    tracked_raw_maps: false
+  occlusion:
+    valid_map_voxels: 26215
+    stable_saliency_order: heatmap_value_descending_then_flat_index_ascending
+    image_copy_required: true
+    inplace_mutation: forbidden
+    replacement_normalized_value: 0.0
+    random_masks_per_target: 20
+    random_sampling: uniform_without_replacement
+    random_seed_material: Baseline-v2/P9/spatial-random-mask || base_seed || fold_index || nodule_uid || target || schema_version
+    random_seed_excludes_model: true
+    original_score_source: same_checkpoint_same_runtime_unoccluded_forward
+    original_vs_persisted_OOF_tolerance: 1.0e-6
+    output_sensitivity: abs_score_occluded_minus_score_original
+    error_increase: abs_score_occluded_minus_target_normalized_minus_abs_score_original_minus_target_normalized
+    output_sensitivity_is_prediction_worsening_evidence: false
+    positive_error_increase_means_prediction_worsened: true
+    negative_error_increase_means_prediction_improved: true
+    retain_individual_random_output_sensitivity_values: 20
+    retain_individual_random_error_increase_values: 20
+    random_aggregates: [mean, sd, median, min, max]
+    retain_saliency_minus_random_mean: true
+    retain_saliency_greater_than_random_mean: true
+    aggregate_statistics: [mean, sd, median, percentile_2_5, percentile_97_5, saliency_greater_than_matched_random_mean_rate]
+  stage_a:
+    fold: 0
+    partition: validation_only
+    reads_test: false
+    formal_training: false
+    all_gradcam_target_paths: 28
+    raw_float32_shard_roundtrip: required
+    true_occlusion_batch_size: 16
+    matched_random_masks: 20
+    require_positive_and_negative_error_increase_cases: true
+    no_inplace: true
+    model_semantic_hash_unchanged: true
+    optimizer_or_parameter_update: forbidden
+    peak_reserved_fraction_limit: 0.85
+    projected_slowest_model_fold_hours_limit: 8.8
+    scratch_free_space_to_projected_peak_ratio_minimum: 1.2
+    hardware: H200
+    fp32: true
+    amp: false
+    bf16: false
+    cuda_matmul_tf32: false
+    cudnn_tf32: false
+    deterministic_algorithms: true
+    deterministic_warn_only: true
+  formal_spatial_execution:
+    approval_environment_variable: P9_SPATIAL_APPROVED
+    default_approval_value: 0
+    required_approval_value: 1
+    user_approval_after_stage_a_required: true
+    stage_a_pass_required: true
+    runtime_storage_gate_pass_required: true
+    full_tests_pass_required: true
+    dual_agent_review_pass_required: true
+    submit_once_after_explicit_user_approval: true
+    jobs: 20
+    mapping: 4_models_times_5_folds
+    queue: csegpu12
+    gpu_model: H200
+    gpus: 1
+    cpus: 8
+    memory_gb: 64
+    walltime: "11:00:00"
+    resume_boundary: atomic_shard
+    cancel_modify_duplicate_or_replacement: forbidden
+  audit:
+    private_root: runs/baseline_v2/p9
+    tracked_evidence: deidentified_aggregate_json_only
+    tracked_identifiers: forbidden
+    tracked_absolute_paths: forbidden
+    complete_concept_metrics_in_P9: true
+    cross_model_comparison_in_P9: true
+    final_report_phase: P10
