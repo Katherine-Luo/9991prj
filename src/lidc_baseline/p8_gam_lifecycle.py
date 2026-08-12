@@ -253,10 +253,10 @@ def _validate_checkpoint_metadata(
             atol=1e-12,
             rtol=0.0,
         ) or not np.allclose(
-            history_weights,
-            np.asarray(reconstructed["weights"][group]),
-            atol=1e-12,
-            rtol=0.0,
+            history_weights.astype(np.float32),
+            np.asarray(reconstructed["weights"][group], dtype=np.float32),
+            atol=ALPHA_SOFTMAX_ABSOLUTE_TOLERANCE,
+            rtol=ALPHA_SOFTMAX_RELATIVE_TOLERANCE,
         ):
             raise ValueError(f"P8_CHECKPOINT_ALPHA_HISTORY_MISMATCH:{group}")
     return reconstructed

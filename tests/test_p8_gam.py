@@ -536,6 +536,18 @@ def test_checkpoint_metadata_binds_objectives_alpha_and_earlier_tie() -> None:
             for group, value in losses["group_losses"].items()
         ),
     }
+    with torch.no_grad():
+        model.alpha_logits["subtlety"].copy_(
+            torch.tensor(
+                [
+                    0.03526713699102402,
+                    -0.02027852274477482,
+                    -0.00368689838796854,
+                    0.016870124265551567,
+                    -0.00645794440060854,
+                ]
+            )
+        )
     alpha = p8l._alpha_snapshot(model)
     history_row: dict[str, object] = {
         "validation_task_loss": validation_report["task_loss"],
@@ -548,6 +560,15 @@ def test_checkpoint_metadata_binds_objectives_alpha_and_earlier_tie() -> None:
         ][group]
         history_row[f"alpha_{group}_logits"] = json.dumps(alpha["logits"][group])
         history_row[f"alpha_{group}_weights"] = json.dumps(alpha["weights"][group])
+    history_row["alpha_subtlety_weights"] = json.dumps(
+        [
+            0.20624220371246338,
+            0.19509869813919067,
+            0.19836270809173584,
+            0.20248264074325562,
+            0.19781377911567688,
+        ]
+    )
     payload = p8l._checkpoint_payload(
         model,
         optimizer,
@@ -561,6 +582,13 @@ def test_checkpoint_metadata_binds_objectives_alpha_and_earlier_tie() -> None:
         history=[history_row],
     )
     assert p8l._validate_checkpoint_metadata(payload, history_row) == alpha
+    corrupted_history = dict(history_row)
+    corrupted_weights = json.loads(str(corrupted_history["alpha_subtlety_weights"]))
+    corrupted_weights[0] += 1e-4
+    corrupted_weights[1] -= 1e-4
+    corrupted_history["alpha_subtlety_weights"] = json.dumps(corrupted_weights)
+    with pytest.raises(ValueError, match="P8_CHECKPOINT_ALPHA_HISTORY_MISMATCH"):
+        p8l._validate_checkpoint_metadata(payload, corrupted_history)
     assert p8l.checkpoint_improves(0.2, 0.3) is True
     assert p8l.checkpoint_improves(0.2, 0.2) is False
     tampered = dict(payload)
