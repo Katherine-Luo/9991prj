@@ -8,19 +8,19 @@ supersedes_protocol: Baseline-v1
 protocol_transition: V2M
 operating_mode: NORMAL_DEVELOPMENT
 reading_scope: CURRENT_AND_NEXT
-development_phase: P8
-development_phase_status: COMPLETED
+development_phase: P9
+development_phase_status: IN_PROGRESS
 maintenance_phase: null
 active_bug_ids: []
-resume_phase: P8
-next_phase: P9
+resume_phase: P9
+next_phase: P10
 last_updated: 2026-08-12
-last_verified_commit: 6ca4f48
+last_verified_commit: 41f5a62
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。P8 Stage A、五折科学执行、existing-artifact final verification、CPU OOF、脱敏audit与阶段级双agent审查均已通过，`BUG-P8-002`已解决；completion commit `6ca4f48`已fast-forward合并至`main`并推送GitHub，合并后完整测试为`280 passed`且仅有3条既有dependency warnings。P8为`COMPLETED / ON_TRACK / DELIVERED`；P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P8均已完成、获用户确认并推送。用户已批准修订后的P9统一评估、干预与空间解释计划；本地分支`p9-unified-evaluation`从交付anchor `41f5a62`创建，P9现为`IN_PROGRESS / ON_TRACK`。P9只读取P5–P8既有best checkpoints与OOF/test artifacts，不修改训练、checkpoint、history、predictions、metrics或evaluations；`P9_SPATIAL_APPROVED`保持`0`，真实Stage A通过并获用户显式批准前不得提交20个formal spatial jobs。P10保持`NOT_STARTED / NOT_APPLICABLE`。
 
 ## 1. 阅读规则
 
@@ -38,23 +38,23 @@ last_verified_commit: 6ca4f48
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P8 End-to-end CBM + Learned-softmax GAM Regression` |
-| 阶段状态 | `COMPLETED / ON_TRACK` |
+| 当前开发阶段 | `P9 统一评估、干预与空间解释` |
+| 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P8-002`已由supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`。 |
-| 当前阻塞项 | 无；P8已完成并交付，当前没有活动开发阶段。 |
-| 恢复阶段 | `P8`（已恢复正常阶段门流程） |
-| 下一阶段 | `P9 统一评估、干预与解释`（保持 `NOT_STARTED / NOT_APPLICABLE`；须另行制定并获得用户批准后才能启动） |
+| 当前阻塞项 | 无技术阻塞；P9本地实现尚未开始，formal spatial jobs受显式用户门约束。 |
+| 恢复阶段 | `P9` |
+| 下一阶段 | `P10 Katana正式实验与报告`（保持 `NOT_STARTED / NOT_APPLICABLE`；P9完成、确认并交付前禁止启动或规划） |
 | 最近更新 | 2026-08-12 |
-| 状态依据 | Final verifier commits=`81e7f33`、`d462e20`，六份脱敏audit evidence commit=`2ddbe30`，均已随P8交付推送；latest exact manifest为10 files / `147,168` bytes，internal/file SHA-256=`d6a541372d37d32c3f20ba736845ed78101238021fb4654217d325adb31f7a58`/`3cc7f1821b4cbfdfc03e838fd19d53e64c24af1b44364af5d6601be7f38d5f46`。首次CPU verifier job `8983007`仅发现同范围checkpoint/history alpha verifier leftover并Exit 1，无train/test/OOF；补充修复后job `8983016`在`k218`、`ngpus=0`以Exit 0完成五折existing-artifact final verify，且checkpoints/history/predictions/metrics/evaluation hashes不变。CPU OOF job `8983018`在`k218`、`ngpus=0`以Exit 0完成：2,633 nodules / 868 patients、fold counts=`479/502/539/549/564`、0 leakage、五折transaction均为1，OOF SHA-256=`a5066e990153903212727c93ddea19f20760dffe7fa33a57aebab2d4d0ec3ffa`。用户于2026-08-12明确确认；completion commit `6ca4f48`已fast-forward合并并推送，合并后完整测试`280 passed`、3条既有warnings，冻结检查PASS，首次交付核对`HEAD=main=origin/main=6ca4f4875cd78ed8bbcd6d8b717f02fa746913b6`且ahead/behind=`0/0`。P9保持未启动。 |
+| 状态依据 | `HEAD=main=origin/main=41f5a62f210a8096138a8b00caeb7c6e2727cb35`且P8已交付；用户批准P9修订计划并固定双faithfulness occlusion、validation-extreme-only Youden-J、正向`Delta_iMAE/Delta_iAUC`及Stage A后的显式20-job用户门。当前仅创建P9本地分支并启动状态，尚未创建P9 config/code/test、执行Stage A或提交formal jobs；P10未启动。 |
 
-## 3. 当前阶段：P8 End-to-end CBM + Learned-softmax GAM Regression
+## 3. 当前阶段：P9 统一评估、干预与空间解释
 
 ### 阶段目标
 
-在P4固定patient-level splits与shared DenseNet-121 encoder initialization、统一H200 warn-only execution profile上，实现端到端joint CBM + GAM regression。八个linear concept heads产生activated predicted concepts；每组由5个concept-local `32→16` ReLU subnetworks及zero-initialized learned-softmax alpha组成，task只读取predicted concepts，并以bias加八组贡献重建unconstrained malignancy score。
+在冻结的P4 splits及P5–P8既有best checkpoints/OOF/test artifacts上，统一计算primary/secondary task metrics、concept metrics、train-fold centered contributions、随机与error-first interventions、2,000次patient bootstrap、Grad-CAM与双faithfulness occlusion。不得重训或改写P5–P8科学产物；P10最终报告不在本阶段实现。
 
-### 已完成
+### 已完成前置条件
 
 - 用户已明确批准P8实施计划，并固定端到端联合训练、alpha logits全零初始化、Stage A通过后一次提交五折且无Fold-0中间确认门。
 - 已从交付完成的`main`创建本地分支`p8-gam`；P7代码与private artifacts不作为P8训练初始化，P8每折仍从同一P4 shared encoder initialization开始。
@@ -101,13 +101,15 @@ last_verified_commit: 6ca4f48
 
 ### 正在进行
 
-- P8已完成封存、fast-forward合并、`main`完整测试与GitHub推送；当前没有活动开发阶段。
-- P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。
+- P9启动状态封存：从最新交付`main`的`41f5a62`创建本地分支`p9-unified-evaluation`，P9为`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。
+- 首批仅创建独立P9 execution supplement及其resolved/hash和直接测试；后续按统一评估、空间解释、Katana/audit接口的原子批次推进。
+- `P9_SPATIAL_APPROVED`保持`0`。只有实际H200 Stage A、runtime/storage gate、完整测试和双agent审查全部通过、向用户汇报完整证据并再次获得明确批准后，才允许一次性提交20个model×fold jobs。
 
 ### 尚未完成
 
-- P8无尚未完成项。
-- P9计划与开发未开始。
+- P9 execution supplement、统一OOF/task/concept/centering/intervention/bootstrap实现与测试尚未完成。
+- Grad-CAM、双faithfulness occlusion、private shard、Katana/audit接口及actual H200 Stage A尚未实现或执行。
+- 20个formal spatial jobs、CPU aggregate、P9 audit、阶段级双agent审查和用户最终确认均尚未完成；不得提前启动P10。
 
 ### 验收边界
 
@@ -116,16 +118,19 @@ last_verified_commit: 6ca4f48
 - Fold 1/2/4的PBS automatic rerun/hold仅作为scheduler audit保留，不允许据此取消、替换、重复提交或改变frozen execution profile。
 - 仅实现P8-R1–P8-R3与P8阶段所需运行/完整性证据；不实现P9完整concept metrics、跨模型比较、centering、intervention curves、Grad-CAM、occlusion或bootstrap。
 - P8的H200 Stage A、五折80 epochs与test exactly once、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、完整测试与双agent阶段审查均已通过；用户确认后的completion封存、合并、合并后验证与GitHub推送也已完成。
+- P9只读取P5–P8既有best checkpoints和OOF/test artifacts；不得重训、形成第二个committed test evaluation或修改既有training/checkpoint/history/predictions/metrics/evaluation。
+- Spatial Stage A只使用fold 0 validation；formal spatial gate在CLI与PBS两层默认阻断，用户再次明确批准前不得设置`P9_SPATIAL_APPROVED=1`。
 
-## 4. 下一阶段：P9 统一评估、干预与解释
+## 4. 下一阶段：P10 Katana正式实验与报告
 
 ### 进入条件
 
-- P8已获用户最终确认并完成状态封存、合并与GitHub推送。当前P9仍为`NOT_STARTED / NOT_APPLICABLE`；须另行制定并获得用户批准后才能启动。
+- P9须完成20个formal spatial jobs、CPU aggregate、完整测试、阶段级双agent审查、用户最终确认、completion封存、合并与GitHub推送。
+- 在上述P9交付门全部完成前，P10保持`NOT_STARTED / NOT_APPLICABLE`，不得规划或实现。
 
 ### 第一批任务
 
-- 尚未制定或批准；P9保持`NOT_STARTED`。
+- 尚未制定或批准；P10保持`NOT_STARTED`。
 
 <!-- NORMAL_READING_END -->
 
@@ -465,14 +470,14 @@ Bug 修复后：
 | P6 | Standard CBM | `COMPLETED` | `ON_TRACK` | Stage A、五折80+80 epochs、test exactly once、final verifies与CPU OOF均`PASS`；OOF 2,633 nodules / 868 patients、0 leakage、reconstruction≤`1e-6`、专项`9 passed`、合并后完整`215 passed`、双agent阶段审查和用户确认均通过。6个tracked audit JSON由`bed615f`封存；completion `6876234`已合并并推送，三方SHA一致 | 0 | 0 |
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
-| P9 | 统一评估 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行；须另行制定并获得用户批准后才能启动 | 0 | 0 |
+| P9 | 统一评估、干预与空间解释 | `IN_PROGRESS` | `ON_TRACK` | 用户已批准修订实施计划；本地分支`p9-unified-evaluation`从交付anchor `41f5a62`创建。当前仅启动状态，尚无P9 config/code/test、Stage A或formal spatial job；`P9_SPATIAL_APPROVED=0` | 0 | 0 |
 | P10 | Katana 正式实验与报告 | `NOT_STARTED` | `NOT_APPLICABLE` | 未执行 | 0 | 1 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P8-002`已通过supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`；P8已完成、确认并交付。P9保持`NOT_STARTED / NOT_APPLICABLE`，须另行制定并获得用户批准后才能启动。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
+当前无活动Bug。`BUG-P8-002`已通过supplemental verifier、CPU existing-artifact five-fold verification与CPU OOF重新验收并标记为`RESOLVED`；P8已完成、确认并交付。P9现为`IN_PROGRESS / ON_TRACK`，P10保持`NOT_STARTED / NOT_APPLICABLE`。`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。
 
 ### Bug 状态
 
@@ -1013,3 +1018,4 @@ Bug 修复后：
 | 2026-08-12 | `BUG_RESOLVED` / `FIVE_FOLD_OOF_PASS` / `PHASE_AWAITING_APPROVAL` | P8 | Supplemental verifier commit `d462e20`将FP32 alpha policy覆盖checkpoint/history snapshots；latest 10-file manifest为`147,168` bytes，internal/file SHA=`d6a54137...f7a58`/`3cc7f182...d5f46`。CPU verifier `8983007`仅发现同范围leftover并Exit 1，无train/test/OOF；最终CPU verifier `8983016`在`k218`、ngpus0、Exit 0验证五折existing artifacts全部PASS且hashes不变。Formal终态保留为Fold0/3 F Exit1 verifier false failure、Fold1/2/4 H run_count21 Exit-18 automatic rerun/hold，不虚构五个formal Exit0。CPU OOF `8983018`在`k218`、ngpus0、Exit 0完成2,633/868、fold counts=`479/502/539/549/564`、0 leakage、transaction=1；original MAE/RMSE=`0.4804293272/0.6175917270`，normalized MAE=`0.1201073318`，Pearson/Spearman=`0.7405389222/0.6527851615`，rating reconstruction≤`6.4075e-7`，OOF SHA=`a5066e99...3ffa`。六份deidentified audit及direct/full=`23/280 passed`、Phase Compliance均PASS；audit evidence由`2ddbe30`原子封存。`BUG-P8-002`转为`RESOLVED`，P8恢复`AWAITING_USER_APPROVAL / ON_TRACK`，P9为`NOT_STARTED / NOT_APPLICABLE`。尚未用户确认，不得完成、推送或启动P9。 | `81e7f33`、`d462e20`、`2ddbe30`（local, unpushed）；jobs `8983007`、`8983016`、`8983018`；summary SHA `957e0e4b...a590`；本次状态同步commit待创建 |
 | 2026-08-12 | `PHASE_COMPLETED` | P8 | 用户明确确认P8；Stage A、五折80 epochs与minimum-validation checkpoints、每折唯一committed test、existing-artifact final verifies、2,633 nodules / 868 patients OOF、0 leakage、learned-alpha与贡献重建、六份脱敏audit、完整`280 passed`与阶段级双agent审查证据均已封存。P8转为`COMPLETED / ON_TRACK`，P9保持`NOT_STARTED / NOT_APPLICABLE`。Completion状态commit、fast-forward合并、`main`完整测试与GitHub push尚待执行，不得声称已交付或启动P9。 | 用户确认；`81e7f33`、`d462e20`、`2ddbe30`、`5e7a66b`；本次completion状态commit待创建 |
 | 2026-08-12 | `DELIVERED` | P8 | Completion commit `6ca4f48`已fast-forward合并至`main`并推送GitHub。合并后完整测试`280 passed`且仅有3条既有dependency warnings；冻结V1/V2 requirements/config、common H200 profile与P8 execution profile无diff。首次交付核对`HEAD=main=origin/main=6ca4f4875cd78ed8bbcd6d8b717f02fa746913b6`且ahead/behind=`0/0`。P8为`COMPLETED / ON_TRACK / DELIVERED`；P9保持`NOT_STARTED / NOT_APPLICABLE`，未制定或实施。 | `6ca4f48`；本次post-delivery状态同步commit待创建 |
+| 2026-08-12 | `PHASE_STARTED` | P9 | 用户批准修订后的统一评估、干预与空间解释实施计划；P9进入`IN_PROGRESS / ON_TRACK`，本地分支`p9-unified-evaluation`从最新交付anchor创建。固定双faithfulness occlusion、validation-extreme-only Youden-J、正向`Delta_iMAE/Delta_iAUC`及Stage A后独立用户门；`P9_SPATIAL_APPROVED=0`，当前无P9 config/code/test或job。P10保持`NOT_STARTED`。 | `p9-unified-evaluation`本地分支；基线`41f5a62`；本次启动状态commit待创建 |
