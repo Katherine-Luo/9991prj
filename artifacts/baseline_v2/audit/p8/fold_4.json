@@ -1,0 +1,179 @@
+{
+  "alpha_gradient_and_update_gate": "PASS",
+  "best_alpha_snapshot_sha256": "c61e56c48cfeede9bb0afc25f122cbbffa5f26cbabcfc9d4ab6185ff04681522",
+  "best_checkpoint_sha256": "66dbb46219284df52738901fbb5ac1c8db0cd24c9b46fda7f0977a994efac21c",
+  "best_epoch_index": 22,
+  "best_validation_total_loss": 0.07566188919300593,
+  "combined_gam_initialization_sha256": "47e1efc947603e0fd6674eacd30eef03f82e972b90a7547dd9086aa42b39230d",
+  "contribution_reconstruction": {
+    "bias_scale_max_absolute_error": 4.190951585769653e-08,
+    "contribution_scale_max_absolute_error": 0.0,
+    "normalized_max_absolute_error": 9.010545909404755e-08,
+    "rating_scale_max_absolute_error": 6.407499313354492e-07
+  },
+  "encoder_initialization_sha256": "5d83267c5e8a3e89368d160f1a2ce46a387ca28cb2f6061c4bc55ffaca4afdf9",
+  "epochs": 80,
+  "execution_config_sha256": "66c925a7b43bf9fa312ceb850b43746a34d1808888667c39392eaef9e47495bb",
+  "final_alpha_snapshot_sha256": "344392dcd401207d54567d8ea2288419047616376bd3e6ff8976231e1f545580",
+  "fold_index": 4,
+  "learned_alpha_at_best_epoch": {
+    "gradient_l1_at_best_epoch": {
+      "calcification": 0.9699955288087948,
+      "internalStructure": 1.0992918011615984,
+      "lobulation": 1.3172649047337472,
+      "margin": 1.722375551762525,
+      "sphericity": 0.8039472454984207,
+      "spiculation": 2.4624813665868714,
+      "subtlety": 1.399454926780891,
+      "texture": 1.6283454998629168
+    },
+    "logits": {
+      "calcification": [
+        0.018062256276607513,
+        0.03652799874544144,
+        -0.019377902150154114,
+        -0.028462853282690048,
+        0.017586208879947662
+      ],
+      "internalStructure": [
+        -0.0008475902723148465,
+        0.003117199521511793,
+        -0.0028219190426170826,
+        0.0029206506442278624,
+        -0.0030234004370868206
+      ],
+      "lobulation": [
+        -0.06290444731712341,
+        0.003864043392241001,
+        0.006754813715815544,
+        0.018338672816753387,
+        -0.021592766046524048
+      ],
+      "margin": [
+        0.00511528505012393,
+        -0.0034461591858416796,
+        -0.007812995463609695,
+        -0.0028029114473611116,
+        0.0021812075283378363
+      ],
+      "sphericity": [
+        -0.0026699111331254244,
+        -0.005239833611994982,
+        0.009631245397031307,
+        -0.004739208612591028,
+        0.00413971021771431
+      ],
+      "spiculation": [
+        -0.006479672156274319,
+        0.008739052340388298,
+        -0.005524026695638895,
+        0.016580013558268547,
+        -0.00280068744905293
+      ],
+      "subtlety": [
+        -0.022616438567638397,
+        -0.0007097774650901556,
+        -0.005049782805144787,
+        0.010045766830444336,
+        0.0041600847616791725
+      ],
+      "texture": [
+        -0.0027474986854940653,
+        -0.003678358858451247,
+        0.0031279930844902992,
+        0.009345212951302528,
+        0.0024795199278742075
+      ]
+    },
+    "weights": {
+      "calcification": [
+        0.2025950700044632,
+        0.20637090504169464,
+        0.19515012204647064,
+        0.19338521361351013,
+        0.2024986445903778
+      ],
+      "internalStructure": [
+        0.1998560130596161,
+        0.20064997673034668,
+        0.19946181774139404,
+        0.20061054825782776,
+        0.19942162930965424
+      ],
+      "lobulation": [
+        0.18982526659965515,
+        0.20293232798576355,
+        0.2035198211669922,
+        0.20589105784893036,
+        0.19783152639865875
+      ],
+      "margin": [
+        0.20129580795764923,
+        0.19957976043224335,
+        0.1987101435661316,
+        0.19970819354057312,
+        0.20070604979991913
+      ],
+      "sphericity": [
+        0.19941864907741547,
+        0.1989068239927292,
+        0.2018868774175644,
+        0.19900642335414886,
+        0.20078124105930328
+      ],
+      "spiculation": [
+        0.19828268885612488,
+        0.20132339000701904,
+        0.1984722763299942,
+        0.20290815830230713,
+        0.19901353120803833
+      ],
+      "subtlety": [
+        0.1960703581571579,
+        0.20041300356388092,
+        0.19954508543014526,
+        0.20258018374443054,
+        0.20139136910438538
+      ],
+      "texture": [
+        0.19910921156406403,
+        0.1989239752292633,
+        0.2002825289964676,
+        0.20153160393238068,
+        0.2001526802778244
+      ]
+    }
+  },
+  "model": "end_to_end_cbm_learned_softmax_gam",
+  "p8_execution_config_sha256": "1569b09c83d6a785601c181d615ac656b71623d054e45705bc0a35b17ba2dc7f",
+  "private_run_storage": {
+    "file_count": 9,
+    "total_bytes": 274951700
+  },
+  "protocol_version": "Baseline-v2",
+  "schema_version": 1,
+  "scientific_config_sha256": "07ad34dc3449383bb195d126d6fedc1db3428198b2144fa75dc38fad939c33ce",
+  "split_sha256": "f6ac19b39f892e1fedd432aa3d6f2efc943d519fe6d7df27e0d975682725b6bb",
+  "status": "PASS",
+  "task_metrics": {
+    "normalized_mae": 0.11652973915360004,
+    "normalized_rmse": 0.14869642186097287,
+    "original_scale_mae": 0.46611895661440017,
+    "original_scale_rmse": 0.5947856874438915,
+    "pearson": 0.7153842945820315,
+    "prediction_above_1_rate": 0.0,
+    "prediction_above_5_on_original_scale_rate": 0.0,
+    "prediction_below_0_rate": 0.0,
+    "prediction_below_1_on_original_scale_rate": 0.0,
+    "prediction_max": 0.9204012751579285,
+    "prediction_min": 0.030869010835886,
+    "samples": 564,
+    "spearman": 0.6173616059244383
+  },
+  "test_evaluated_once": true,
+  "test_evaluation_sha256": "f6eaccaaa0446075b6e67c4eadb940c21d191533a43aae8696a28f1c0d1e2d30",
+  "test_predictions_sha256": "953b8d33ce5b2544372995f4592b692345f93a75ab98b0041e99aef9474e11eb",
+  "test_samples": 564,
+  "test_transaction_count": 1,
+  "train_samples_per_epoch": 1811
+}
