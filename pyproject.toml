@@ -26,6 +26,13 @@ dev = [
   "pytest==8.3.4",
   "pytest-cov==6.0.0",
 ]
+report = [
+  "matplotlib==3.11.1",
+  "Pillow==12.1.1",
+  "reportlab==4.4.9",
+  "pypdf==6.10.0",
+  "pdfplumber==0.11.9",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
