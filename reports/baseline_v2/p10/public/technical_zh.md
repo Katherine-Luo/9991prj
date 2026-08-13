@@ -161,18 +161,18 @@ Grad-CAM 使用最终预注册卷积层、空间均值梯度、加权 activation
 | Mixed-type CEM | 0.484 (0.467–0.502) | 0.628 (0.604–0.654) | 0.121 (0.117–0.126) | 0.730 (0.701–0.757) | 0.640 (0.604–0.673) | 0.823–4.935 | 2633 |
 | Standard CBM | 0.502 (0.483–0.522) | 0.650 (0.625–0.675) | 0.126 (0.121–0.131) | 0.708 (0.677–0.735) | 0.609 (0.570–0.648) | 0.858–4.580 | 2633 |
 
-观察到了什么？配对 Delta-MAE 支持 Learned-softmax GAM 优于 Black-box 和 Standard CBM，因为对应区间不跨零；较小差异则需要谨慎解读。Black-box 与 Standard CBM 的区间跨零，说明加入解释结构并不会自动改善点预测。表 RPT-T08 与图 RPT-F05 保留全部六组比较以及 MAE_A − MAE_B 符号约定。
+观察到了什么？配对 Delta-MAE 支持 Learned-softmax GAM 优于 Black-box 和 Standard CBM，因为对应区间不跨零；较小差异则需要谨慎解读。Black-box 与 Standard CBM 的区间跨零，说明加入解释结构并不会自动改善点预测。表 RPT-T08 与图 RPT-F05 保留全部六组比较以及 MAE_A − MAE_B 符号约定。在面向读者的表格中，No supported difference 表示配对 95% CI 跨越零。
 
 **RPT-T08. 六组配对 Delta-MAE 比较**
 
 | Comparison (A vs B) | Delta-MAE (A−B) | 95% CI | Crosses zero | Sign convention | Supported conclusion |
 | --- | --- | --- | --- | --- | --- |
-| Black-box vs Learned-softmax GAM | 0.020 | 0.010–0.031 | False | Positive Δ favors B | SUPPORTS_B |
-| Black-box vs Mixed-type CEM | 0.016 | 0.006–0.027 | False | Positive Δ favors B | SUPPORTS_B |
-| Black-box vs Standard CBM | -0.002 | -0.015–0.012 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Mixed-type CEM vs Learned-softmax GAM | 0.004 | -0.006–0.013 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Standard CBM vs Learned-softmax GAM | 0.022 | 0.011–0.033 | False | Positive Δ favors B | SUPPORTS_B |
-| Standard CBM vs Mixed-type CEM | 0.018 | 0.006–0.030 | False | Positive Δ favors B | SUPPORTS_B |
+| Black-box vs Learned-softmax GAM | 0.020 | 0.010–0.031 | False | Positive Δ favors B | Supports B |
+| Black-box vs Mixed-type CEM | 0.016 | 0.006–0.027 | False | Positive Δ favors B | Supports B |
+| Black-box vs Standard CBM | -0.002 | -0.015–0.012 | True | Positive Δ favors B | No supported difference |
+| Mixed-type CEM vs Learned-softmax GAM | 0.004 | -0.006–0.013 | True | Positive Δ favors B | No supported difference |
+| Standard CBM vs Learned-softmax GAM | 0.022 | 0.011–0.033 | False | Positive Δ favors B | Supports B |
+| Standard CBM vs Mixed-type CEM | 0.018 | 0.006–0.030 | False | Positive Δ favors B | Supports B |
 
 在 1,073 个结节的极端子集上，四个连续评分均能区分低分与高分，但配对 Delta-AUROC 证据不如 MAE 证据明确。多个区间跨零；在预注册 B−A 约定下，Standard CBM 低于 Black-box。因此，表 RPT-T09、表 RPT-T10 与图 RPT-F06 把绝对 AUROC/AUPRC 性能和模型间不确定性分开。
 
@@ -191,12 +191,12 @@ Grad-CAM 使用最终预注册卷积层、空间均值梯度、加权 activation
 
 | Comparison (A vs B) | Delta-AUROC (B−A) | 95% CI | Crosses zero | Sign convention | Supported conclusion |
 | --- | --- | --- | --- | --- | --- |
-| Black-box vs Learned-softmax GAM | 0.004 | -0.005–0.014 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Black-box vs Mixed-type CEM | -0.004 | -0.013–0.005 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Black-box vs Standard CBM | -0.013 | -0.022–-0.004 | False | Positive Δ favors B | SUPPORTS_A |
-| Mixed-type CEM vs Learned-softmax GAM | 0.008 | -0.001–0.018 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Standard CBM vs Learned-softmax GAM | 0.017 | 0.006–0.027 | False | Positive Δ favors B | SUPPORTS_B |
-| Standard CBM vs Mixed-type CEM | 0.009 | -0.002–0.020 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Black-box vs Learned-softmax GAM | 0.004 | -0.005–0.014 | True | Positive Δ favors B | No supported difference |
+| Black-box vs Mixed-type CEM | -0.004 | -0.013–0.005 | True | Positive Δ favors B | No supported difference |
+| Black-box vs Standard CBM | -0.013 | -0.022–-0.004 | False | Positive Δ favors B | Supports A |
+| Mixed-type CEM vs Learned-softmax GAM | 0.008 | -0.001–0.018 | True | Positive Δ favors B | No supported difference |
+| Standard CBM vs Learned-softmax GAM | 0.017 | 0.006–0.027 | False | Positive Δ favors B | Supports B |
+| Standard CBM vs Mixed-type CEM | 0.009 | -0.002–0.020 | True | Positive Δ favors B | No supported difference |
 
 ![RPT-F04. 主要 pooled MAE 及 2,000 次患者聚类 bootstrap 95% 区间。](figures_catalogue/RPT-F04_zh.png)
 
@@ -440,18 +440,18 @@ Grad-CAM 使用最终预注册卷积层、空间均值梯度、加权 activation
 
 ### 6.4 结果——WHY
 
-测量内容是什么？WHY 证据关注预测概念如何进入每个概念模型的恶性评分。每一折使用 train-only mean 对原始 group term 进行中心化；中心化 bias 与八个 term 在冻结 1e-6 tolerance 内重建 task score。表 RPT-T15 记录 pooled signed mean 与逐折 centering constants，但不会把它们改称 importance。
+测量内容是什么？WHY 证据关注预测概念如何进入每个概念模型的恶性评分。每一折使用 train-only mean 对原始 group term 进行中心化；中心化 bias 与八个 term 在冻结 1e-6 tolerance 内重建 task score。表 RPT-T15 汇总经选择且已持久化的 pooled signed mean；完整的逐折 centering constants 保留在可复现性证据中。
 
 **RPT-T15. 中心化贡献汇总**
 
 | Model | Concept | Pooled signed mean (rating points) | Role within model |
 | --- | --- | --- | --- |
-| Standard CBM | calcification | 0.400 | Most positive |
-| Standard CBM | texture | -0.122 | Most negative |
-| Mixed-type CEM | internalStructure | 0.486 | Most positive |
-| Mixed-type CEM | texture | 0.101 | Most positive |
-| Learned-softmax GAM | calcification | 0.402 | Most positive |
-| Learned-softmax GAM | lobulation | -0.016 | Most negative |
+| Standard CBM | calcification | 0.400 | Largest pooled signed mean |
+| Standard CBM | texture | -0.122 | Smallest pooled signed mean |
+| Mixed-type CEM | internalStructure | 0.486 | Largest pooled signed mean |
+| Mixed-type CEM | texture | 0.101 | Smallest pooled signed mean |
+| Learned-softmax GAM | calcification | 0.402 | Largest pooled signed mean |
+| Learned-softmax GAM | lobulation | -0.016 | Smallest pooled signed mean |
 
 观察到了什么？不同 concept 与 model 的有符号贡献方向不同，说明相同 concept name 不一定具有相同决策角色。图 RPT-F10 把冻结逐样本点做成经验 OOF profile。该 profile 仅为描述性展示，不能读作 global causal shape function。权威 model-by-concept mean absolute aggregate 未持久化，因此报告将其标记为 DATA_NOT_PERSISTED，而不重新计算。
 

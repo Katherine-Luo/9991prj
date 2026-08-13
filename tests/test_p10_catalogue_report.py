@@ -29,6 +29,7 @@ from lidc_baseline.p10_catalogue_report import (
     _verify_manual_review_provenance,
     _contribution_profiles,
     _pdf_table_layout,
+    export_public_tables,
 )
 
 
@@ -184,8 +185,25 @@ def test_public_table_and_figure_inventory_is_exact() -> None:
     assert "RPT-F09B" in PUBLIC_FIGURE_IDS
     assert "RPT-F09" not in PUBLIC_FIGURE_IDS
     assert len(tables["RPT-T15"]) == 6
-    assert {row["Role within model"] for row in tables["RPT-T15"]} == {"Most positive", "Most negative"}
+    assert {row["Role within model"] for row in tables["RPT-T15"]} == {
+        "Largest pooled signed mean",
+        "Smallest pooled signed mean",
+    }
+    for model in {row["Model"] for row in tables["RPT-T15"]}:
+        model_rows = [row for row in tables["RPT-T15"] if row["Model"] == model]
+        by_role = {row["Role within model"]: float(row["Pooled signed mean (rating points)"]) for row in model_rows}
+        assert by_role["Largest pooled signed mean"] >= by_role["Smallest pooled signed mean"]
     assert all(row["Target"] == "malignancy" for row in tables["RPT-T14"])
+
+
+def test_controlled_comparison_codes_are_not_exported_in_reader_tables(tmp_path: Path) -> None:
+    export_public_tables(load_catalogue_context(REPOSITORY_ROOT), tmp_path)
+    for table_id in ("RPT-T08", "RPT-T10"):
+        text = (tmp_path / "tables_catalogue" / f"{table_id}.csv").read_text(encoding="utf-8")
+        assert "controlled_conclusion_code" not in text
+        assert "SUPPORTS_A" not in text
+        assert "SUPPORTS_B" not in text
+        assert "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO" not in text
 
 
 def test_correction_round_scientific_semantics_are_fail_closed() -> None:
@@ -195,11 +213,14 @@ def test_correction_round_scientific_semantics_are_fail_closed() -> None:
         for row in tables[table_id]:
             assert row["Sign convention"] == "Positive Δ favors B"
             if row["Crosses zero"]:
-                assert row["Supported conclusion"] == "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO"
+                assert row["Supported conclusion"] == "No supported difference"
+                assert row["controlled_conclusion_code"] == "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO"
             elif float(row[next(key for key in row if key.startswith("Delta-"))]) > 0:
-                assert row["Supported conclusion"] == "SUPPORTS_B"
+                assert row["Supported conclusion"] == "Supports B"
+                assert row["controlled_conclusion_code"] == "SUPPORTS_B"
             else:
-                assert row["Supported conclusion"] == "SUPPORTS_A"
+                assert row["Supported conclusion"] == "Supports A"
+                assert row["controlled_conclusion_code"] == "SUPPORTS_A"
     how = next(row for row in tables["RPT-T18"] if row["Layer"] == "HOW")
     assert "strong and consistent for CEM" in how["Main evidence"]
     assert "unfavorable overall for GAM" in how["Main evidence"]
@@ -214,6 +235,14 @@ def test_bilingual_manuscript_has_same_numbers_and_interleaved_story() -> None:
     english = build_markdown_manuscript(context, tables, "en")
     chinese = build_markdown_manuscript(context, tables, "zh")
     verify_bilingual_numeric_parity(english, chinese)
+    assert "No supported difference means that the paired 95% CI crosses zero" in english
+    assert "No supported difference 表示配对 95% CI 跨越零" in chinese
+    assert "Table RPT-T15 summarizes selected persisted pooled signed means" in english
+    assert "表 RPT-T15 汇总经选择且已持久化的 pooled signed mean" in chinese
+    assert "SUPPORTS_A" not in english and "SUPPORTS_B" not in english
+    assert "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO" not in english
+    assert "SUPPORTS_A" not in chinese and "SUPPORTS_B" not in chinese
+    assert "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO" not in chinese
     for label in ("Prediction", "WHERE", "WHAT", "WHY", "HOW"):
         assert english.index(label) >= 0
         assert chinese.index(label) >= 0

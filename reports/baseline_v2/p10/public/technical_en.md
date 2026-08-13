@@ -161,18 +161,18 @@ What was measured? Primary prediction was evaluated on all 2,633 OOF nodules wit
 | Mixed-type CEM | 0.484 (0.467–0.502) | 0.628 (0.604–0.654) | 0.121 (0.117–0.126) | 0.730 (0.701–0.757) | 0.640 (0.604–0.673) | 0.823–4.935 | 2633 |
 | Standard CBM | 0.502 (0.483–0.522) | 0.650 (0.625–0.675) | 0.126 (0.121–0.131) | 0.708 (0.677–0.735) | 0.609 (0.570–0.648) | 0.858–4.580 | 2633 |
 
-What did we observe? Paired Delta-MAE supports Learned-softmax GAM over Black-box and Standard CBM because the corresponding intervals do not cross zero, whereas smaller differences require a more cautious reading. The Black-box versus Standard CBM interval crosses zero, showing that interpretability structure did not automatically improve point prediction. Table RPT-T08 and Figure RPT-F05 preserve all six comparisons and the sign convention MAE_A − MAE_B.
+What did we observe? Paired Delta-MAE supports Learned-softmax GAM over Black-box and Standard CBM because the corresponding intervals do not cross zero, whereas smaller differences require a more cautious reading. The Black-box versus Standard CBM interval crosses zero, showing that interpretability structure did not automatically improve point prediction. Table RPT-T08 and Figure RPT-F05 preserve all six comparisons and the sign convention MAE_A − MAE_B. In the reader-facing tables, No supported difference means that the paired 95% CI crosses zero.
 
 **RPT-T08. Six paired Delta-MAE comparisons**
 
 | Comparison (A vs B) | Delta-MAE (A−B) | 95% CI | Crosses zero | Sign convention | Supported conclusion |
 | --- | --- | --- | --- | --- | --- |
-| Black-box vs Learned-softmax GAM | 0.020 | 0.010–0.031 | False | Positive Δ favors B | SUPPORTS_B |
-| Black-box vs Mixed-type CEM | 0.016 | 0.006–0.027 | False | Positive Δ favors B | SUPPORTS_B |
-| Black-box vs Standard CBM | -0.002 | -0.015–0.012 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Mixed-type CEM vs Learned-softmax GAM | 0.004 | -0.006–0.013 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Standard CBM vs Learned-softmax GAM | 0.022 | 0.011–0.033 | False | Positive Δ favors B | SUPPORTS_B |
-| Standard CBM vs Mixed-type CEM | 0.018 | 0.006–0.030 | False | Positive Δ favors B | SUPPORTS_B |
+| Black-box vs Learned-softmax GAM | 0.020 | 0.010–0.031 | False | Positive Δ favors B | Supports B |
+| Black-box vs Mixed-type CEM | 0.016 | 0.006–0.027 | False | Positive Δ favors B | Supports B |
+| Black-box vs Standard CBM | -0.002 | -0.015–0.012 | True | Positive Δ favors B | No supported difference |
+| Mixed-type CEM vs Learned-softmax GAM | 0.004 | -0.006–0.013 | True | Positive Δ favors B | No supported difference |
+| Standard CBM vs Learned-softmax GAM | 0.022 | 0.011–0.033 | False | Positive Δ favors B | Supports B |
+| Standard CBM vs Mixed-type CEM | 0.018 | 0.006–0.030 | False | Positive Δ favors B | Supports B |
 
 On the 1,073-nodule extreme subset, all four continuous scores discriminated low from high ratings, but paired Delta-AUROC evidence was less decisive than the MAE evidence. Several intervals cross zero, and Standard CBM is lower than Black-box under the registered B−A convention. Table RPT-T09, Table RPT-T10, and Figure RPT-F06 therefore separate absolute AUROC/AUPRC performance from between-model uncertainty.
 
@@ -191,12 +191,12 @@ What does this mean? Learned-softmax GAM is the strongest point-estimate regress
 
 | Comparison (A vs B) | Delta-AUROC (B−A) | 95% CI | Crosses zero | Sign convention | Supported conclusion |
 | --- | --- | --- | --- | --- | --- |
-| Black-box vs Learned-softmax GAM | 0.004 | -0.005–0.014 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Black-box vs Mixed-type CEM | -0.004 | -0.013–0.005 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Black-box vs Standard CBM | -0.013 | -0.022–-0.004 | False | Positive Δ favors B | SUPPORTS_A |
-| Mixed-type CEM vs Learned-softmax GAM | 0.008 | -0.001–0.018 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
-| Standard CBM vs Learned-softmax GAM | 0.017 | 0.006–0.027 | False | Positive Δ favors B | SUPPORTS_B |
-| Standard CBM vs Mixed-type CEM | 0.009 | -0.002–0.020 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Black-box vs Learned-softmax GAM | 0.004 | -0.005–0.014 | True | Positive Δ favors B | No supported difference |
+| Black-box vs Mixed-type CEM | -0.004 | -0.013–0.005 | True | Positive Δ favors B | No supported difference |
+| Black-box vs Standard CBM | -0.013 | -0.022–-0.004 | False | Positive Δ favors B | Supports A |
+| Mixed-type CEM vs Learned-softmax GAM | 0.008 | -0.001–0.018 | True | Positive Δ favors B | No supported difference |
+| Standard CBM vs Learned-softmax GAM | 0.017 | 0.006–0.027 | False | Positive Δ favors B | Supports B |
+| Standard CBM vs Mixed-type CEM | 0.009 | -0.002–0.020 | True | Positive Δ favors B | No supported difference |
 
 ![RPT-F04. Pooled primary MAE with 2,000 patient-cluster bootstrap 95% intervals.](figures_catalogue/RPT-F04_en.png)
 
@@ -440,18 +440,18 @@ What does this mean? WHAT evidence supports inspecting individual concept groups
 
 ### 6.4 Results — WHY
 
-What was measured? WHY evidence asks how predicted concepts enter each concept model's malignancy score. For every fold, train-only means centre the raw group terms, and the centered bias plus eight terms reconstructs the task score within the frozen 1e-6 tolerance. Table RPT-T15 records pooled signed means and fold centering constants without relabelling them as importance.
+What was measured? WHY evidence asks how predicted concepts enter each concept model's malignancy score. For every fold, train-only means centre the raw group terms, and the centered bias plus eight terms reconstructs the task score within the frozen 1e-6 tolerance. Table RPT-T15 summarizes selected persisted pooled signed means; complete fold-level centering constants remain in the reproducibility evidence.
 
 **RPT-T15. Centered contribution summary**
 
 | Model | Concept | Pooled signed mean (rating points) | Role within model |
 | --- | --- | --- | --- |
-| Standard CBM | calcification | 0.400 | Most positive |
-| Standard CBM | texture | -0.122 | Most negative |
-| Mixed-type CEM | internalStructure | 0.486 | Most positive |
-| Mixed-type CEM | texture | 0.101 | Most positive |
-| Learned-softmax GAM | calcification | 0.402 | Most positive |
-| Learned-softmax GAM | lobulation | -0.016 | Most negative |
+| Standard CBM | calcification | 0.400 | Largest pooled signed mean |
+| Standard CBM | texture | -0.122 | Smallest pooled signed mean |
+| Mixed-type CEM | internalStructure | 0.486 | Largest pooled signed mean |
+| Mixed-type CEM | texture | 0.101 | Smallest pooled signed mean |
+| Learned-softmax GAM | calcification | 0.402 | Largest pooled signed mean |
+| Learned-softmax GAM | lobulation | -0.016 | Smallest pooled signed mean |
 
 What did we observe? Signed contribution directions differ across concept and model, demonstrating that identical concept names need not play identical decision roles. Figure RPT-F10 displays empirical OOF profiles derived as a presentation summary of frozen per-sample points. The profiles are descriptive and should not be read as global causal shape functions. The authoritative model-by-concept mean absolute aggregate was not persisted, so the report marks it DATA_NOT_PERSISTED rather than recreating it.
 

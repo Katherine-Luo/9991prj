@@ -218,10 +218,18 @@ def _trace(item: Mapping[str, Any]) -> dict[str, str]:
     }
 
 
-def _supported_conclusion(details: Mapping[str, Any]) -> str:
+def _supported_conclusion_code(details: Mapping[str, Any]) -> str:
     if details["ci_crosses_zero"]:
         return "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO"
     return "SUPPORTS_B" if float(details["estimate_mean"]) > 0 else "SUPPORTS_A"
+
+
+def _supported_conclusion_label(details: Mapping[str, Any]) -> str:
+    return {
+        "SUPPORTS_A": "Supports A",
+        "SUPPORTS_B": "Supports B",
+        "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO": "No supported difference",
+    }[_supported_conclusion_code(details)]
 
 
 def _training_configuration_rows(context: CatalogueContext) -> list[dict[str, Any]]:
@@ -350,7 +358,8 @@ def build_public_table_rows(context: CatalogueContext) -> dict[str, list[dict[st
             "95% CI": f"{_fmt(d['percentile_2_5'])}–{_fmt(d['percentile_97_5'])}",
             "Crosses zero": d["ci_crosses_zero"],
             "Sign convention": "Positive Δ favors B",
-            "Supported conclusion": _supported_conclusion(d),
+            "Supported conclusion": _supported_conclusion_label(d),
+            "controlled_conclusion_code": _supported_conclusion_code(d),
             **_trace(item),
         }
         for item in _category_rows(context, "CAT-D")
@@ -377,7 +386,8 @@ def build_public_table_rows(context: CatalogueContext) -> dict[str, list[dict[st
             "95% CI": f"{_fmt(d['percentile_2_5'])}–{_fmt(d['percentile_97_5'])}",
             "Crosses zero": d["ci_crosses_zero"],
             "Sign convention": "Positive Δ favors B",
-            "Supported conclusion": _supported_conclusion(d),
+            "Supported conclusion": _supported_conclusion_label(d),
+            "controlled_conclusion_code": _supported_conclusion_code(d),
             **_trace(item),
         }
         for item in _category_rows(context, "CAT-F")
@@ -413,12 +423,12 @@ def build_public_table_rows(context: CatalogueContext) -> dict[str, list[dict[st
     for model in MODEL_ORDER[1:]:
         model_rows = [item for item in contribution_rows if item["model"] == model]
         selected_contributions.extend((
-            max(model_rows, key=lambda item: item["details"]["pooled_signed_mean_rating_points"]),
-            min(model_rows, key=lambda item: item["details"]["pooled_signed_mean_rating_points"]),
+            (max(model_rows, key=lambda item: item["details"]["pooled_signed_mean_rating_points"]), "Largest pooled signed mean"),
+            (min(model_rows, key=lambda item: item["details"]["pooled_signed_mean_rating_points"]), "Smallest pooled signed mean"),
         ))
     tables["RPT-T15"] = [
-        {"Model": MODEL_LABELS[str(item["model"])], "Concept": item["concept_or_target"], "Pooled signed mean (rating points)": _fmt(d["pooled_signed_mean_rating_points"]), "Role within model": "Most positive" if d["pooled_signed_mean_rating_points"] > 0 else "Most negative", **_trace(item)}
-        for item in selected_contributions for d in [item["details"]]
+        {"Model": MODEL_LABELS[str(item["model"])], "Concept": item["concept_or_target"], "Pooled signed mean (rating points)": _fmt(d["pooled_signed_mean_rating_points"]), "Role within model": role, **_trace(item)}
+        for item, role in selected_contributions for d in [item["details"]]
     ]
     tables["RPT-T16"] = [
         {"Fold": item["fold"], "Concept": item["concept_or_target"], **{f"Expert {i+1}": _fmt(v) for i, v in enumerate(d["final_weights"])}, "Min–max": f"{_fmt(d['minimum_weight'])}–{_fmt(d['maximum_weight'])}", "Simplex": _fmt(d["simplex_sum"]), **_trace(item)}
@@ -446,7 +456,11 @@ def export_public_tables(context: CatalogueContext, public_root: Path = PUBLIC_R
     paths: dict[str, Path] = {}
     for table_id, payload in rows.items():
         path = root / f"{table_id}.csv"
-        _write_csv(path, payload)
+        reader_facing_payload = [
+            {key: value for key, value in row.items() if key != "controlled_conclusion_code"}
+            for row in payload
+        ]
+        _write_csv(path, reader_facing_payload)
         paths[table_id] = path
     return paths
 
@@ -927,13 +941,13 @@ def build_manuscript_sections(context: CatalogueContext) -> tuple[ManuscriptSect
             "SEC-RESULTS-PREDICTION", "6.1 Results — Prediction", "6.1 结果——Prediction",
             (
                 f"What was measured? Primary prediction was evaluated on all 2,633 OOF nodules with original-scale MAE as the primary endpoint. Learned-softmax GAM produced the lowest point estimate ({_fmt(gam['original_scale_mae'])}), followed by Mixed-type CEM ({_fmt(p['mixed_cem']['original_scale_mae'])}), Black-box ({_fmt(bb['original_scale_mae'])}), and Standard CBM ({_fmt(p['standard_cbm']['original_scale_mae'])}). Table RPT-T07 reports every frozen regression point estimate and its existing 2,000-draw interval; Figure RPT-F04 makes the overlap in uncertainty visible.",
-                "What did we observe? Paired Delta-MAE supports Learned-softmax GAM over Black-box and Standard CBM because the corresponding intervals do not cross zero, whereas smaller differences require a more cautious reading. The Black-box versus Standard CBM interval crosses zero, showing that interpretability structure did not automatically improve point prediction. Table RPT-T08 and Figure RPT-F05 preserve all six comparisons and the sign convention MAE_A − MAE_B.",
+                "What did we observe? Paired Delta-MAE supports Learned-softmax GAM over Black-box and Standard CBM because the corresponding intervals do not cross zero, whereas smaller differences require a more cautious reading. The Black-box versus Standard CBM interval crosses zero, showing that interpretability structure did not automatically improve point prediction. Table RPT-T08 and Figure RPT-F05 preserve all six comparisons and the sign convention MAE_A − MAE_B. In the reader-facing tables, No supported difference means that the paired 95% CI crosses zero.",
                 "On the 1,073-nodule extreme subset, all four continuous scores discriminated low from high ratings, but paired Delta-AUROC evidence was less decisive than the MAE evidence. Several intervals cross zero, and Standard CBM is lower than Black-box under the registered B−A convention. Table RPT-T09, Table RPT-T10, and Figure RPT-F06 therefore separate absolute AUROC/AUPRC performance from between-model uncertainty.",
                 "What does this mean? Learned-softmax GAM is the strongest point-estimate regressor in this experiment, but the result does not justify a universal ranking across endpoints. Unclipped score ranges and small out-of-range rates remain part of the model behaviour rather than being hidden by post-hoc clipping. The target is a radiologist mean, so predictive accuracy should not be interpreted as pathology-level diagnostic accuracy.",
             ),
             (
                 f"测量内容是什么？主要预测在全部 2,633 个 OOF 结节上评估，以原始量尺 MAE 为主要终点。Learned-softmax GAM 的点估计最低（{_fmt(gam['original_scale_mae'])}），随后为 Mixed-type CEM（{_fmt(p['mixed_cem']['original_scale_mae'])}）、Black-box（{_fmt(bb['original_scale_mae'])}）与 Standard CBM（{_fmt(p['standard_cbm']['original_scale_mae'])}）。表 RPT-T07 报告全部冻结回归点估计及既有 2,000-draw 区间；图 RPT-F04 直观展示不确定性重叠。",
-                "观察到了什么？配对 Delta-MAE 支持 Learned-softmax GAM 优于 Black-box 和 Standard CBM，因为对应区间不跨零；较小差异则需要谨慎解读。Black-box 与 Standard CBM 的区间跨零，说明加入解释结构并不会自动改善点预测。表 RPT-T08 与图 RPT-F05 保留全部六组比较以及 MAE_A − MAE_B 符号约定。",
+                "观察到了什么？配对 Delta-MAE 支持 Learned-softmax GAM 优于 Black-box 和 Standard CBM，因为对应区间不跨零；较小差异则需要谨慎解读。Black-box 与 Standard CBM 的区间跨零，说明加入解释结构并不会自动改善点预测。表 RPT-T08 与图 RPT-F05 保留全部六组比较以及 MAE_A − MAE_B 符号约定。在面向读者的表格中，No supported difference 表示配对 95% CI 跨越零。",
                 "在 1,073 个结节的极端子集上，四个连续评分均能区分低分与高分，但配对 Delta-AUROC 证据不如 MAE 证据明确。多个区间跨零；在预注册 B−A 约定下，Standard CBM 低于 Black-box。因此，表 RPT-T09、表 RPT-T10 与图 RPT-F06 把绝对 AUROC/AUPRC 性能和模型间不确定性分开。",
                 "这意味着什么？Learned-softmax GAM 是本实验中点估计最好的回归模型，但该结果不能支持跨终点的普遍排名。未裁剪评分范围与少量越界比例属于模型行为的一部分，不应被 post-hoc clipping 隐藏。目标是放射科医师均值，因此预测精度不能解释为病理层级诊断精度。",
             ),
@@ -974,13 +988,13 @@ def build_manuscript_sections(context: CatalogueContext) -> tuple[ManuscriptSect
         ManuscriptSection(
             "SEC-RESULTS-WHY", "6.4 Results — WHY", "6.4 结果——WHY",
             (
-                "What was measured? WHY evidence asks how predicted concepts enter each concept model's malignancy score. For every fold, train-only means centre the raw group terms, and the centered bias plus eight terms reconstructs the task score within the frozen 1e-6 tolerance. Table RPT-T15 records pooled signed means and fold centering constants without relabelling them as importance.",
+                "What was measured? WHY evidence asks how predicted concepts enter each concept model's malignancy score. For every fold, train-only means centre the raw group terms, and the centered bias plus eight terms reconstructs the task score within the frozen 1e-6 tolerance. Table RPT-T15 summarizes selected persisted pooled signed means; complete fold-level centering constants remain in the reproducibility evidence.",
                 "What did we observe? Signed contribution directions differ across concept and model, demonstrating that identical concept names need not play identical decision roles. Figure RPT-F10 displays empirical OOF profiles derived as a presentation summary of frozen per-sample points. The profiles are descriptive and should not be read as global causal shape functions. The authoritative model-by-concept mean absolute aggregate was not persisted, so the report marks it DATA_NOT_PERSISTED rather than recreating it.",
                 "Learned-softmax GAM adds a second WHY layer: five expert outputs per concept are mixed with nonnegative weights summing to one. Table RPT-T16 and Figure RPT-F11 show that the weights moved away from the uniform 0.2 initialization, although many movements are modest and fold-dependent. Learned mixtures therefore constitute evidence of optimisation, not proof that each expert represents a distinct clinical mechanism.",
                 "What does this mean? Contribution decompositions make score construction auditable and permit case-level signed bars, but magnitude and sign remain properties of the trained decision function. They do not validate the underlying concepts or establish clinical causation. The private qualitative appendix pairs contribution bars with CT context and concept prediction/target evidence so WHY is not detached from WHAT and Prediction.",
             ),
             (
-                "测量内容是什么？WHY 证据关注预测概念如何进入每个概念模型的恶性评分。每一折使用 train-only mean 对原始 group term 进行中心化；中心化 bias 与八个 term 在冻结 1e-6 tolerance 内重建 task score。表 RPT-T15 记录 pooled signed mean 与逐折 centering constants，但不会把它们改称 importance。",
+                "测量内容是什么？WHY 证据关注预测概念如何进入每个概念模型的恶性评分。每一折使用 train-only mean 对原始 group term 进行中心化；中心化 bias 与八个 term 在冻结 1e-6 tolerance 内重建 task score。表 RPT-T15 汇总经选择且已持久化的 pooled signed mean；完整的逐折 centering constants 保留在可复现性证据中。",
                 "观察到了什么？不同 concept 与 model 的有符号贡献方向不同，说明相同 concept name 不一定具有相同决策角色。图 RPT-F10 把冻结逐样本点做成经验 OOF profile。该 profile 仅为描述性展示，不能读作 global causal shape function。权威 model-by-concept mean absolute aggregate 未持久化，因此报告将其标记为 DATA_NOT_PERSISTED，而不重新计算。",
                 "Learned-softmax GAM 增加第二层 WHY：每个 concept 的五个 expert output 由非负且和为一的权重混合。表 RPT-T16 与图 RPT-F11 表明，权重偏离均匀的 0.2 初始化，但很多变化较小且依赖 fold。学习到的 mixture 是 optimisation evidence，并不能证明每个 expert 对应不同临床机制。",
                 "这意味着什么？贡献分解让评分构成可审计，并支持病例层面有符号 bar，但 magnitude 与 sign 仍是训练决策函数的属性，不能验证底层概念或建立临床因果关系。私有定性附录把 contribution bar 与 CT context、concept prediction/target evidence 配对，避免 WHY 脱离 WHAT 与 Prediction。",
@@ -1084,7 +1098,7 @@ def build_manuscript_sections(context: CatalogueContext) -> tuple[ManuscriptSect
 
 
 def _display_columns(rows: Sequence[Mapping[str, Any]]) -> list[str]:
-    hidden={"catalogue_item_id","source_artifact_id","source_field_path","source_sha256"}
+    hidden={"catalogue_item_id","source_artifact_id","source_field_path","source_sha256","controlled_conclusion_code"}
     return [key for key in rows[0] if key not in hidden]
 
 
@@ -1321,7 +1335,11 @@ def build_reverse_traceability(context: CatalogueContext, tables: Mapping[str,Se
     for section in sections:
         for table_id in section.table_ids:
             for idx,row in enumerate(tables[table_id]):
-                if "catalogue_item_id" in row: rows.append({"report_component_id":f"{table_id}.row.{idx}","component_type":"table_row","section_id":section.section_id,"catalogue_item_id":row["catalogue_item_id"],"source_artifact_id":row["source_artifact_id"],"source_field_path":row["source_field_path"],"source_sha256":row["source_sha256"]})
+                if "catalogue_item_id" in row:
+                    trace_row={"report_component_id":f"{table_id}.row.{idx}","component_type":"table_row","section_id":section.section_id,"catalogue_item_id":row["catalogue_item_id"],"source_artifact_id":row["source_artifact_id"],"source_field_path":row["source_field_path"],"source_sha256":row["source_sha256"]}
+                    if "controlled_conclusion_code" in row:
+                        trace_row["controlled_conclusion_code"]=row["controlled_conclusion_code"]
+                    rows.append(trace_row)
         for figure_id in section.figure_ids:
             mapped=[]
             for item in context.items:

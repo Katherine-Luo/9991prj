@@ -6,7 +6,7 @@
     "overlap": "PASS",
     "tables_and_captions": "PASS"
   },
-  "manual_review_timestamp_utc": "2026-08-13T14:40:44.748539+00:00",
+  "manual_review_timestamp_utc": "2026-08-13T16:02:29.373529+00:00",
   "manual_reviewer": "Codex primary agent (visual inspection of contact sheets and original-resolution critical pages)",
   "manual_visual_review": "PASS",
   "pdfplumber_text_gate": "PASS",
@@ -88,7 +88,7 @@
           "width": 1241
         }
       ],
-      "sha256": "407cb67588c8c20369cfdb8f2a276cde5d9bafa51620c420c2e4350f3d90b7a7",
+      "sha256": "6b8cef13a27934b2964f16275fdb11cc9a18fd7f8d70bf840666af78bec25f98",
       "title": "Private qualitative appendix"
     },
     "qualitative_appendix_zh": {
@@ -168,7 +168,7 @@
           "width": 1241
         }
       ],
-      "sha256": "efcb8fde4f8576282be990e46d707ae2ed7f8aa6d15c9fa6444a9649804807df",
+      "sha256": "257d4d780c3eba7cac6e807d2d54acbb19a56de8b6d9f54334a69db2b87009b0",
       "title": "\u79c1\u6709\u5b9a\u6027\u9644\u5f55"
     },
     "technical_en": {
@@ -185,14 +185,14 @@
         2420,
         2959,
         3623,
-        3557,
-        1351,
+        3617,
+        1279,
         1025,
         2737,
         521,
         1934,
         1679,
-        3378,
+        3493,
         1664,
         1694,
         3041,
@@ -265,13 +265,13 @@
         {
           "height": 1754,
           "page": 11,
-          "sha256": "0b08cd5900cdd8eef9c6e169ed425c403437d01ca1697ce75e01b74666196f9d",
+          "sha256": "33963873b84b163037d5fadfa47fe44d97b06ecca84d8ef8c1c55af93f892084",
           "width": 1241
         },
         {
           "height": 1754,
           "page": 12,
-          "sha256": "ab0b52c4e187794c81090d94f6679c33ecf5440cb3b432040348dbd622522e9e",
+          "sha256": "dd467d766b0f3f723a0fd6dfd65dabcd1d5bd3ca7f7f02050f46ac705e2e9621",
           "width": 1241
         },
         {
@@ -307,7 +307,7 @@
         {
           "height": 1754,
           "page": 18,
-          "sha256": "102a07e65ad42baa2ac117efdcc9f9f585be77a8231e92abdc4089be15a5b8df",
+          "sha256": "4e8fb696d72f9be0000a9e567bac942b6fcd618dacdf2cb8d1fe62848d8340cd",
           "width": 1241
         },
         {
@@ -353,7 +353,7 @@
           "width": 1241
         }
       ],
-      "sha256": "5291c0ef363391997b880ca9cff4e3a4c38586a37a018a549bd405d22f5da01f",
+      "sha256": "20be47d11b8c5f46796a47da202a6a22e363b52ed615e32cb75765dfa4b72d36",
       "title": "Interpretable Pulmonary-Nodule Malignancy Scoring"
     },
     "technical_en_with_appendix": {
@@ -370,14 +370,14 @@
         2420,
         2959,
         3623,
-        3557,
-        1351,
+        3617,
+        1279,
         1025,
         2737,
         521,
         1934,
         1679,
-        3378,
+        3493,
         1664,
         1694,
         3041,
@@ -460,13 +460,13 @@
         {
           "height": 1754,
           "page": 11,
-          "sha256": "0b08cd5900cdd8eef9c6e169ed425c403437d01ca1697ce75e01b74666196f9d",
+          "sha256": "33963873b84b163037d5fadfa47fe44d97b06ecca84d8ef8c1c55af93f892084",
           "width": 1241
         },
         {
           "height": 1754,
           "page": 12,
-          "sha256": "ab0b52c4e187794c81090d94f6679c33ecf5440cb3b432040348dbd622522e9e",
+          "sha256": "dd467d766b0f3f723a0fd6dfd65dabcd1d5bd3ca7f7f02050f46ac705e2e9621",
           "width": 1241
         },
         {
@@ -502,7 +502,7 @@
         {
           "height": 1754,
           "page": 18,
-          "sha256": "102a07e65ad42baa2ac117efdcc9f9f585be77a8231e92abdc4089be15a5b8df",
+          "sha256": "4e8fb696d72f9be0000a9e567bac942b6fcd618dacdf2cb8d1fe62848d8340cd",
           "width": 1241
         },
         {
@@ -608,7 +608,7 @@
           "width": 1241
         }
       ],
-      "sha256": "5eb39b43c48fe73a0c896dbdc755f716245a5e7875de724394e51a2b31c904ea",
+      "sha256": "14bbaa9687ea832de2d0fac008bba2ca5fafc5ee30aaabf89db953d8ec434edd",
       "title": ""
     },
     "technical_zh": {
@@ -624,14 +624,14 @@
         2165,
         1943,
         1618,
-        3019,
-        2192,
+        3070,
+        2084,
         104,
         1663,
         1146,
         1655,
-        1063,
-        3132,
+        1065,
+        3213,
         581,
         1246,
         1863,
@@ -699,13 +699,13 @@
         {
           "height": 1754,
           "page": 10,
-          "sha256": "b6f4411428f37f8e58ec6c765a3bb1560f5aecf337759bac6362bbdd0ce8a217",
+          "sha256": "e546520a5137128bc9bb1b7af0d779c9c9d22eb8e96426c13a9b0441b07b49e2",
           "width": 1241
         },
         {
           "height": 1754,
           "page": 11,
-          "sha256": "a57331a5811d0e25ad419afa6d85b6f4563568edc9e629b50d4ae165e501b225",
+          "sha256": "7d2f0538b57d89c7e0ec30a21a857ba808d1f7fd4b90ceda33cf13d3d19c79b7",
           "width": 1241
         },
         {
@@ -735,13 +735,13 @@
         {
           "height": 1754,
           "page": 16,
-          "sha256": "21468afcc50579e4509bbc10e8f573a56f6d03731697b68c7463d9d43363d234",
+          "sha256": "2d1d43738dc4fe700309ef2e0c3dd16415fa1bcfd28699f4d637c274fa77c9a4",
           "width": 1241
         },
         {
           "height": 1754,
           "page": 17,
-          "sha256": "36b1bd782413e95d8618165eef6330570510bfe05c80bb2ec77437e0ec94621d",
+          "sha256": "a35c1d0dac4732d9a430fcda746404389f28d1d8f318d3832117542738c7316b",
           "width": 1241
         },
         {
@@ -793,7 +793,7 @@
           "width": 1241
         }
       ],
-      "sha256": "82bbbb123639e433c0aaaef15bf2bcffeda53d90a0adc99de77cebcf0a561e29",
+      "sha256": "2b217e7d96ed36d1ae88bafbf52d5993a1c854a120400d44a83d35b5aa94c215",
       "title": "Interpretable Pulmonary-Nodule Malignancy Scoring"
     },
     "technical_zh_with_appendix": {
@@ -809,14 +809,14 @@
         2165,
         1943,
         1618,
-        3019,
-        2192,
+        3070,
+        2084,
         104,
         1663,
         1146,
         1655,
-        1063,
-        3132,
+        1065,
+        3213,
         581,
         1246,
         1863,
@@ -894,13 +894,13 @@
         {
           "height": 1754,
           "page": 10,
-          "sha256": "b6f4411428f37f8e58ec6c765a3bb1560f5aecf337759bac6362bbdd0ce8a217",
+          "sha256": "e546520a5137128bc9bb1b7af0d779c9c9d22eb8e96426c13a9b0441b07b49e2",
           "width": 1241
         },
         {
           "height": 1754,
           "page": 11,
-          "sha256": "a57331a5811d0e25ad419afa6d85b6f4563568edc9e629b50d4ae165e501b225",
+          "sha256": "7d2f0538b57d89c7e0ec30a21a857ba808d1f7fd4b90ceda33cf13d3d19c79b7",
           "width": 1241
         },
         {
@@ -930,13 +930,13 @@
         {
           "height": 1754,
           "page": 16,
-          "sha256": "21468afcc50579e4509bbc10e8f573a56f6d03731697b68c7463d9d43363d234",
+          "sha256": "2d1d43738dc4fe700309ef2e0c3dd16415fa1bcfd28699f4d637c274fa77c9a4",
           "width": 1241
         },
         {
           "height": 1754,
           "page": 17,
-          "sha256": "36b1bd782413e95d8618165eef6330570510bfe05c80bb2ec77437e0ec94621d",
+          "sha256": "a35c1d0dac4732d9a430fcda746404389f28d1d8f318d3832117542738c7316b",
           "width": 1241
         },
         {
@@ -1048,12 +1048,12 @@
           "width": 1241
         }
       ],
-      "sha256": "0b80b4edd7d19bcd51f73abe4677c12c1a6694e254146af0e0cae96a68109f53",
+      "sha256": "15a2287da5d9c89fd42b86c79266e6841836d7419928712dc0107422075f013a",
       "title": ""
     }
   },
   "render_dpi": 150,
-  "rendered_page_manifest_sha256": "174aca64567674dda9a1ef334c246851bb9dbdafadcd17c11341755d2dedef7d",
+  "rendered_page_manifest_sha256": "b09f335c35d6740b709ddbdc01a2aacbe3f921cb078b2930f26f623fc2317f5f",
   "renderer": "pdftoppm",
   "schema_version": 1,
   "status": "PASS"
