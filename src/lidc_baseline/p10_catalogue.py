@@ -782,7 +782,13 @@ def _contribution_rows(repository_root: Path, report: Mapping[str, Any], archive
                         "empirical_oof_profile_renderable": True,
                         "case_level_contribution_bar_renderable": True,
                         "mean_absolute_contribution_status": "DATA_NOT_PERSISTED",
-                        "mean_absolute_contribution_note": "Not recomputed at Catalogue stage",
+                        "mean_absolute_contribution_note": (
+                            "No authoritative frozen P9 aggregate stores model-by-concept mean "
+                            "absolute centered contribution. Per-sample contributions and train-fold "
+                            "centering constants exist, but deriving the aggregate would be a prohibited "
+                            "new scientific computation at the Catalogue gate. Any earlier narrative "
+                            "summary is non-authoritative for P10."
+                        ),
                     },
                 )
             )
@@ -1127,6 +1133,11 @@ def _table_figure_rows(
                     "planned_table_id": identifier, "evidence_categories": category,
                     "render_status": "NOT_RENDERED_AT_CATALOGUE_GATE",
                     "new_inference_required": False,
+                    "mean_absolute_centered_contribution_policy": (
+                        "UNAVAILABLE_FROM_AUTHORITATIVE_FROZEN_SOURCE; do not use transient narrative "
+                        "values or recompute from per-sample contributions"
+                        if identifier == "RPT-T15" else None
+                    ),
                     "categorical_target_semantics": (
                         "full reader vote distribution retained; modal label display-only"
                         if identifier == "RPT-TA02" else None
@@ -1200,8 +1211,16 @@ def _table_figure_rows(
                 scientific_question="Which current public figure asset already exists?",
                 source_artifact_id=f"ART-P10-FIGURE-{path.stem.upper()}", source_root_alias="repo://",
                 source_relative_path=rel, source_field_path="$", source_sha256=sha256_file(path),
-                report_section_id="SEC-PUBLIC-REPRODUCIBILITY", report_usage_status="USED_APPENDIX",
-                details={"existing": True, "revision_needed": True, "modified_by_catalogue": False},
+                scientific_status="LEGACY_PRESENTATION_ONLY",
+                report_section_id="SEC-PUBLIC-REPRODUCIBILITY", report_usage_status="AUDIT_ONLY",
+                details={
+                    "existing": True,
+                    "presentation_class": "LEGACY_PRESENTATION_ONLY",
+                    "revision_needed": True,
+                    "modified_by_catalogue": False,
+                    "may_satisfy_planned_report_requirement": False,
+                    "authoritative_rewrite_input": False,
+                },
             )
         )
     return tables, figures
@@ -1642,14 +1661,30 @@ def _storage_rows(
         relative = path.relative_to(repository_root).as_posix()
         digest = sha256_file(path)
         item_id = f"ART-STORAGE-REPO-{hashlib.sha256(relative.encode()).hexdigest()[:12].upper()}"
+        legacy_presentation = (
+            relative.startswith("reports/baseline_v2/p10/public/")
+            and (
+                relative.endswith(".pdf")
+                or "/figures/" in relative
+            )
+        )
         rows.append(
             _item(
-                category="R", catalogue_item_id=item_id, entity_type="tracked_repository_file", phase="P10",
+                category="R", catalogue_item_id=item_id,
+                entity_type="legacy_presentation_file" if legacy_presentation else "tracked_repository_file",
+                phase="P10",
                 result_name=f"Repository evidence: {path.name}", scientific_question="Where is this tracked public evidence stored?",
                 source_artifact_id=item_id, source_root_alias="repo://", source_relative_path=relative,
                 source_field_path="$", source_sha256=digest, privacy_class="PUBLIC_DEIDENTIFIED",
+                scientific_status="LEGACY_PRESENTATION_ONLY" if legacy_presentation else "PASS",
                 report_section_id="SEC-PUBLIC-REPRODUCIBILITY", report_usage_status="AUDIT_ONLY",
-                details={"byte_size": path.stat().st_size, "human_master_include": relative.startswith("artifacts/baseline_v2/audit/p9/")},
+                details={
+                    "byte_size": path.stat().st_size,
+                    "human_master_include": relative.startswith("artifacts/baseline_v2/audit/p9/"),
+                    "presentation_class": "LEGACY_PRESENTATION_ONLY" if legacy_presentation else "NOT_APPLICABLE",
+                    "may_satisfy_planned_report_requirement": False if legacy_presentation else None,
+                    "authoritative_rewrite_input": False if legacy_presentation else None,
+                },
             )
         )
         private_locations.append(
@@ -1678,14 +1713,25 @@ def _storage_rows(
         relative = path.relative_to(private_report).as_posix()
         digest = sha256_file(path)
         item_id = f"ART-STORAGE-PRIVATE-REPORT-{hashlib.sha256(relative.encode()).hexdigest()[:12].upper()}"
+        legacy_presentation = path.suffix.lower() in {".pdf", ".png", ".svg"}
         rows.append(
             _item(
-                category="R", catalogue_item_id=item_id, entity_type="private_report_file", phase="P10",
+                category="R", catalogue_item_id=item_id,
+                entity_type="legacy_private_presentation_file" if legacy_presentation else "private_report_file",
+                phase="P10",
                 result_name=f"Private report asset: {path.name}", scientific_question="Where is this private appendix asset stored?",
                 source_artifact_id=item_id, source_root_alias="private-report://", source_relative_path=relative,
                 source_field_path="$", source_sha256=digest, privacy_class="PRIVATE_RESTRICTED",
-                report_section_id="SEC-PRIVATE-APPENDIX", report_usage_status="USED_PRIVATE_APPENDIX",
-                details={"byte_size": path.stat().st_size, "human_master_include": path.suffix.lower() in {".pdf", ".md", ".json"}},
+                scientific_status="LEGACY_PRESENTATION_ONLY" if legacy_presentation else "PASS",
+                report_section_id="SEC-PRIVATE-APPENDIX",
+                report_usage_status="AUDIT_ONLY" if legacy_presentation else "USED_PRIVATE_APPENDIX",
+                details={
+                    "byte_size": path.stat().st_size,
+                    "human_master_include": path.suffix.lower() in {".pdf", ".md", ".json"},
+                    "presentation_class": "LEGACY_PRESENTATION_ONLY" if legacy_presentation else "NOT_APPLICABLE",
+                    "may_satisfy_planned_report_requirement": False if legacy_presentation else None,
+                    "authoritative_rewrite_input": False if legacy_presentation else None,
+                },
             )
         )
         private_locations.append(
@@ -1735,12 +1781,34 @@ def _gap_rows(repository_root: Path) -> list[dict[str, Any]]:
     plan_path = "docs/results/RESULTS_CATALOGUE_PLAN.md"
     digest = _source_hash(repository_root, plan_path)
     specifications = [
-        ("MEAN-ABS-CONTRIBUTION", "Mean absolute centered contribution summary", "DATA_NOT_PERSISTED", "Do not label centering constants as importance; leave unavailable."),
+        (
+            "MEAN-ABS-CONTRIBUTION",
+            "Mean absolute centered contribution summary",
+            "DATA_NOT_PERSISTED",
+            "No authoritative frozen P9 aggregate persists model-by-concept mean absolute centered "
+            "contribution. Earlier narrative values were transient analysis, are not authoritative P10 "
+            "sources, and must not be reused in RPT-T15. Do not recompute from frozen per-sample values.",
+        ),
         ("UNDEFINED-MECHANISM", "Pre-ReLU CAM and gradient decomposition", "DATA_NOT_PERSISTED", "Report the mechanism boundary; do not run a new forward pass."),
         ("CASE-INTERVENTION", "Case-level intervention before/after evidence for RPT-FA06", "WOULD_REQUIRE_NEW_SCIENTIFIC_COMPUTE", "Mark HOW unavailable; never recompute for presentation."),
-        ("PLANNED-TABLES", "Planned academic report tables RPT-T01 through RPT-T18 and TA02", "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS", "Render only after generated Catalogue approval."),
-        ("PLANNED-FIGURES", "Planned public scientific figures RPT-F01 through RPT-F13", "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS", "Render only after generated Catalogue approval."),
-        ("PRIVATE-FIGURES", "Planned paper-style private figures RPT-FA01 through RPT-FA06", "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS", "Render supported components only after Catalogue approval."),
+        (
+            "PLANNED-TABLES",
+            "20 planned tables: RPT-T01-RPT-T18 + RPT-TA01 + RPT-TA02",
+            "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS",
+            "Render only after generated Catalogue approval.",
+        ),
+        (
+            "PLANNED-FIGURES",
+            "14 planned public figures: RPT-F01-RPT-F08 + RPT-F09A + RPT-F09B + RPT-F10-RPT-F13",
+            "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS",
+            "Render only after generated Catalogue approval.",
+        ),
+        (
+            "PRIVATE-FIGURES",
+            "6 planned private figures: RPT-FA01-RPT-FA06",
+            "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS",
+            "Render supported components only after Catalogue approval.",
+        ),
         ("FULL-CT-PANELS", "Full CT context, ROI box, and deterministic reprojection panels", "VISUALIZATION_NOT_YET_RENDERED_BUT_FROZEN_DATA_EXISTS", "Use existing exact source/mapping only; no inference."),
     ]
     return [

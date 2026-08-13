@@ -167,6 +167,106 @@ def test_missing_outputs_are_explicit_and_never_silently_recomputed() -> None:
     assert "never recompute" in case_intervention["details"]["permitted_action"]
 
 
+def test_mean_absolute_centered_contribution_remains_non_authoritative() -> None:
+    registry = _registry()
+    gap = next(
+        item
+        for item in registry["items"]
+        if item["catalogue_item_id"] == "RES-P10-GAP-MEAN-ABS-CONTRIBUTION"
+    )
+    assert gap["availability_status"] == "DATA_NOT_PERSISTED"
+    assert "transient analysis" in gap["details"]["permitted_action"]
+    assert "must not be reused in RPT-T15" in gap["details"]["permitted_action"]
+    contribution_rows = [item for item in registry["items"] if item["category"] == "CAT-J"]
+    assert len(contribution_rows) == 24
+    assert all(
+        item["details"]["mean_absolute_contribution_status"] == "DATA_NOT_PERSISTED"
+        and "non-authoritative for P10" in item["details"]["mean_absolute_contribution_note"]
+        for item in contribution_rows
+    )
+    table = next(
+        item
+        for item in registry["items"]
+        if item["details"].get("planned_table_id") == "RPT-T15"
+    )
+    assert table["details"]["mean_absolute_centered_contribution_policy"].startswith(
+        "UNAVAILABLE_FROM_AUTHORITATIVE_FROZEN_SOURCE"
+    )
+
+
+def test_cat_t_reconciles_exact_planned_output_counts() -> None:
+    registry = _registry()
+    gaps = {
+        item["catalogue_item_id"]: item
+        for item in registry["items"]
+        if item["category"] == "CAT-T"
+    }
+    assert gaps["RES-P10-GAP-PLANNED-TABLES"]["result_name"] == (
+        "20 planned tables: RPT-T01-RPT-T18 + RPT-TA01 + RPT-TA02"
+    )
+    assert gaps["RES-P10-GAP-PLANNED-FIGURES"]["result_name"] == (
+        "14 planned public figures: RPT-F01-RPT-F08 + RPT-F09A + RPT-F09B + RPT-F10-RPT-F13"
+    )
+    assert gaps["RES-P10-GAP-PRIVATE-FIGURES"]["result_name"] == (
+        "6 planned private figures: RPT-FA01-RPT-FA06"
+    )
+    planned_tables = [
+        item for item in registry["items"] if item["entity_type"] == "planned_scientific_table"
+    ]
+    planned_figures = [
+        item for item in registry["items"] if item["entity_type"] == "planned_scientific_figure"
+    ]
+    assert len(planned_tables) == 20
+    assert len([item for item in planned_figures if not item["details"]["planned_figure_id"].startswith("RPT-FA")]) == 14
+    assert len([item for item in planned_figures if item["details"]["planned_figure_id"].startswith("RPT-FA")]) == 6
+
+
+def test_old_figures_and_pdfs_are_legacy_presentation_only() -> None:
+    registry = _registry()
+    existing_figures = [
+        item for item in registry["items"] if item["entity_type"] == "existing_public_figure"
+    ]
+    assert existing_figures
+    for item in existing_figures:
+        assert item["scientific_status"] == "LEGACY_PRESENTATION_ONLY"
+        assert item["report_usage_status"] == "AUDIT_ONLY"
+        assert item["report_table_ids"] == []
+        assert item["report_figure_ids"] == []
+        assert item["details"]["may_satisfy_planned_report_requirement"] is False
+        assert item["details"]["authoritative_rewrite_input"] is False
+    legacy_files = [
+        item for item in registry["items"] if item["entity_type"] == "legacy_presentation_file"
+    ]
+    assert legacy_files
+    assert any(item["source_relative_path"].endswith(".pdf") for item in legacy_files)
+    assert any("/figures/" in item["source_relative_path"] for item in legacy_files)
+    assert all(
+        item["scientific_status"] == "LEGACY_PRESENTATION_ONLY"
+        and item["report_usage_status"] == "AUDIT_ONLY"
+        and item["details"]["may_satisfy_planned_report_requirement"] is False
+        and item["details"]["authoritative_rewrite_input"] is False
+        for item in legacy_files
+    )
+    private_legacy_files = [
+        item
+        for item in registry["items"]
+        if item["entity_type"] == "legacy_private_presentation_file"
+    ]
+    assert private_legacy_files
+    assert any(item["source_relative_path"].endswith(".pdf") for item in private_legacy_files)
+    assert any(item["source_relative_path"].endswith(".png") for item in private_legacy_files)
+    assert all(
+        item["source_root_alias"] == "private-report://"
+        and item["scientific_status"] == "LEGACY_PRESENTATION_ONLY"
+        and item["report_usage_status"] == "AUDIT_ONLY"
+        and item["report_table_ids"] == []
+        and item["report_figure_ids"] == []
+        and item["details"]["may_satisfy_planned_report_requirement"] is False
+        and item["details"]["authoritative_rewrite_input"] is False
+        for item in private_legacy_files
+    )
+
+
 def test_public_catalogue_rejects_private_tokens(tmp_path: Path) -> None:
     safe = tmp_path / "safe.csv"
     safe.write_text("case_label,root_alias\nCASE-0001,mac-archive://\n", encoding="utf-8")
