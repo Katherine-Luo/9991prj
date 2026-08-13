@@ -227,6 +227,13 @@ Qualitative and spatial items additionally record, where applicable:
 - `display_windowing_policy`
 - `visualization_normalization_policy`
 - `caption_warning_required`
+- `original_frozen_ct_source_available`
+- `series_and_slice_provenance_available`
+- `roi_to_full_volume_mapping_available`
+- `read_only_full_ct_renderable`
+- `categorical_reader_vote_distribution_available`
+- `categorical_modal_label_displayable`
+- `case_level_intervention_evidence_available`
 - `new_inference_required`
 
 ### 4.3 Controlled states
@@ -255,8 +262,10 @@ qualitative_renderability:
   FULL_CT_CONTEXT_AVAILABLE
   ROI_ONLY_AVAILABLE
   FULL_SLICE_REPROJECTION_AVAILABLE
+  FULL_SLICE_REPROJECTION_NOT_AVAILABLE_FROM_FROZEN_DATA
   GRADCAM_AVAILABLE
   GRADCAM_UNDEFINED_ZERO_MAP
+  CASE_LEVEL_INTERVENTION_AVAILABLE
   NOT_RENDERABLE_FROM_FROZEN_DATA
 ```
 
@@ -349,6 +358,14 @@ Record raw FP32 storage, occlusion availability, private shard alias, and qualit
 
 Do not reduce feasibility to a single yes/no field. For each relevant model/fold/target/case binding, register full-slice availability and source, frozen z index, ROI source and bounding box, zoomed ROI availability, map valid/undefined state, display-window policy, ROI-overlay renderability, full-slice reprojection renderability, concept-specific target availability, display-only normalization policy, required caption warning, and whether a missing component would require prohibited new inference.
 
+A full axial CT visualization may be rendered read-only from the original frozen CT/DICOM series referenced by existing provenance only when all three conditions are verified:
+
+1. the original frozen CT source still exists and is readable without changing it;
+2. exact series and slice provenance for the case exists;
+3. the frozen ROI-to-full-volume coordinate mapping can be recovered exactly.
+
+This is a display operation, not model inference. If any condition fails, full-slice context or reprojection is marked `FULL_SLICE_REPROJECTION_NOT_AVAILABLE_FROM_FROZEN_DATA`, `DATA_NOT_PERSISTED`, or `NOT_RENDERABLE_FROM_FROZEN_DATA` as appropriate. No series, slice, ROI location, or heatmap placement may be inferred heuristically.
+
 ### CAT-M - Undefined-map RCA inventory
 
 Include 28 model x target rows with counts/rates, fold/class concentration, confirmed post-ReLU zero status, implementation-bug evidence, exact-mechanism availability, and RCA classification. Pre-ReLU/gradient quantities not persisted are `NOT_PERSISTED / UNRESOLVED`.
@@ -359,7 +376,9 @@ Include model x target, model-pooled, and global rows. Keep output sensitivity a
 
 ### CAT-O - Scientific table inventory
 
-Inventory every existing table and every planned report table, including current P10 machine-readable CSVs and report tables `RPT-T01` through `RPT-T18` plus `RPT-TA01`.
+Inventory every existing table and every planned report table, including current P10 machine-readable CSVs, report tables `RPT-T01` through `RPT-T18`, the frozen-case index `RPT-TA01`, and the case-level concept/malignancy prediction table `RPT-TA02`.
+
+For `RPT-TA02`, register the frozen source for malignancy prediction/target and every concept prediction/reader target. Categorical targets must preserve the complete frozen reader vote distribution; a modal reader label may be registered as a display-only convenience but must never replace or misrepresent the distributional target.
 
 ### CAT-P - Scientific figure inventory
 
@@ -378,7 +397,9 @@ For every qualitative figure component, record whether frozen evidence supports:
 9. texture Grad-CAM;
 10. case-level concept prediction-versus-GT table;
 11. case-level centered contribution bars;
-12. undefined/zero-map limitation panel.
+12. undefined/zero-map limitation panel;
+13. persisted case-level intervention before/after evidence;
+14. an integrated Prediction-WHERE-WHAT-WHY-HOW case panel.
 
 Each component receives a controlled renderability state. Missing components must be `DATA_NOT_PERSISTED` or `WOULD_REQUIRE_NEW_SCIENTIFIC_COMPUTE`; they must never be silently synthesized.
 
@@ -386,7 +407,11 @@ Each component receives a controlled renderability state. Missing components mus
 
 Include the 14 frozen cases using opaque `CASE-####` labels only. Record role, model, fold, available prediction/concept/contribution/Grad-CAM evidence, map status, and intended panel. UID/patient mappings remain private.
 
-For every frozen case and target, also record `case_role` (`representative`, `failure`, `intervention_worsening`, `limitation`, or `undefined_zero_map`), full CT/ROI/z-index/bounding-box metadata, zoomed-ROI availability, display windowing, Grad-CAM validity, ROI-overlay and full-slice-reprojection feasibility, concept-specific map availability, caption warnings, and the complete twelve-component support checklist defined in CAT-P.
+For every frozen case and target, also record `case_role` (`representative`, `failure`, `intervention_worsening`, `limitation`, `undefined_zero_map`, or `integrated_explanation`), full CT/ROI/z-index/bounding-box metadata, zoomed-ROI availability, display windowing, Grad-CAM validity, ROI-overlay and full-slice-reprojection feasibility, concept-specific map availability, caption warnings, and the complete fourteen-component support checklist defined in CAT-P.
+
+For case-level concept evidence, record frozen predictions and targets for all six continuous concepts plus internalStructure and calcification. For each categorical concept, retain the full reader vote distribution and optionally expose a modal label only as a clearly labelled readability aid.
+
+For the integrated case explanation, independently classify the availability of Prediction, WHERE, WHAT, WHY, and HOW. HOW is available only when sufficient case-level intervention evidence was persisted by P9. Otherwise it is `DATA_NOT_PERSISTED`; the Catalogue must not request or imply a recomputed intervention.
 
 The Catalogue must therefore function as a paper-style qualitative-asset manifest, not merely state that a Grad-CAM artifact exists.
 
@@ -445,6 +470,9 @@ The future catalogue implementation must test:
 - exact expected cardinalities for training, OOF, comparisons, concepts, contributions, alpha, Grad-CAM, faithfulness, and cases;
 - `73,724 = 66,769 + 6,955` at detail, pooled, and global levels;
 - exact source file/field/hash binding;
+- exact `RPT-TA02` case-level malignancy/concept prediction and target bindings, including categorical reader vote distributions and any modal display label;
+- read-only full CT renderability only when frozen source, exact series/slice provenance, and exact ROI-to-full-volume mapping all verify;
+- independent Prediction/WHERE/WHAT/WHY/HOW availability for `RPT-FA06`, with unpersisted case-level intervention evidence classified rather than recomputed;
 - public root aliases versus private exact-path overlay;
 - public privacy and private file permissions;
 - deterministic registry/Markdown/CSV/XLSX parity;
