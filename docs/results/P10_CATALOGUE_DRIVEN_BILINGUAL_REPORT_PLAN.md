@@ -32,14 +32,16 @@ Hard boundaries:
 
 - Read P5-P9 frozen evidence only.
 - Do not train, create an optimizer, run test inference, run a model forward pass, or start a new scientific job.
+- Do not reselect checkpoints or rerun any committed test transaction.
 - Do not modify P4 splits/initializations or P5-P9 checkpoints, histories, predictions, metrics, evaluations, OOF rows, interventions, Grad-CAM maps, occlusion rows, or faithfulness artifacts.
-- Do not recompute bootstrap draws or scientific estimates.
+- Do not recompute bootstrap draws, intervention results, contributions, Grad-CAM, occlusion, faithfulness, or any scientific estimate merely to improve presentation.
+- Do not introduce Guided Backprop, Guided Grad-CAM, SHAP, LIME, Integrated Gradients, a new Grad-CAM variant, or any other XAI method not frozen in P5-P9.
 - Display-only transformation of frozen evidence is allowed only when registered by the Catalogue and traceable to its source hash.
 - P11 is undefined and must not be created or started.
 
 ## 3. Mandatory Catalogue dependency
 
-The report generator must not discover results by scanning ad hoc paths or rely on author memory. Its only scientific inventory is the approved Catalogue registry and its approved report mappings.
+The report generator is `CATALOGUE_DRIVEN`, not merely Catalogue-informed. It must not discover results by scanning ad hoc paths, rely on author memory, copy from a previous PDF, use a hard-coded stale result list, or construct scientific inputs from unregistered paths. Its only scientific inventory is the approved Catalogue registry and its approved report mappings.
 
 Required inputs:
 
@@ -67,21 +69,20 @@ verified frozen P5-P9 artifact
 -> approved Catalogue registry item
 -> approved report section manifest
 -> shared manuscript data model
+-> table/figure/caption/prose
 -> English/Chinese renderers
 ```
 
 ## 4. Deliverables
 
-### 4.1 Public Git deliverables
+### 4.1 Mandatory public Git deliverables
 
-Four canonical public bilingual reports:
+1. English complete technical research report, Markdown and PDF.
+2. Chinese complete technical research report, Markdown and PDF.
 
-1. English short report, Markdown and PDF.
-2. Chinese short report, Markdown and PDF.
-3. English technical report, Markdown and PDF.
-4. Chinese technical report, Markdown and PDF.
+The two Markdown files and two corresponding public PDFs share the same structured evidence model. Public support files include aggregate figures, table CSVs, bilingual data dictionaries, source manifests, and reverse-traceability records.
 
-The four Markdown files and four corresponding public PDFs share the same structured evidence model. Public support files include aggregate figures, table CSVs, bilingual data dictionaries, source manifests, and reverse-traceability records.
+English and Chinese short reports remain supported only as `OPTIONAL_LATER_DERIVATIVE`. They must not block P10 completion, enter the mandatory approval gate, or enter the mandatory PDF QA gate. If a short derivative is generated later under separate approval, it must use the same approved Catalogue/manuscript model and receive its own independent validation.
 
 ### 4.2 Private Mac-only deliverables
 
@@ -93,13 +94,11 @@ The four Markdown files and four corresponding public PDFs share the same struct
 
 Private deliverables never enter GitHub or Git LFS. They use opaque `CASE-####` labels in all human-readable output.
 
-### 4.3 PDF set subject to page-level QA
+### 4.3 Mandatory PDF set subject to page-level QA
 
-Exactly eight PDFs require the complete PDF quality gate:
+Exactly six PDFs require the complete P10 PDF quality gate:
 
 ```text
-short_en.pdf
-short_zh.pdf
 technical_en.pdf
 technical_zh.pdf
 qualitative_appendix_en.pdf
@@ -113,8 +112,11 @@ technical_zh_with_appendix.pdf
 - A4, single-column, journal-style layout for adviser/reviewer reading.
 - Flow-based ReportLab Platypus composition, not fixed one-section-per-page canvases.
 - Cover placeholders: Author, Affiliation, Supervisor, Date.
-- Technical main body must remain within the frozen 25-35 page gate, with an editorial target of approximately 30-35 pages and 8,000-12,000 English words. References and private appendix pages do not count toward this body target.
-- Short-report target: 8-12 pages and approximately 2,500-4,000 English words.
+- Technical main body editorial target is approximately 25-35 pages and 8,000-12,000 English words, excluding references, the public reproducibility appendix where appropriate, and the private qualitative appendix.
+- Page and word ranges are guidance, not scientific hard gates. A complete, clear report must not fail solely because it is 24 or 36 pages, and prose must never be padded to reach a target.
+- Scientific completeness, clarity, readability, and integration of evidence take precedence over page count.
+- Any future implementation must place this revised nonblocking editorial rule in the separately reviewed report-revision execution supplement; this plan does not modify the currently frozen P10 report/archive supplement.
+- Optional short-report derivatives, if separately approved later, may target 8-12 pages and approximately 2,500-4,000 English words without becoming P10 completion requirements.
 - Chinese text is paragraph-level semantic correspondence, not mechanical word-count padding.
 - Long tables may use landscape pages or repeating-header `LongTable` layouts.
 - Captions stay bound to tables/figures; `KeepWithNext` and `KeepTogether` keep evidence near its analysis.
@@ -124,7 +126,7 @@ technical_zh_with_appendix.pdf
 ### Front matter
 
 - Title page.
-- Abstract.
+- Abstract, editorial target 250-350 words.
 - Keywords.
 - Table of contents.
 - List of tables.
@@ -133,23 +135,39 @@ technical_zh_with_appendix.pdf
 
 ### 1. Introduction
 
-Explain clinical context, the prediction-versus-explanation gap, the evaluation objective, contributions, and the WHERE-WHAT-WHY-HOW framework. Do not add a table merely for appearance.
+Explain clinical context, the prediction-versus-explanation gap, the evaluation objective, contributions, and the WHERE-WHAT-WHY-HOW framework. Editorial target: approximately 2-3 pages. Do not add a table merely for appearance.
 
 ### 2. Related Work
 
-Cover Black-box models, concept bottleneck models, mixed-type CEMs, local-expert GAMs, Grad-CAM, occlusion faithfulness, concept interventions, and lung-nodule concept explanation. Include the directly relevant Dumaev et al. concept-based malignancy paper. Use verified primary-source metadata in complete IEEE numeric format.
+Cover Black-box models, concept bottleneck models, mixed-type CEMs, local-expert GAMs, Grad-CAM, occlusion faithfulness, concept interventions, and lung-nodule concept explanation. Editorial target: approximately 2-3 pages. Include the directly relevant Dumaev et al. concept-based malignancy paper. Use verified primary-source metadata in complete IEEE numeric format and clearly distinguish prior work from this project’s Mixed-type CEM and Learned-softmax GAM.
 
 ### 3. Dataset and Preprocessing
 
-Describe cohort flow, radiologist-assessed malignancy target, eight concepts, exclusion logic, 64-cubed ROI, normalization, and patient-grouped folds.
+Describe only this project's frozen LIDC-IDRI cohort construction, radiologist-assessed malignancy target, eight concepts, exclusion logic, 64-cubed ROI, normalization, and patient-grouped folds. Editorial target: approximately 2-3 pages. Reference-paper cohort sizes such as 2,651 belong only in Related Work and must never be presented as the starting point from which this project's 2,633 nodules were obtained.
+
+State explicitly:
+
+```text
+Malignancy is the downstream radiologist-assessed 1-5 target and is NOT one of the eight bottleneck concepts.
+```
+
+The eight concepts are exactly subtlety, internalStructure, calcification, sphericity, margin, lobulation, spiculation, and texture.
+
+Also explain:
+
+```text
+ROI = 64 x 64 x 64 preprocessed local pulmonary-nodule patch used as model input.
+It is not a complete axial CT slice.
+Because it has been cropped and resampled, an ROI slice can appear lower-resolution than the original CT image.
+```
 
 ### 4. Methods
 
-Describe the four architectures, objectives, contribution semantics, learned GAM alpha, Grad-CAM target/formula, occlusion protocol, interventions, and statistical definitions.
+Describe the four architectures, objectives, contribution semantics, learned GAM alpha, Grad-CAM target/formula, occlusion protocol, interventions, and statistical definitions. Editorial target: approximately 5-7 pages. Every architecture schematic and relevant caption must keep malignancy outside the eight-concept bottleneck and show it only as the downstream target/output.
 
 ### 5. Experimental Setup
 
-Describe five-fold grouping, frozen initialization, training/evaluation separation, exactly-once committed test evaluation, validation-only threshold selection, bootstrap, resources, determinism, and execution provenance without turning the section into a scheduler log.
+Describe five-fold grouping, frozen initialization, training/evaluation separation, exactly-once committed test evaluation, validation-only threshold selection, bootstrap, resources, determinism, and execution provenance without turning the section into a scheduler log. Editorial target: approximately 2-3 pages.
 
 ### 6. Results
 
@@ -162,13 +180,15 @@ The order is mandatory:
 5. HOW: `k=0..8` interventions, `iMAE/Delta_iMAE`, `iAUC/Delta_iAUC`, random/permutation and error-first orderings.
 6. Integrated interpretation: connect prediction quality and all four explanatory layers into one evidence chain.
 
+Results have an approximate editorial target of 6-10 pages, determined by scientific completeness rather than padding.
+
 ### 7. Discussion
 
-Interpret the principal findings, negative and unexpected results, comparison with related work, and implications. Do not restate the Results section as a metric list.
+Interpret the principal findings, negative and unexpected results, comparison with related work, and implications. Editorial target: approximately 3-5 pages. Do not restate the Results section as a metric list.
 
 ### 8. Limitations
 
-Separate methodological and interpretive limitations: radiologist labels rather than pathology, no external validation, intervention semantics, Grad-CAM limitations, concentrated undefined maps, and unavailable pre-ReLU/gradient decomposition.
+Use full prose to separate methodological and interpretive limitations: radiologist labels rather than pathology, no external validation, intervention semantics, Grad-CAM limitations, concentrated undefined maps, and unavailable pre-ReLU/gradient decomposition.
 
 ### 9. Conclusion
 
@@ -182,14 +202,25 @@ Place execution provenance, source hashes, storage, recovery classification, pri
 
 Every Results subsection must:
 
-1. begin with the scientific question and registered metric;
-2. cite its Catalogue items and source evidence;
-3. place the first relevant table or figure near its first textual reference;
-4. provide at least three substantive paragraphs in the technical report;
-5. explain the main numerical finding;
-6. explain its scientific meaning;
+1. answer `What was measured?` by stating the scientific question and registered method/metric;
+2. answer `What did we observe?` with the relevant Catalogue-bound evidence;
+3. answer `What does this mean for the research question?` without exceeding the registered interpretation boundary;
+4. cite its Catalogue items and source evidence;
+5. place the first relevant table or figure near its first textual reference;
+6. provide at least three substantive paragraphs in the technical report;
 7. identify negative or unexpected evidence;
-8. state the interpretation boundary.
+8. state the limitation or interpretation boundary.
+
+The local narrative sequence is a hard requirement:
+
+```text
+scientific question
+-> method/metric
+-> nearby table/figure
+-> observed result
+-> interpretation
+-> limitation
+```
 
 Forbidden patterns:
 
@@ -210,8 +241,8 @@ All tables have stable IDs and must be registered in CAT-O before rendering.
 | ID | Table | Scientific role |
 |---|---|---|
 | RPT-T01 | Related-work comparison | Compare task, concepts, spatial explanation, intervention and validation scope. |
-| RPT-T02 | Cohort flow | Report reference cohort, exclusions, 2,633 primary nodules, 868 patients, 1,073 extreme nodules and 578 extreme patients. |
-| RPT-T03 | Target and concept definitions | Define malignancy, six continuous concepts, two categorical concepts and encodings. |
+| RPT-T02 | Our frozen cohort flow | Report only this project's frozen cohort construction, exclusions, 2,633 primary nodules, 868 patients, 1,073 extreme nodules and 578 extreme patients; never start from a reference-paper 2,651-nodule cohort. |
+| RPT-T03 | Target and concept definitions | Define malignancy explicitly as the downstream radiologist-assessed 1-5 target, not a bottleneck concept; define the six continuous and two categorical bottleneck concepts and their encodings. |
 | RPT-T04 | Four-model architecture comparison | Compare inputs, concept layer, decision layer, contribution and intervention semantics. |
 | RPT-T05 | Frozen training configuration | Summarize registered model training settings and resources without scheduler-noise substitution. |
 | RPT-T06 | Evaluation protocol | Summarize folds, metrics, bootstrap, threshold and faithfulness definitions. |
@@ -221,9 +252,9 @@ All tables have stable IDs and must be registered in CAT-O before rendering.
 | RPT-T10 | Six paired Delta-AUROC comparisons | Estimate, 95% CI, zero-crossing and direction. |
 | RPT-T11 | Continuous concept metrics | Six concepts by three concept models with MAE, RMSE, Pearson, Spearman and N. |
 | RPT-T12 | Categorical concept metrics | Two concepts by three concept models with CE, Brier, macro-F1, ties and N. |
-| RPT-T13 | Grad-CAM accounting | Model x fold x target requested, valid, undefined and rate, with pooled/global totals. |
+| RPT-T13 | Grad-CAM accounting | Main Results uses model-level and important target-level concentrations, including the explicit CEM malignancy limitation; complete model x fold x target accounting remains in machine-readable CSV, Catalogue, and technical/reproducibility appendix. |
 | RPT-T14 | Spatial faithfulness | Saliency, matched random, difference and win rate for output sensitivity and error increase. |
-| RPT-T15 | Centered contribution summary | Principal positive/negative centered contributions with magnitude and sign semantics. |
+| RPT-T15 | Centered contribution summary | Report frozen OOF centered contributions using available mean absolute magnitude, 2.5th percentile, median, 97.5th percentile and sign/direction; keep train-fold centering constants in separate columns and never label them importance. |
 | RPT-T16 | Fold-level learned GAM alpha | Concept x fold x expert weights and deviation from uniform initialization. |
 | RPT-T17 | Intervention summary | `k=0`, selected intermediate k, `k=8`, random/permutation and error-first summaries. |
 | RPT-T18 | WHERE-WHAT-WHY-HOW synthesis | Integrate predictive and explanatory evidence by model. |
@@ -244,7 +275,7 @@ All figures have stable IDs and must be registered in CAT-P before rendering.
 | RPT-F06 | Extreme AUROC/AUPRC and paired Delta-AUROC | Combine secondary performance and six paired comparisons without obscuring sign conventions. |
 | RPT-F07 | Undefined Grad-CAM rate heatmap | Display model x fold x target concentration. |
 | RPT-F08 | Spatial faithfulness dual panel | Compare saliency and matched random for output sensitivity and error increase separately. |
-| RPT-F09 | Concept prediction performance | Present continuous and categorical metrics in coordinated panels. |
+| RPT-F09 | Concept prediction performance | Use separate continuous and categorical panels with independent scales and metric semantics; never mix MAE/RMSE/Pearson/Spearman with CE/Brier/macro-F1 on one colour scale. |
 | RPT-F10 | Empirical OOF contribution profiles | Show six continuous binned profiles and two categorical distributions for all concept models. |
 | RPT-F11 | GAM alpha heatmap | Show fold x concept x expert learned weights. |
 | RPT-F12 | Intervention curves | Show `k=0..8` iMAE/Delta_iMAE and iAUC/Delta_iAUC under registered orderings. |
@@ -254,25 +285,111 @@ Figure `RPT-F10` is explicitly descriptive: continuous profiles use frozen OOF p
 
 ## 10. Planned private figures
 
-The private qualitative appendix contains five registered figure types, all derived from frozen cases and existing artifacts:
+The private qualitative appendix contains five registered paper-style figure types, all derived from frozen cases and existing artifacts. They must be designed for supervisors/reviewers, not presented as debug panels:
 
 | ID | Private figure | Content |
 |---|---|---|
-| RPT-FA01 | Representative-case comparison | Median-error cases with ROI, four-model existing task maps and predictions where available. |
-| RPT-FA02 | Maximum-error failure comparison | Maximum-error cases with prediction error and spatial evidence. |
-| RPT-FA03 | Concept contribution explanation | GT/predicted concepts and signed contribution bars for concept-model cases. |
-| RPT-FA04 | Intervention-worsening cases | Existing largest positive error-worsening evidence for each concept model. |
-| RPT-FA05 | Undefined zero-map cases | Existing all-zero post-ReLU maps for the highest-undefined-rate target of each concept model. |
+| RPT-FA01 | Representative-case comparison | Median-error cases with full axial CT context, ROI box, zoomed ROI, available four-model task overlays and prediction/target evidence. |
+| RPT-FA02 | Maximum-error failure comparison | Maximum-error cases with full CT/ROI context, prediction error and available spatial evidence. |
+| RPT-FA03 | Concept contribution explanation | Full CT/ROI context plus malignancy prediction/target, concept prediction/GT and signed centered contribution bars. |
+| RPT-FA04 | Intervention-worsening cases | Existing largest positive error-worsening evidence for each concept model, paired with CT/ROI context where frozen metadata permit. |
+| RPT-FA05 | Undefined zero-map limitation | Genuine frozen all-zero post-ReLU map for a high-undefined target, with CT/ROI context and a valid comparison map where available. |
 
 Case rules:
 
 - Use the already frozen 14 cases; do not select or infer new cases during report rendering.
 - A frozen case may display existing task maps from multiple models without increasing the number of cases.
-- Use ROI source, ROI plus Grad-CAM overlay, and raw post-ReLU map where registered and available.
-- Overlay normalization applies only to an in-memory display copy; raw FP32 maps remain unchanged.
+- ROI-only panels must not be the primary or sole case presentation when registered frozen full-slice metadata are available.
+- Use the Catalogue to determine availability of full CT, frozen z index, ROI bounding box, zoomed ROI, ROI overlay, full-slice reprojection and concept-specific targets. Do not scan ad hoc paths during rendering.
+- Paper-style case figures prioritize human interpretability over implementation/debug convenience.
 - Valid maps have a color bar; undefined maps remain visibly all zero.
 - Do not infer the unavailable pre-ReLU, gradient, channel-weight, or exact-mechanism decomposition.
 - Strip image metadata and expose no UID, patient key, absolute path or private approval record.
+
+### 10.1 Required case-panel composition
+
+For every selected case, render the following from frozen data when the Catalogue marks the component available:
+
+**Panel A - full axial CT context**
+
+- original complete axial CT slice at the registered frozen z index;
+- pulmonary-window or registered grayscale display;
+- clearly marked ROI bounding box.
+
+**Panel B - zoomed ROI**
+
+- zoomed local nodule ROI crop;
+- registered grayscale/windowing;
+- no misleading image enhancement.
+
+**Panel C - ROI plus Grad-CAM**
+
+- existing frozen Grad-CAM overlay;
+- display-only normalization allowed;
+- colour bar for valid maps.
+
+**Panel D - full CT plus reprojected Grad-CAM**
+
+- only when frozen spatial-transform metadata permit exact placement;
+- place heatmap values only inside the mapped ROI region;
+- never fabricate values outside the ROI.
+
+If reprojection cannot be derived from frozen metadata, the panel is labelled `FULL_SLICE_REPROJECTION_NOT_AVAILABLE_FROM_FROZEN_DATA`; no new forward pass, registration, or scientific estimate is allowed.
+
+### 10.2 Concept-specific maps and case explanations
+
+For selected concept-model cases, include existing valid maps for malignancy, spiculation, margin, and texture where available. Additional concept maps may be shown only when scientifically useful, frozen, and Catalogue-registered. Undefined or unavailable maps are never treated as required colourful panels.
+
+Case-level contribution figures must not show contribution bars alone. They pair:
+
+```text
+full CT / ROI context
++ malignancy prediction versus radiologist mean target
++ predicted concepts versus ground-truth reader targets
++ signed centered contribution bars
+```
+
+The figure must answer both `WHAT did the model predict?` and `WHY did those concepts produce this malignancy score?`
+
+### 10.3 Undefined zero-map limitation figure
+
+At least one dedicated figure uses a genuine frozen undefined map and labels it:
+
+```text
+Undefined - post-ReLU all-zero Grad-CAM
+```
+
+Where available, show full CT context, ROI, and a valid comparison map from another registered model/target. Never manufacture a colourful substitute or claim the exact mechanism is known when pre-ReLU/gradient decomposition was not persisted.
+
+### 10.4 Display-only normalization and windowing
+
+The scientific artifact remains unchanged:
+
+```text
+raw FP32 Grad-CAM map
+-> display-only normalization
+-> qualitative overlay
+```
+
+Every relevant caption states:
+
+```text
+Grad-CAM heatmaps were normalized only for visualization. Quantitative occlusion/faithfulness analysis used the original unnormalized FP32 maps.
+```
+
+CT grayscale/windowing may improve human readability without modifying frozen underlying values, and the applied policy must be registered in the Catalogue.
+
+### 10.5 CT-context policy by figure type
+
+CT context is required or preferred for qualitative CT/Grad-CAM cases, failures, undefined maps, case-level concept predictions, case-level contributions, and integrated Prediction-WHERE-WHAT-WHY-HOW examples.
+
+CT context is not required and must not be added merely for decoration to aggregate MAE/CI, paired Delta-MAE, AUROC/AUPRC, paired Delta-AUROC, concept-metric summaries, intervention curves, GAM-alpha heatmaps, empirical contribution profiles, Grad-CAM accounting heatmaps, or aggregate spatial-faithfulness figures.
+
+### 10.6 Public versus private figure policy
+
+Public Git reports may contain aggregate tables, aggregate statistical plots, architecture/workflow diagrams, and deidentified numeric evidence. They must exclude raw CT, raw ROI, CT case panels, raw Grad-CAM volumes, private case mappings, UID, and patient keys.
+
+Private reports/appendices may contain deidentified qualitative CT figures using opaque `CASE-####` labels only. All exported images have identifying metadata removed.
 
 ## 11. Shared manuscript data model
 
@@ -304,18 +421,27 @@ Required fields:
 ```text
 section_id
 catalogue_registry_sha256
+catalogue_items_required
+catalogue_items_used
 required_result_ids
 required_artifact_ids
 required_table_ids
+tables_rendered
 required_figure_ids
+figures_rendered
+private_cases_required
+private_cases_rendered
 conclusion_codes
 omitted_catalogue_ids_and_reasons
+omission_approval
 privacy_scope
 source_hashes
 english_render_sha256
 chinese_render_sha256
-verification_status
+verification_status: PASS | BLOCKED
 ```
+
+A required Catalogue item cannot be silently omitted. The verifier compares required versus used/rendered sets exactly and blocks until each omission has an explicit reason and approval reference.
 
 Forward traceability:
 
@@ -346,11 +472,18 @@ Mandatory statements in both languages:
 
 - Primary scores are unclipped.
 - LIDC malignancy is a radiologist assessment, not a pathology-confirmed diagnosis.
+- Malignancy is the downstream radiologist-assessed 1-5 target and is NOT one of the eight bottleneck concepts.
 - The system is not a clinical diagnostic product.
 - CEM means this project’s mixed-type CEM.
 - GAM means the preregistered learned-softmax local-expert design.
 - The 6,955 undefined maps are confirmed post-ReLU all-zero maps; exact pre-ReLU/gradient decomposition was not persisted and cannot be over-interpreted without prohibited new forward passes.
 - The observed concentration is reported with the registered `SYSTEMATIC_MODEL/TARGET_ISSUE` limitation label, not silently treated as an implementation error.
+
+### 13.1 Reference and prior-work policy
+
+The report requires verified primary-source citations for LIDC-IDRI, DenseNet, CBM, CEM, Grad-CAM, bootstrap/statistical methodology, Dumaev et al. concept-based pulmonary-nodule malignancy work, and relevant GAM/additive-model literature. Both languages use identical IEEE numeric ordering and verified DOI/arXiv metadata.
+
+Prior work, this project’s Mixed-type CEM, and this project’s Learned-softmax GAM must be distinguished explicitly. Reference-paper tables, figures, cohort definitions, and scientific outputs may inspire layout or discussion but must not be copied or represented as this project’s evidence.
 
 ## 14. Planned build interfaces
 
@@ -368,7 +501,7 @@ python -m lidc_baseline.p10_report verify --scope all
 python -m lidc_baseline.p10_audit build
 ```
 
-No CLI flag may bypass the approved Catalogue SHA, approved report-plan SHA, section manifests, privacy gate, or reverse traceability.
+The two `--variant short` commands are optional later derivatives and are outside the mandatory P10 completion/QA gate. No CLI flag may bypass the approved Catalogue SHA, approved report-plan SHA, section manifests, privacy gate, or reverse traceability.
 
 ## 15. Validation and visual QA
 
@@ -388,7 +521,7 @@ No CLI flag may bypass the approved Catalogue SHA, approved report-plan SHA, sec
 - Every table/figure is cited and appears near substantive analysis.
 - No end-of-document figure dump exists.
 - Technical Results subsections contain at least three substantive paragraphs.
-- Technical English main body is approximately 8,000-12,000 words; short English is approximately 2,500-4,000 words.
+- Page and word ranges are evaluated as editorial diagnostics, not completion blockers; scientific completeness and clarity take precedence.
 - Duplicate template paragraphs, repeated disclaimers and page-count padding fail validation.
 
 ### 15.3 Privacy checks
@@ -407,7 +540,7 @@ No CLI flag may bypass the approved Catalogue SHA, approved report-plan SHA, sec
 
 ### 15.5 PDF checks
 
-For all eight PDFs:
+For all six mandatory PDFs:
 
 - render every page with Poppler at 150 DPI;
 - verify page count, table of contents, extractable text, metadata, references, table/figure numbering and fonts with pypdf/pdfplumber;
@@ -417,7 +550,27 @@ For all eight PDFs:
 
 Manual visual-review evidence must identify reviewer, timestamp, PDF SHA, rendered-page manifest SHA and PASS/FAIL. The audit must never infer a PASS merely because rendering completed.
 
-## 16. Implementation sequence after approvals
+## 16. Plan-level consistency checks before implementation
+
+Before any future implementation begins, search both full plans and block on contradictions involving:
+
+- mandatory versus `OPTIONAL_LATER_DERIVATIVE` short reports;
+- exactly six mandatory PDFs;
+- approximately 25-35 pages as an editorial target rather than a scientific hard gate;
+- this project's frozen cohort versus any reference-paper cohort;
+- malignancy as downstream target versus the eight bottleneck concepts;
+- continuous versus categorical metric semantics and scales;
+- centering constants versus contribution importance;
+- public versus private images;
+- ROI patch versus full CT slice;
+- Grad-CAM display normalization versus quantitative raw FP32 maps;
+- allowed display transformations versus prohibited scientific recomputation;
+- Catalogue-driven report generation and reverse traceability;
+- P10 completion and approval gates.
+
+Any requirement not fully represented is reported as `BLOCKED_NOT_FULLY_IN_PLAN`; it must not be silently claimed complete.
+
+## 17. Implementation sequence after approvals
 
 This plan does not authorize implementation. The future sequence is fixed:
 
@@ -426,8 +579,8 @@ This plan does not authorize implementation. The future sequence is fixed:
 3. Stop and deliver the actual Catalogue, manifests, counts, gaps, SHA values and verification evidence.
 4. Wait for explicit user approval of the actual Catalogue.
 5. Only then implement the Catalogue-driven manuscript model, section manifests, report generator and reverse traceability.
-6. Rebuild the four public bilingual reports, two private bilingual appendices and two combined PDFs.
-7. Complete scientific, bilingual, privacy, layout and eight-PDF visual QA.
+6. Rebuild the two mandatory public bilingual technical reports, two private bilingual appendices and two combined PDFs. Optional short derivatives are not part of this gate.
+7. Complete scientific, bilingual, privacy, layout and six-PDF visual QA.
 8. Run full tests, frozen checks, Phase Compliance Review and Status Synchronization Review.
 9. Transition P10 only to `AWAITING_USER_APPROVAL`.
 10. Wait for final user confirmation before `COMPLETED`, fast-forward merge, main-branch retest and GitHub push.
