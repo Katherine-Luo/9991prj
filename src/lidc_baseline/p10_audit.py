@@ -42,6 +42,37 @@ P10_DEVELOPMENT_FILES = {
     "tests/test_p10_archive.py",
     "tests/test_p10_audit.py",
     "tests/test_p10_private_appendix.py",
+    "configs/experiments/baseline_v2_p10_catalogue.yaml",
+    "configs/experiments/baseline_v2_p10_catalogue.resolved.yaml",
+    "configs/experiments/baseline_v2_p10_catalogue.sha256",
+    "scripts/p10_catalogue_xlsx.mjs",
+    "src/lidc_baseline/p10_catalogue.py",
+    "tests/test_p10_catalogue.py",
+}
+P10_CATALOGUE_PUBLIC_FILES = {
+    "docs/results/RESULTS_MASTER_CATALOGUE.md",
+    "docs/results/RESULTS_ARTIFACTS_MASTER_TABLE.md",
+    "docs/results/RESULTS_ARTIFACTS_MASTER_TABLE.csv",
+    "docs/results/results_catalogue_registry.json",
+    "docs/results/results_master_catalogue.csv",
+    "docs/results/catalogue_manifest.json",
+    "docs/results/artifacts_inventory.csv",
+    "docs/results/tables_inventory.csv",
+    "docs/results/figures_inventory.csv",
+    "docs/results/qualitative_case_inventory.csv",
+    "docs/results/missing_incomplete_outputs.csv",
+    "docs/results/report_evidence_map.csv",
+    "docs/results/public_private_storage_map.csv",
+    "docs/results/catalogue_to_report_plan.csv",
+    *{f"docs/results/catalogue_tables/{name}" for name in (
+        "CAT_A_phase_overview.csv", "CAT_B_training_results.csv", "CAT_C_primary_results.csv",
+        "CAT_D_paired_primary.csv", "CAT_E_secondary_results.csv", "CAT_F_paired_secondary.csv",
+        "CAT_G_continuous_concepts.csv", "CAT_H_categorical_concepts.csv", "CAT_I_interventions.csv",
+        "CAT_J_contributions.csv", "CAT_K_gam_alpha.csv", "CAT_L_gradcam.csv",
+        "CAT_M_undefined_rca.csv", "CAT_N_spatial_faithfulness.csv", "CAT_O_tables.csv",
+        "CAT_P_figures.csv", "CAT_Q_qualitative_cases.csv", "CAT_R_storage.csv",
+        "CAT_S_report_evidence.csv", "CAT_T_gaps.csv",
+    )},
 }
 
 
@@ -140,6 +171,7 @@ def verify_git_candidate_whitelist(
     public_relative = public_root.resolve().relative_to(repository_root.resolve())
     audit_relative = audit_root.resolve().relative_to(repository_root.resolve())
     allowed = set(P10_DEVELOPMENT_FILES)
+    allowed.update(P10_CATALOGUE_PUBLIC_FILES)
     allowed.update(
         (public_relative / path.relative_to(public_root)).as_posix()
         for path in public_root.rglob("*")

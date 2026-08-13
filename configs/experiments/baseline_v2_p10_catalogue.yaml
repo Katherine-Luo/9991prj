@@ -1,0 +1,71 @@
+schema_version: 1
+phase: P10
+purpose: Results and Artifacts Master Catalogue implementation gate
+
+approved_plans:
+  results_catalogue:
+    path: docs/results/RESULTS_CATALOGUE_PLAN.md
+    sha256: eb3aa9110fc06acd8cd9e2a375b64bcfa5a60d768ef6f37f16e1c693576c5c93
+    approved: true
+  catalogue_driven_bilingual_report:
+    path: docs/results/P10_CATALOGUE_DRIVEN_BILINGUAL_REPORT_PLAN.md
+    sha256: be33c07d566914d40bd50fba65b347118e706940a64495782cf0245f7914629c
+    approved: true
+
+gates:
+  results_catalogue_plan_approved: 1
+  p10_report_plan_approved: 1
+  catalogue_implementation_authorized: 1
+  generated_catalogue_approved: 0
+  report_revision_authorized: 0
+
+boundaries:
+  source_access: read_only
+  model_forward: forbidden
+  training: forbidden
+  test_inference: forbidden
+  scientific_recomputation: forbidden
+  report_regeneration: forbidden
+  p11: forbidden
+
+roots:
+  public_catalogue: docs/results
+  verified_report_data: reports/baseline_v2/p10/public/report_data.json
+  p5_p9_audit: artifacts/baseline_v2/audit
+  private_archive_alias: mac-archive://
+  private_report_alias: private-report://
+  private_overlay_subdirectory: p10_private_report
+
+expected_cardinalities:
+  training_model_fold_rows: 20
+  pooled_oof_rows: 4
+  primary_models: 4
+  paired_primary: 6
+  secondary_models: 4
+  paired_secondary: 6
+  continuous_concepts: 18
+  categorical_concepts: 6
+  interventions: 6
+  contributions: 24
+  learned_alpha: 40
+  gradcam_detail: 140
+  gradcam_pooled: 28
+  gradcam_global: 1
+  undefined_rca: 28
+  qualitative_cases: 14
+  gradcam_requested: 73724
+  gradcam_valid: 66769
+  gradcam_undefined: 6955
+
+privacy:
+  public_root_aliases:
+    - repo://
+    - katana-run://
+    - mac-archive://
+    - private-report://
+  public_forbidden_tokens:
+    - nodule_uid
+    - patient_key
+    - /Users/
+    - /srv/scratch/
+  private_overlay_mode: "0600"

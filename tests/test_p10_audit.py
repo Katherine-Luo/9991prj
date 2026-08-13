@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from lidc_baseline.p10_audit import (
+    P10_CATALOGUE_PUBLIC_FILES,
     P10_DEVELOPMENT_FILES,
     _source_manifest_sha256,
     validate_git_candidates,
@@ -18,6 +19,14 @@ def test_generated_pdf_and_svg_git_attributes_are_whitespace_safe() -> None:
     attributes = Path(".gitattributes").read_text(encoding="utf-8")
     assert "reports/baseline_v2/p10/public/**/*.pdf binary" in attributes
     assert "reports/baseline_v2/p10/public/**/*.svg binary" in attributes
+
+
+def test_catalogue_git_whitelist_is_exact_and_excludes_private_outputs() -> None:
+    assert "docs/results/results_catalogue_registry.json" in P10_CATALOGUE_PUBLIC_FILES
+    assert "docs/results/catalogue_tables/CAT_Q_qualitative_cases.csv" in P10_CATALOGUE_PUBLIC_FILES
+    assert "docs/results/catalogue_tables/CAT_T_gaps.csv" in P10_CATALOGUE_PUBLIC_FILES
+    assert all(not path.endswith(".xlsx") for path in P10_CATALOGUE_PUBLIC_FILES)
+    assert all("p10_private_report" not in path for path in P10_CATALOGUE_PUBLIC_FILES)
 
 
 def test_source_manifest_is_order_invariant_and_hash_bound() -> None:
