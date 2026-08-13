@@ -90,7 +90,7 @@ English and Chinese short reports remain supported only as `OPTIONAL_LATER_DERIV
 2. Chinese qualitative appendix, Markdown and PDF.
 3. English technical report plus English appendix combined PDF.
 4. Chinese technical report plus Chinese appendix combined PDF.
-5. Full-resolution panel sources and the restricted private case index.
+5. Full-resolution panel sources, `RPT-TA01`, `RPT-TA02`, and the restricted private case index.
 
 Private deliverables never enter GitHub or Git LFS. They use opaque `CASE-####` labels in all human-readable output.
 
@@ -261,6 +261,28 @@ All tables have stable IDs and must be registered in CAT-O before rendering.
 
 Private Table `RPT-TA01` is the frozen 14-case index containing only opaque labels, model, role, target, ground truth, prediction, error and map status. Exact UID/patient mappings remain restricted to the private machine index.
 
+Private Table `RPT-TA02` is the paper-style case-level concept and malignancy prediction table. For each selected frozen qualitative case it contains:
+
+- opaque `CASE-####` label;
+- model;
+- malignancy prediction;
+- radiologist-mean malignancy target;
+- predicted and reader-target values for subtlety, sphericity, margin, lobulation, spiculation, and texture;
+- predicted and reader-target evidence for internalStructure and calcification.
+
+Canonical table fields:
+
+```text
+CASE | Model | Malignancy Pred | Malignancy GT |
+Subtlety Pred | Subtlety GT | Sphericity Pred | Sphericity GT |
+Margin Pred | Margin GT | Lobulation Pred | Lobulation GT |
+Spiculation Pred | Spiculation GT | Texture Pred | Texture GT |
+InternalStructure Pred | InternalStructure reader-vote GT | InternalStructure modal display label |
+Calcification Pred | Calcification reader-vote GT | Calcification modal display label
+```
+
+For categorical targets, the table may display the modal reader label for readability, but it must retain a source binding to the complete frozen reader vote distribution. Its caption and table note must state explicitly that the training/evaluation ground-truth target is the full reader vote distribution, not a single expert hard label. `RPT-TA02` uses existing frozen predictions and targets only and must never trigger new inference.
+
 ## 9. Planned public figures
 
 All figures have stable IDs and must be registered in CAT-P before rendering.
@@ -275,7 +297,8 @@ All figures have stable IDs and must be registered in CAT-P before rendering.
 | RPT-F06 | Extreme AUROC/AUPRC and paired Delta-AUROC | Combine secondary performance and six paired comparisons without obscuring sign conventions. |
 | RPT-F07 | Undefined Grad-CAM rate heatmap | Display model x fold x target concentration. |
 | RPT-F08 | Spatial faithfulness dual panel | Compare saliency and matched random for output sensitivity and error increase separately. |
-| RPT-F09 | Concept prediction performance | Use separate continuous and categorical panels with independent scales and metric semantics; never mix MAE/RMSE/Pearson/Spearman with CE/Brier/macro-F1 on one colour scale. |
+| RPT-F09A | Continuous concept fidelity | Show continuous concept MAE/RMSE/Pearson/Spearman using compatible panels and continuous-metric scales only. |
+| RPT-F09B | Categorical concept fidelity | Show categorical soft CE, multiclass Brier and tie-excluded macro-F1 using separate panels/scales; never share a colour scale with continuous metrics. |
 | RPT-F10 | Empirical OOF contribution profiles | Show six continuous binned profiles and two categorical distributions for all concept models. |
 | RPT-F11 | GAM alpha heatmap | Show fold x concept x expert learned weights. |
 | RPT-F12 | Intervention curves | Show `k=0..8` iMAE/Delta_iMAE and iAUC/Delta_iAUC under registered orderings. |
@@ -285,7 +308,7 @@ Figure `RPT-F10` is explicitly descriptive: continuous profiles use frozen OOF p
 
 ## 10. Planned private figures
 
-The private qualitative appendix contains five registered paper-style figure types, all derived from frozen cases and existing artifacts. They must be designed for supervisors/reviewers, not presented as debug panels:
+The private qualitative appendix contains six registered paper-style figure types, all derived from frozen cases and existing artifacts. They must be designed for supervisors/reviewers, not presented as debug panels:
 
 | ID | Private figure | Content |
 |---|---|---|
@@ -294,6 +317,7 @@ The private qualitative appendix contains five registered paper-style figure typ
 | RPT-FA03 | Concept contribution explanation | Full CT/ROI context plus malignancy prediction/target, concept prediction/GT and signed centered contribution bars. |
 | RPT-FA04 | Intervention-worsening cases | Existing largest positive error-worsening evidence for each concept model, paired with CT/ROI context where frozen metadata permit. |
 | RPT-FA05 | Undefined zero-map limitation | Genuine frozen all-zero post-ReLU map for a high-undefined target, with CT/ROI context and a valid comparison map where available. |
+| RPT-FA06 | Integrated Prediction-WHERE-WHAT-WHY-HOW case explanation | One selected deidentified frozen case combining CT context, malignancy prediction, spatial maps, concept predictions, centered contributions and persisted case-level intervention evidence where available. |
 
 Case rules:
 
@@ -301,6 +325,8 @@ Case rules:
 - A frozen case may display existing task maps from multiple models without increasing the number of cases.
 - ROI-only panels must not be the primary or sole case presentation when registered frozen full-slice metadata are available.
 - Use the Catalogue to determine availability of full CT, frozen z index, ROI bounding box, zoomed ROI, ROI overlay, full-slice reprojection and concept-specific targets. Do not scan ad hoc paths during rendering.
+- A full axial CT may be rendered read-only from the original frozen CT/DICOM source referenced by existing provenance only when the original source exists, exact series/slice provenance exists, and the frozen ROI-to-full-volume coordinate mapping is recoverable exactly. This is display-only and not model inference.
+- If any full-slice condition is absent, label the component `FULL_SLICE_REPROJECTION_NOT_AVAILABLE_FROM_FROZEN_DATA`; do not infer a slice, bounding box, coordinate transform, or heatmap placement.
 - Paper-style case figures prioritize human interpretability over implementation/debug convenience.
 - Valid maps have a color bar; undefined maps remain visibly all zero.
 - Do not infer the unavailable pre-ReLU, gradient, channel-weight, or exact-mechanism decomposition.
@@ -385,7 +411,22 @@ CT context is required or preferred for qualitative CT/Grad-CAM cases, failures,
 
 CT context is not required and must not be added merely for decoration to aggregate MAE/CI, paired Delta-MAE, AUROC/AUPRC, paired Delta-AUROC, concept-metric summaries, intervention curves, GAM-alpha heatmaps, empirical contribution profiles, Grad-CAM accounting heatmaps, or aggregate spatial-faithfulness figures.
 
-### 10.6 Public versus private figure policy
+### 10.6 Integrated Prediction-WHERE-WHAT-WHY-HOW case figure
+
+`RPT-FA06` is a separately registered private figure, not an alias for the aggregate public synthesis `RPT-F13`. Where frozen evidence permits, it presents one selected `CASE-####` as a single visual chain:
+
+```text
+full axial CT plus ROI box
+-> Prediction: malignancy prediction versus radiologist-mean target
+-> WHERE: existing malignancy and/or concept Grad-CAM
+-> WHAT: concept predictions versus reader targets
+-> WHY: signed centered concept contributions
+-> HOW: persisted case-level intervention before/after evidence
+```
+
+The WHAT block uses the same frozen values and categorical-reader-distribution semantics as `RPT-TA02`. The HOW block may appear only when sufficient case-level P9 intervention evidence already exists and is Catalogue-registered. If HOW or another component was not persisted at case level, that component is visibly marked `DATA_NOT_PERSISTED`; it must not be recomputed, approximated, or silently omitted.
+
+### 10.7 Public versus private figure policy
 
 Public Git reports may contain aggregate tables, aggregate statistical plots, architecture/workflow diagrams, and deidentified numeric evidence. They must exclude raw CT, raw ROI, CT case panels, raw Grad-CAM volumes, private case mappings, UID, and patient keys.
 
@@ -513,6 +554,8 @@ The two `--variant short` commands are optional later derivatives and are outsid
 - Four-model metrics, every available bootstrap CI, all six paired comparisons, eight concepts, GAM alpha, intervention and both faithfulness quantities agree with frozen evidence.
 - Every table row, plot series, caption claim and conclusion code has reverse traceability.
 - Every required Catalogue item is used or has an approved omission reason.
+- `RPT-TA02` values match the frozen malignancy/concept predictions and targets exactly; categorical display labels remain bound to their complete reader vote distributions.
+- `RPT-FA06` independently verifies component availability and rejects any unpersisted HOW/intervention content rather than regenerating it.
 - No report output creates a new scientific estimate.
 
 ### 15.2 Narrative and layout checks
@@ -537,6 +580,7 @@ The two `--variant short` commands are optional later derivatives and are outsid
 - Numerical tokens, table cells, CIs, zero-crossing flags and conclusion codes are identical.
 - Chinese labels are translated according to the glossary.
 - English and Chinese use identical cases, slices, maps, panel layouts and chart geometry.
+- English and Chinese `RPT-TA02` use identical case rows, numeric values, categorical vote distributions, modal display labels and table notes.
 
 ### 15.5 PDF checks
 
@@ -566,6 +610,9 @@ Before any future implementation begins, search both full plans and block on con
 - Grad-CAM display normalization versus quantitative raw FP32 maps;
 - allowed display transformations versus prohibited scientific recomputation;
 - Catalogue-driven report generation and reverse traceability;
+- `RPT-TA02` case-level prediction/GT semantics and categorical reader distributions;
+- `RPT-FA06` integrated case chain with fail-closed case-level HOW availability;
+- exact frozen-source/provenance/mapping requirements for read-only full CT rendering;
 - P10 completion and approval gates.
 
 Any requirement not fully represented is reported as `BLOCKED_NOT_FULLY_IN_PLAN`; it must not be silently claimed complete.
