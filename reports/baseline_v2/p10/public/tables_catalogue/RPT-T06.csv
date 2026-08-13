@@ -1,0 +1,6 @@
+Component,Unit,Metric,Selection/uncertainty
+Primary regression,Nodule; patient-cluster bootstrap,"Unclipped original-scale MAE (primary), RMSE, normalized MAE, Pearson, Spearman","2,000 shared patient draws"
+Secondary extreme,"1,073 extreme nodules / 578 patients","AUROC, AUPRC; threshold metrics","Fold-validation extreme-only Youden-J; 2,000 valid draws"
+Concept fidelity,Nodule,Continuous MAE/RMSE/correlation; categorical CE/Brier/macro-F1,Hard F1 excludes true modal ties
+Spatial faithfulness,Valid Grad-CAM target,output_sensitivity and error_increase,"26,215 voxels; 20 matched random masks"
+Intervention,Pooled OOF,iMAE/Delta_iMAE; iAUC/Delta_iAUC,k=0…8; random and error-first orderings

@@ -1,0 +1,54 @@
+{
+  "catalogue_items_required": [
+    "RES-P0-PHASE-OVERVIEW",
+    "RES-P2-PHASE-OVERVIEW",
+    "RES-P3-PHASE-OVERVIEW",
+    "RES-P4-PHASE-OVERVIEW"
+  ],
+  "catalogue_items_used": [
+    "RES-P0-PHASE-OVERVIEW",
+    "RES-P2-PHASE-OVERVIEW",
+    "RES-P3-PHASE-OVERVIEW",
+    "RES-P4-PHASE-OVERVIEW"
+  ],
+  "catalogue_registry_sha256": "624fa259430d6c5709568f7507ec0a92421d669ad64071d935eece566283b3cf",
+  "chinese_render_sha256": "93abbf9484c71d6bedbbd42929b24401d2ec6fe6f654bdbb6abd7991632f34ea",
+  "conclusion_codes": [],
+  "english_render_sha256": "10bd4b81148fe28aa60cf62ab5f5653f78ae3b05c64f606d9e3e5cbeb349f572",
+  "figures_rendered": [
+    "RPT-F02"
+  ],
+  "omission_approval": null,
+  "omitted_catalogue_ids_and_reasons": [],
+  "privacy_scope": "PUBLIC_DEIDENTIFIED",
+  "private_cases_rendered": [],
+  "private_cases_required": [],
+  "required_artifact_ids": [
+    "ART-CATALOGUE-PHASE-STATUS-SNAPSHOT"
+  ],
+  "required_figure_ids": [
+    "RPT-F02"
+  ],
+  "required_result_ids": [
+    "RES-P0-PHASE-OVERVIEW",
+    "RES-P2-PHASE-OVERVIEW",
+    "RES-P3-PHASE-OVERVIEW",
+    "RES-P4-PHASE-OVERVIEW"
+  ],
+  "required_table_ids": [
+    "RPT-T02",
+    "RPT-T03"
+  ],
+  "section_id": "SEC-DATASET",
+  "source_hashes": {
+    "RES-P0-PHASE-OVERVIEW": "28948919f127c5c00b2084e7213c34b85abdfe52f1361319691ac3a6409d404d",
+    "RES-P2-PHASE-OVERVIEW": "28948919f127c5c00b2084e7213c34b85abdfe52f1361319691ac3a6409d404d",
+    "RES-P3-PHASE-OVERVIEW": "28948919f127c5c00b2084e7213c34b85abdfe52f1361319691ac3a6409d404d",
+    "RES-P4-PHASE-OVERVIEW": "28948919f127c5c00b2084e7213c34b85abdfe52f1361319691ac3a6409d404d"
+  },
+  "tables_rendered": [
+    "RPT-T02",
+    "RPT-T03"
+  ],
+  "verification_status": "PASS"
+}

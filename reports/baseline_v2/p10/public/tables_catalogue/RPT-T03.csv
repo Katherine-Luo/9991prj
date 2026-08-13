@@ -1,0 +1,10 @@
+Variable,Role,Type,Frozen target
+Malignancy,Downstream target (not a concept),Continuous,"Radiologist mean, 1–5; normalized (y−1)/4"
+subtlety,Bottleneck concept,Continuous,Normalized valid-reader mean
+sphericity,Bottleneck concept,Continuous,Normalized valid-reader mean
+margin,Bottleneck concept,Continuous,Normalized valid-reader mean
+lobulation,Bottleneck concept,Continuous,Normalized valid-reader mean
+spiculation,Bottleneck concept,Continuous,Normalized valid-reader mean
+texture,Bottleneck concept,Continuous,Normalized valid-reader mean
+internalStructure,Bottleneck concept,Categorical (4 classes),Full reader vote distribution
+calcification,Bottleneck concept,Categorical (6 classes),Full reader vote distribution

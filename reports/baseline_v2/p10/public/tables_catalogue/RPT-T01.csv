@@ -1,0 +1,5 @@
+Approach,Prediction,Concepts,Spatial explanation,Intervention,This study
+Black-box CNN,Yes,No,Optional,No,Comparator
+Concept Bottleneck Model,Yes,Explicit,Concept/task Grad-CAM,Concept replacement,Standard CBM
+Concept Embedding Model,Yes,Mixed-type embeddings,Concept/task Grad-CAM,Mixture-weight replacement,Project-specific Mixed-type CEM
+Additive local experts,Yes,Explicit,Concept/task Grad-CAM,Local-expert re-evaluation,Preregistered Learned-softmax GAM

@@ -1,0 +1,26 @@
+{
+  "catalogue_items_required": [],
+  "catalogue_items_used": [],
+  "catalogue_registry_sha256": "624fa259430d6c5709568f7507ec0a92421d669ad64071d935eece566283b3cf",
+  "chinese_render_sha256": "93abbf9484c71d6bedbbd42929b24401d2ec6fe6f654bdbb6abd7991632f34ea",
+  "conclusion_codes": [],
+  "english_render_sha256": "10bd4b81148fe28aa60cf62ab5f5653f78ae3b05c64f606d9e3e5cbeb349f572",
+  "figures_rendered": [
+    "RPT-F01"
+  ],
+  "omission_approval": null,
+  "omitted_catalogue_ids_and_reasons": [],
+  "privacy_scope": "PUBLIC_DEIDENTIFIED",
+  "private_cases_rendered": [],
+  "private_cases_required": [],
+  "required_artifact_ids": [],
+  "required_figure_ids": [
+    "RPT-F01"
+  ],
+  "required_result_ids": [],
+  "required_table_ids": [],
+  "section_id": "SEC-ABSTRACT",
+  "source_hashes": {},
+  "tables_rendered": [],
+  "verification_status": "PASS"
+}

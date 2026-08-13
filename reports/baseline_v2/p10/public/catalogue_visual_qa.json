@@ -1,0 +1,1116 @@
+{
+  "manual_checklist": {
+    "clipping": "PASS",
+    "fonts_and_missing_glyphs": "PASS",
+    "gradcam_panels": "PASS",
+    "overlap": "PASS",
+    "tables_and_captions": "PASS"
+  },
+  "manual_review_timestamp_utc": "2026-08-13T11:25:53.464610+00:00",
+  "manual_reviewer": "Codex primary agent (visual inspection of contact sheets and original-resolution critical pages)",
+  "manual_visual_review": "PASS",
+  "pdfplumber_text_gate": "PASS",
+  "pdfs": {
+    "qualitative_appendix_en": {
+      "author": "LIDC-IDRI Baseline-v2",
+      "page_count": 12,
+      "page_text_lengths": [
+        304,
+        500,
+        500,
+        636,
+        624,
+        248,
+        390,
+        390,
+        102,
+        1296,
+        4046,
+        449
+      ],
+      "rendered_pages": [
+        {
+          "height": 1754,
+          "page": 1,
+          "sha256": "8d03bf854e28618e056f1adc9f2dbd3d67d866c1de7dd5a993f4c57e3ef641fc",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 2,
+          "sha256": "e021ed2a3aefa2ec44c71eaced15ef9c14c6549826151953315bc6ccc4b1eebb",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 3,
+          "sha256": "5b313407a392d3df51d96f369742c7cca16b52d7e1f7a65bac8ce5ca4e306271",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 4,
+          "sha256": "c0e4bc1f4faa6078500116f17e7b68e050f5c37b12b60953cfc065f55bc648a3",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 5,
+          "sha256": "f94d4b8640050a6ecb6e62c293a37545c3967910f4c8e7d2aadc6cca7189e3bb",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 6,
+          "sha256": "eb994706b44f0114f767e3cdf7dbe368da3b21df1e741c9a9a1151925bcabcde",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 7,
+          "sha256": "1fd132cc18b7773a95a4c086443030ab2718671e3be0c49b8a71d393df5ceb7d",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 8,
+          "sha256": "420144a64acacd868229dd7218fe54e84d48cca10a12a919629d76fd11189309",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 9,
+          "sha256": "f92ac7aa74375a3a6f521b635e1d36c8596a64ab92b8b49c2ffbaf1e22a02755",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 10,
+          "sha256": "e275411da6115cf8368b02a875ceab11965cb74d2af2738ce84f0215331be02a",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 11,
+          "sha256": "b039d589bc96f30955e52871d3852c9a674783ecec56786559942f5bfd2a0444",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 12,
+          "sha256": "7f02f5acc2f0428fbc1474db6669025a2cbcc22e87132eac1814bf5624915c56",
+          "width": 1241
+        }
+      ],
+      "sha256": "6ab360301f5d5f228486765bbb0a73365b6573e7e2026f67d6d13eee16febb50",
+      "title": "Private qualitative appendix"
+    },
+    "qualitative_appendix_zh": {
+      "author": "LIDC-IDRI Baseline-v2",
+      "page_count": 12,
+      "page_text_lengths": [
+        126,
+        324,
+        324,
+        416,
+        404,
+        160,
+        258,
+        258,
+        49,
+        1296,
+        3937,
+        406
+      ],
+      "rendered_pages": [
+        {
+          "height": 1754,
+          "page": 1,
+          "sha256": "1e0d49a1df94b914070499e16e3c493775c14b340d03955ffb3cee492cdb2cd5",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 2,
+          "sha256": "666e11ce757048e873bd4ee5f2b01258f686cd3f4942ee4dd2d07364107d3ecd",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 3,
+          "sha256": "23d6f54cc25d67b7c001f96efe09dea715644abb731c167de65792341efcaecf",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 4,
+          "sha256": "14a9a36e5574d6952be889eccf8da93682d7368627610331a659ed4675fde668",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 5,
+          "sha256": "f38f72fa6cd8c45c21ef6d36c5ced07c6fdefadfb934b2f786d1771d2354c765",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 6,
+          "sha256": "c44e91e23e703d659a274b8317299122c766742530e06f20e255fcd41304537d",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 7,
+          "sha256": "c07378a12175165485439bbdc7e4bb3ea09406f1134967cead9f4a0c467dee91",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 8,
+          "sha256": "2d8915dfbc488b05711c5bdac7ab20dbb4eea50b50fae941f8ce9d4dab4fa404",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 9,
+          "sha256": "9e3ee2d4b2cf8dbcfc80cd0f4809b0a5f09373c31b1eb4034bf406b285d6c1a1",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 10,
+          "sha256": "942f6d4701ac8c63aa9022bca2234a155fe13456cb64239a6d5aa4d766c59414",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 11,
+          "sha256": "21e4416b5d27b8b6a31fc88836002c88bb1ac4b0e618ca01eec0ee362343fc31",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 12,
+          "sha256": "ede0fc731fa4f00700b9b40e46777bb06170cf76fa18628980a3a01b9a3f6e61",
+          "width": 1241
+        }
+      ],
+      "sha256": "e6683e5a9d04e096d3070fa87814e4331a7c5e47bda2aac2ce6c23f42de471e0",
+      "title": "\u79c1\u6709\u5b9a\u6027\u9644\u5f55"
+    },
+    "technical_en": {
+      "author": "LIDC-IDRI Baseline-v2",
+      "page_count": 25,
+      "page_text_lengths": [
+        247,
+        1023,
+        1880,
+        361,
+        3007,
+        3361,
+        2517,
+        2813,
+        2546,
+        3419,
+        1621,
+        1058,
+        2843,
+        505,
+        1794,
+        2003,
+        2430,
+        3309,
+        2101,
+        573,
+        1148,
+        2842,
+        2720,
+        3997,
+        1219
+      ],
+      "rendered_pages": [
+        {
+          "height": 1754,
+          "page": 1,
+          "sha256": "150597188215302f0729904ffcdd4733a6af5f419e3ccd218d79179bdb24f3ad",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 2,
+          "sha256": "2169ade71797b7bb41938ba917e366fd7d71db990ffa736c7ea833f535657bfc",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 3,
+          "sha256": "ace75db74dced8eaea86cab598aa0b73badfd70f172c17afe818bac01e616a6e",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 4,
+          "sha256": "7ac15cfd674dc9f00304b08af732d76076b95fa7c1333968b9e920a04d114e94",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 5,
+          "sha256": "e5a8ffd54d4ab328e98c4b1564e3a730dc695d16f8f2ccd372052868e4c104b2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 6,
+          "sha256": "d726b545d41f0408bfa36b075cea18bd79573fbd2428dcb235b05817faaafdd4",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 7,
+          "sha256": "fc689de3af58161579750a6b152d56a51951d8791c0baa710ec02698108d8923",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 8,
+          "sha256": "326e498963600d594207c96d53af87c0e08ecb16239f4f10fc3ca1e2da983bf3",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 9,
+          "sha256": "37b9b8a89fbf3726aaf705bd5368375b48b45525414978f2295a61d4048a7ade",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 10,
+          "sha256": "697fc5afa2d348092ab15c5c17c581e91f73e810132efcc6dc2a7eb107b5ba24",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 11,
+          "sha256": "fa9569ed2f3afa3a600261a74e391017b1a282bbe7edeb489cc22f6d275b93d2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 12,
+          "sha256": "2bc0fe320e48f938de636a05f51be9ce5ef8aefa5dbf7f97745269f3a7043f87",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 13,
+          "sha256": "3b75c57d3652d85cc04802e7febdec6c3501f734a8ce1c74dd1d4d777c1f9cdd",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 14,
+          "sha256": "f3cc502ac1783e789969e6e0d439efd65d864a3e25c0e21a2d925e97bafa88ae",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 15,
+          "sha256": "a4b08230baaf131fb458a1ffce0562d9e2fdc28113b73a9203fa1c8b9b076654",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 16,
+          "sha256": "5296fcb6b412a2a29b96bb7940a0d5f6b6858e38c475848f92cc92b0327ccfcf",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 17,
+          "sha256": "42747bbce3f0206d5df3f82a45401b8e24d2d74c818933d174d8f0ba5c60e282",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 18,
+          "sha256": "da2ec8286551128da15a648910fa69c7275febe1094ac4a7f48405d17143b1ec",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 19,
+          "sha256": "a4336a7188ecd419005dab9d3d4578eecbf1433addfe43cccc14a9318532e13b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 20,
+          "sha256": "9e3c235849b9766a289d1e4531e92a919f8540672a6426498d4eb11880621d63",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 21,
+          "sha256": "e0f9019698f03f03a468bd2c829aa9dcbd615de041626cdaad79ff3b6f05c804",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 22,
+          "sha256": "74524915a19f8c1bd4f5887b90b9d134846dfceb1a2fd7276634db351425b6bc",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 23,
+          "sha256": "c8ba5718a929582513f2b31d48ebd320cc25f43d5f2bd45a80f8a8a6f06d69b2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 24,
+          "sha256": "fe313decca662b375307f69db4d36e11a472da4ed9cc95249718af0c8a844cef",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 25,
+          "sha256": "0d652f77350259e6e666f8e0463a5020c936ab5d507e5991890939d8ad1a3684",
+          "width": 1241
+        }
+      ],
+      "sha256": "c8dcf71277ce53cc48e7d645f2cad0187db42a4ae5c1c2fcd83004a51954d565",
+      "title": "P10 Catalogue-driven Technical Report"
+    },
+    "technical_en_with_appendix": {
+      "author": "",
+      "page_count": 37,
+      "page_text_lengths": [
+        247,
+        1023,
+        1880,
+        361,
+        3007,
+        3361,
+        2517,
+        2813,
+        2546,
+        3419,
+        1621,
+        1058,
+        2843,
+        505,
+        1794,
+        2003,
+        2430,
+        3309,
+        2101,
+        573,
+        1148,
+        2842,
+        2720,
+        3997,
+        1219,
+        304,
+        500,
+        500,
+        636,
+        624,
+        248,
+        390,
+        390,
+        102,
+        1296,
+        4046,
+        449
+      ],
+      "rendered_pages": [
+        {
+          "height": 1754,
+          "page": 1,
+          "sha256": "150597188215302f0729904ffcdd4733a6af5f419e3ccd218d79179bdb24f3ad",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 2,
+          "sha256": "2169ade71797b7bb41938ba917e366fd7d71db990ffa736c7ea833f535657bfc",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 3,
+          "sha256": "ace75db74dced8eaea86cab598aa0b73badfd70f172c17afe818bac01e616a6e",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 4,
+          "sha256": "7ac15cfd674dc9f00304b08af732d76076b95fa7c1333968b9e920a04d114e94",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 5,
+          "sha256": "e5a8ffd54d4ab328e98c4b1564e3a730dc695d16f8f2ccd372052868e4c104b2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 6,
+          "sha256": "d726b545d41f0408bfa36b075cea18bd79573fbd2428dcb235b05817faaafdd4",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 7,
+          "sha256": "fc689de3af58161579750a6b152d56a51951d8791c0baa710ec02698108d8923",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 8,
+          "sha256": "326e498963600d594207c96d53af87c0e08ecb16239f4f10fc3ca1e2da983bf3",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 9,
+          "sha256": "37b9b8a89fbf3726aaf705bd5368375b48b45525414978f2295a61d4048a7ade",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 10,
+          "sha256": "697fc5afa2d348092ab15c5c17c581e91f73e810132efcc6dc2a7eb107b5ba24",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 11,
+          "sha256": "fa9569ed2f3afa3a600261a74e391017b1a282bbe7edeb489cc22f6d275b93d2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 12,
+          "sha256": "2bc0fe320e48f938de636a05f51be9ce5ef8aefa5dbf7f97745269f3a7043f87",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 13,
+          "sha256": "3b75c57d3652d85cc04802e7febdec6c3501f734a8ce1c74dd1d4d777c1f9cdd",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 14,
+          "sha256": "f3cc502ac1783e789969e6e0d439efd65d864a3e25c0e21a2d925e97bafa88ae",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 15,
+          "sha256": "a4b08230baaf131fb458a1ffce0562d9e2fdc28113b73a9203fa1c8b9b076654",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 16,
+          "sha256": "5296fcb6b412a2a29b96bb7940a0d5f6b6858e38c475848f92cc92b0327ccfcf",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 17,
+          "sha256": "42747bbce3f0206d5df3f82a45401b8e24d2d74c818933d174d8f0ba5c60e282",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 18,
+          "sha256": "da2ec8286551128da15a648910fa69c7275febe1094ac4a7f48405d17143b1ec",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 19,
+          "sha256": "a4336a7188ecd419005dab9d3d4578eecbf1433addfe43cccc14a9318532e13b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 20,
+          "sha256": "9e3c235849b9766a289d1e4531e92a919f8540672a6426498d4eb11880621d63",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 21,
+          "sha256": "e0f9019698f03f03a468bd2c829aa9dcbd615de041626cdaad79ff3b6f05c804",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 22,
+          "sha256": "74524915a19f8c1bd4f5887b90b9d134846dfceb1a2fd7276634db351425b6bc",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 23,
+          "sha256": "c8ba5718a929582513f2b31d48ebd320cc25f43d5f2bd45a80f8a8a6f06d69b2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 24,
+          "sha256": "fe313decca662b375307f69db4d36e11a472da4ed9cc95249718af0c8a844cef",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 25,
+          "sha256": "0d652f77350259e6e666f8e0463a5020c936ab5d507e5991890939d8ad1a3684",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 26,
+          "sha256": "8d03bf854e28618e056f1adc9f2dbd3d67d866c1de7dd5a993f4c57e3ef641fc",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 27,
+          "sha256": "e021ed2a3aefa2ec44c71eaced15ef9c14c6549826151953315bc6ccc4b1eebb",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 28,
+          "sha256": "5b313407a392d3df51d96f369742c7cca16b52d7e1f7a65bac8ce5ca4e306271",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 29,
+          "sha256": "c0e4bc1f4faa6078500116f17e7b68e050f5c37b12b60953cfc065f55bc648a3",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 30,
+          "sha256": "f94d4b8640050a6ecb6e62c293a37545c3967910f4c8e7d2aadc6cca7189e3bb",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 31,
+          "sha256": "eb994706b44f0114f767e3cdf7dbe368da3b21df1e741c9a9a1151925bcabcde",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 32,
+          "sha256": "1fd132cc18b7773a95a4c086443030ab2718671e3be0c49b8a71d393df5ceb7d",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 33,
+          "sha256": "420144a64acacd868229dd7218fe54e84d48cca10a12a919629d76fd11189309",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 34,
+          "sha256": "f92ac7aa74375a3a6f521b635e1d36c8596a64ab92b8b49c2ffbaf1e22a02755",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 35,
+          "sha256": "e275411da6115cf8368b02a875ceab11965cb74d2af2738ce84f0215331be02a",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 36,
+          "sha256": "b039d589bc96f30955e52871d3852c9a674783ecec56786559942f5bfd2a0444",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 37,
+          "sha256": "7f02f5acc2f0428fbc1474db6669025a2cbcc22e87132eac1814bf5624915c56",
+          "width": 1241
+        }
+      ],
+      "sha256": "95b17a41a781eaabaaabae65915668d25704651b8f01bf6c6c995b667e652987",
+      "title": ""
+    },
+    "technical_zh": {
+      "author": "LIDC-IDRI Baseline-v2",
+      "page_count": 25,
+      "page_text_lengths": [
+        189,
+        968,
+        888,
+        118,
+        338,
+        1085,
+        2143,
+        1789,
+        1756,
+        2132,
+        2847,
+        164,
+        1636,
+        1309,
+        312,
+        2267,
+        1310,
+        3178,
+        2539,
+        264,
+        843,
+        1911,
+        1208,
+        2087,
+        889
+      ],
+      "rendered_pages": [
+        {
+          "height": 1754,
+          "page": 1,
+          "sha256": "881bf9d55a2112bc159f7bab6658f1d8ac44e56c28ad5ea0e9a31bf79f3ec38c",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 2,
+          "sha256": "83d30d8cc46f854ba25a6863546e6619746dc4cde81d965aa19f1c6862beaa84",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 3,
+          "sha256": "c8d1ce037ff538403b99407857cc1420898e16e42db5787cfc27fb1c282baccb",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 4,
+          "sha256": "337381973825a7e521ff7dc7358a081f8f138f7738cb94ab0c884852268a102b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 5,
+          "sha256": "8198a6282d8aa0d3a2d6e2218b19901c3e7564de1d0813d1ca35a414ddb41ea1",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 6,
+          "sha256": "212c3520fb644305a566f048843fefa4b52e1697b542eafa92f9d569253bf13c",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 7,
+          "sha256": "c604b3c1aa1811f3602e7c9840ab1a5eb5859c8aef86d03a268be9be87cdd0e2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 8,
+          "sha256": "f30345ba02337aeaa7a224e5a3e94440c04ba6c2eb8a8f0c5184fc25111ccf9b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 9,
+          "sha256": "b85dbecd79b7974c00dbb8131520e4d869cebe64cfaea3502c0cdd28b9e0e2ae",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 10,
+          "sha256": "de51819c047465304ce4dd8f9dc866e58c353bf3ea4650153de1bef00c2c6ed8",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 11,
+          "sha256": "d7da71066a166977568989a582770a95116aa212887ff476331bafc7d900064c",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 12,
+          "sha256": "25ec15d6c016fbb714c6a8d5958a607be0f8808afd20b59e17824866f34d4ca1",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 13,
+          "sha256": "73773ae5f58b6594898ef467da32ce946921c1a159459955a174d24a0b255e9e",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 14,
+          "sha256": "3172621f670e572c9ba884ab93044644a0a93d9766094a891c3df21992ab1616",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 15,
+          "sha256": "c3c69bcfe98fe88443313d221ca39418706a5a98b45aa8a60d8e3e34577efff3",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 16,
+          "sha256": "85e2205780030d2103e093b46a7b102ee395bbf69a43fe46a1e8c4c898209736",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 17,
+          "sha256": "693d6c32c244fc854155781eb56e8d8669fd043f21e8d7a2afcde781988c9ce6",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 18,
+          "sha256": "32f3a915e2350d4cc09534c14ca2c700a1ca0daec92b62f3be8b193db0a2437b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 19,
+          "sha256": "ad51441c5428c59cacebe671c14cb014636f9e6633ccde50326546368fd81893",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 20,
+          "sha256": "5847da8daa4fab80ada2d80bacb16186c7c30e15bdde30f6e725d997c19fb620",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 21,
+          "sha256": "4238b251c5b2aaf73cfa2b6e44628064ff487226b7d94568135731c848340876",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 22,
+          "sha256": "70d0fa9d07e7f8dcbbc939faad7917761b17031abcd836e39fdd85a8799a92a4",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 23,
+          "sha256": "751cc9a6b0d3e0dab43b60b1202c0153c677fd050a278eb8fe71d871e9995418",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 24,
+          "sha256": "00164bb22a5b2335200ab3c8fd8f0879c7f0857ca07b8c1c4244da118b7bf504",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 25,
+          "sha256": "26d26753edd82fbf08cdf44b92eafa4f47640de1da670f7a8121cf9d6cdb240a",
+          "width": 1241
+        }
+      ],
+      "sha256": "22f26603e2c4e2418bd0c08f16037e90c73377324f17620527c093f30518c553",
+      "title": "P10 Catalogue-driven Technical Report"
+    },
+    "technical_zh_with_appendix": {
+      "author": "",
+      "page_count": 37,
+      "page_text_lengths": [
+        189,
+        968,
+        888,
+        118,
+        338,
+        1085,
+        2143,
+        1789,
+        1756,
+        2132,
+        2847,
+        164,
+        1636,
+        1309,
+        312,
+        2267,
+        1310,
+        3178,
+        2539,
+        264,
+        843,
+        1911,
+        1208,
+        2087,
+        889,
+        126,
+        324,
+        324,
+        416,
+        404,
+        160,
+        258,
+        258,
+        49,
+        1296,
+        3937,
+        406
+      ],
+      "rendered_pages": [
+        {
+          "height": 1754,
+          "page": 1,
+          "sha256": "881bf9d55a2112bc159f7bab6658f1d8ac44e56c28ad5ea0e9a31bf79f3ec38c",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 2,
+          "sha256": "83d30d8cc46f854ba25a6863546e6619746dc4cde81d965aa19f1c6862beaa84",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 3,
+          "sha256": "c8d1ce037ff538403b99407857cc1420898e16e42db5787cfc27fb1c282baccb",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 4,
+          "sha256": "337381973825a7e521ff7dc7358a081f8f138f7738cb94ab0c884852268a102b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 5,
+          "sha256": "8198a6282d8aa0d3a2d6e2218b19901c3e7564de1d0813d1ca35a414ddb41ea1",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 6,
+          "sha256": "212c3520fb644305a566f048843fefa4b52e1697b542eafa92f9d569253bf13c",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 7,
+          "sha256": "c604b3c1aa1811f3602e7c9840ab1a5eb5859c8aef86d03a268be9be87cdd0e2",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 8,
+          "sha256": "f30345ba02337aeaa7a224e5a3e94440c04ba6c2eb8a8f0c5184fc25111ccf9b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 9,
+          "sha256": "b85dbecd79b7974c00dbb8131520e4d869cebe64cfaea3502c0cdd28b9e0e2ae",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 10,
+          "sha256": "de51819c047465304ce4dd8f9dc866e58c353bf3ea4650153de1bef00c2c6ed8",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 11,
+          "sha256": "d7da71066a166977568989a582770a95116aa212887ff476331bafc7d900064c",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 12,
+          "sha256": "25ec15d6c016fbb714c6a8d5958a607be0f8808afd20b59e17824866f34d4ca1",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 13,
+          "sha256": "73773ae5f58b6594898ef467da32ce946921c1a159459955a174d24a0b255e9e",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 14,
+          "sha256": "3172621f670e572c9ba884ab93044644a0a93d9766094a891c3df21992ab1616",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 15,
+          "sha256": "c3c69bcfe98fe88443313d221ca39418706a5a98b45aa8a60d8e3e34577efff3",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 16,
+          "sha256": "85e2205780030d2103e093b46a7b102ee395bbf69a43fe46a1e8c4c898209736",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 17,
+          "sha256": "693d6c32c244fc854155781eb56e8d8669fd043f21e8d7a2afcde781988c9ce6",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 18,
+          "sha256": "32f3a915e2350d4cc09534c14ca2c700a1ca0daec92b62f3be8b193db0a2437b",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 19,
+          "sha256": "ad51441c5428c59cacebe671c14cb014636f9e6633ccde50326546368fd81893",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 20,
+          "sha256": "5847da8daa4fab80ada2d80bacb16186c7c30e15bdde30f6e725d997c19fb620",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 21,
+          "sha256": "4238b251c5b2aaf73cfa2b6e44628064ff487226b7d94568135731c848340876",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 22,
+          "sha256": "70d0fa9d07e7f8dcbbc939faad7917761b17031abcd836e39fdd85a8799a92a4",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 23,
+          "sha256": "751cc9a6b0d3e0dab43b60b1202c0153c677fd050a278eb8fe71d871e9995418",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 24,
+          "sha256": "00164bb22a5b2335200ab3c8fd8f0879c7f0857ca07b8c1c4244da118b7bf504",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 25,
+          "sha256": "26d26753edd82fbf08cdf44b92eafa4f47640de1da670f7a8121cf9d6cdb240a",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 26,
+          "sha256": "1e0d49a1df94b914070499e16e3c493775c14b340d03955ffb3cee492cdb2cd5",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 27,
+          "sha256": "666e11ce757048e873bd4ee5f2b01258f686cd3f4942ee4dd2d07364107d3ecd",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 28,
+          "sha256": "23d6f54cc25d67b7c001f96efe09dea715644abb731c167de65792341efcaecf",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 29,
+          "sha256": "14a9a36e5574d6952be889eccf8da93682d7368627610331a659ed4675fde668",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 30,
+          "sha256": "f38f72fa6cd8c45c21ef6d36c5ced07c6fdefadfb934b2f786d1771d2354c765",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 31,
+          "sha256": "c44e91e23e703d659a274b8317299122c766742530e06f20e255fcd41304537d",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 32,
+          "sha256": "c07378a12175165485439bbdc7e4bb3ea09406f1134967cead9f4a0c467dee91",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 33,
+          "sha256": "2d8915dfbc488b05711c5bdac7ab20dbb4eea50b50fae941f8ce9d4dab4fa404",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 34,
+          "sha256": "9e3ee2d4b2cf8dbcfc80cd0f4809b0a5f09373c31b1eb4034bf406b285d6c1a1",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 35,
+          "sha256": "942f6d4701ac8c63aa9022bca2234a155fe13456cb64239a6d5aa4d766c59414",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 36,
+          "sha256": "21e4416b5d27b8b6a31fc88836002c88bb1ac4b0e618ca01eec0ee362343fc31",
+          "width": 1241
+        },
+        {
+          "height": 1754,
+          "page": 37,
+          "sha256": "ede0fc731fa4f00700b9b40e46777bb06170cf76fa18628980a3a01b9a3f6e61",
+          "width": 1241
+        }
+      ],
+      "sha256": "8f73f2ad3bafe22b670947126ef13693b2937f3cb98811d75b9e30d4bb4cd744",
+      "title": ""
+    }
+  },
+  "render_dpi": 150,
+  "rendered_page_manifest_sha256": "3d999f6d6795972f40f0d8e1e14ae1b57e9f97075551b0f536eab13220e2c079",
+  "renderer": "pdftoppm",
+  "schema_version": 1,
+  "status": "PASS"
+}

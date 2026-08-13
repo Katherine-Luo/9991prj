@@ -1,0 +1,5 @@
+Model,Task path,Concept representation,Contribution semantics,Intervention semantics
+Black-box,DenseNet features → linear score,None,Not applicable,Not applicable
+Standard CBM,Predicted concepts → linear score,6 sigmoid + 2 softmax groups,Linear group terms,Replace activated concept group
+Mixed-type CEM,Sample-conditioned concept embeddings → linear score,Mixed-type dynamic states,Embedding block dot product,Replace mixture weights only
+Learned-softmax GAM,Predicted concepts → local experts → additive score,6 sigmoid + 2 softmax groups,Softmax-weighted local experts,Ground-truth concept through experts

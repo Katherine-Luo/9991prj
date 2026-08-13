@@ -1,0 +1,6 @@
+Layer,Question,Main evidence,Boundary
+Prediction,How accurately is malignancy scored?,Learned-softmax GAM has the lowest point-estimate MAE; paired support is model-dependent.,"Radiologist assessment, not pathology."
+WHERE,Where is the output spatially sensitive?,"66,769 valid maps; saliency often did not exceed matched random masks.","6,955 post-ReLU zero maps; exact mechanism unavailable."
+WHAT,Which concepts were predicted?,Continuous fidelity varied by concept; categorical hard-F1 was limited.,Categorical targets are reader-vote distributions.
+WHY,How do concepts enter the score?,Signed centered terms and learned GAM mixtures reconstruct the score.,Centering constants are not importance; mean absolute aggregate was not persisted.
+HOW,How does correcting concepts alter prediction?,Intervention benefit was strongest for CEM/GAM and ordering-dependent.,"Interventions test model dependence, not causal clinical effects."

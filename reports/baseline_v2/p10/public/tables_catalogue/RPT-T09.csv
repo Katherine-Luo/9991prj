@@ -1,0 +1,5 @@
+Model,AUROC (95% CI),AUPRC (95% CI),Sensitivity,Specificity,Balanced accuracy,N,catalogue_item_id,source_artifact_id,source_field_path,source_sha256
+Black-box,0.945 (0.926–0.962),0.894 (0.859–0.925),0.801,0.927,0.864,1073,RES-P9-SECONDARY-BLACKBOX,ART-P9-TASK,models.blackbox.pooled_secondary,d62eb69568af89301c816fc505c129ab2a60cece3aff1dd66ccec567d20dfa01
+Learned-softmax GAM,0.949 (0.927–0.968),0.903 (0.868–0.934),0.859,0.894,0.876,1073,RES-P9-SECONDARY-LEARNED_SOFTMAX_GAM,ART-P9-TASK,models.learned_softmax_gam.pooled_secondary,d62eb69568af89301c816fc505c129ab2a60cece3aff1dd66ccec567d20dfa01
+Mixed-type CEM,0.942 (0.920–0.960),0.877 (0.833–0.916),0.832,0.923,0.877,1073,RES-P9-SECONDARY-MIXED_CEM,ART-P9-TASK,models.mixed_cem.pooled_secondary,d62eb69568af89301c816fc505c129ab2a60cece3aff1dd66ccec567d20dfa01
+Standard CBM,0.933 (0.911–0.951),0.866 (0.826–0.900),0.825,0.866,0.845,1073,RES-P9-SECONDARY-STANDARD_CBM,ART-P9-TASK,models.standard_cbm.pooled_secondary,d62eb69568af89301c816fc505c129ab2a60cece3aff1dd66ccec567d20dfa01

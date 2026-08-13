@@ -1,0 +1,97 @@
+schema_version: 1
+protocol_version: Baseline-v2
+phase: P10
+purpose: Catalogue-driven bilingual final report revision
+
+approved_inputs:
+  results_catalogue_plan:
+    path: docs/results/RESULTS_CATALOGUE_PLAN.md
+    sha256: eb3aa9110fc06acd8cd9e2a375b64bcfa5a60d768ef6f37f16e1c693576c5c93
+  report_plan:
+    path: docs/results/P10_CATALOGUE_DRIVEN_BILINGUAL_REPORT_PLAN.md
+    sha256: be33c07d566914d40bd50fba65b347118e706940a64495782cf0245f7914629c
+  catalogue_registry:
+    path: docs/results/results_catalogue_registry.json
+    sha256: 624fa259430d6c5709568f7507ec0a92421d669ad64071d935eece566283b3cf
+  catalogue_manifest:
+    path: docs/results/catalogue_manifest.json
+    sha256: 0658fe8e9248deb735c8cf06b33467362293f11519a0f7ad5aed1c00897099db
+
+approval_gates:
+  results_catalogue_plan_approved: 1
+  p10_report_plan_approved: 1
+  generated_catalogue_approved: 1
+  report_revision_authorized: 1
+
+scientific_boundaries:
+  p5_through_p9_access: read_only
+  model_forward: forbidden
+  training: forbidden
+  optimizer_creation: forbidden
+  test_inference: forbidden
+  scientific_recomputation: forbidden
+  bootstrap_recomputation: forbidden
+  intervention_recomputation: forbidden
+  gradcam_recomputation: forbidden
+  p11: forbidden
+
+catalogue_contract:
+  mode: CATALOGUE_DRIVEN
+  source_discovery_outside_catalogue: forbidden
+  section_manifests_required: true
+  forward_traceability_required: true
+  reverse_traceability_required: true
+  planned_tables: 20
+  planned_public_figures: 14
+  planned_private_figures: 6
+  missing_component_policy: visibly_mark_registered_unavailable_state
+
+mandatory_public_outputs:
+  - reports/baseline_v2/p10/public/technical_en.md
+  - reports/baseline_v2/p10/public/technical_en.pdf
+  - reports/baseline_v2/p10/public/technical_zh.md
+  - reports/baseline_v2/p10/public/technical_zh.pdf
+
+mandatory_private_outputs:
+  root: /Users/katherine/Desktop/lidc_data/lidc_baseline_private_archive/baseline_v2/p10_private_report
+  files:
+    - qualitative_appendix_en.md
+    - qualitative_appendix_en.pdf
+    - qualitative_appendix_zh.md
+    - qualitative_appendix_zh.pdf
+    - technical_en_with_appendix.pdf
+    - technical_zh_with_appendix.pdf
+
+editorial_contract:
+  page_size: A4
+  layout: single_column_journal_style
+  renderer: reportlab_platypus
+  fixed_section_per_page_canvas: forbidden
+  technical_pages_editorial_target: [25, 35]
+  technical_english_words_editorial_target: [8000, 12000]
+  page_and_word_targets_are_blocking: false
+  results_order: [Prediction, WHERE, WHAT, WHY, HOW, Integrated_interpretation]
+  results_minimum_substantive_paragraphs_per_subsection: 3
+  end_of_document_figure_dump: forbidden
+
+bilingual_contract:
+  shared_structured_manuscript_model: true
+  section_table_figure_reference_ids_identical: true
+  numeric_tokens_identical: true
+  table_cells_identical: true
+  conclusion_codes_identical: true
+  chinese_font: Songti_SC
+
+pdf_quality_gate:
+  mandatory_pdf_count: 6
+  poppler_dpi: 150
+  all_pages_rendered: true
+  pdfplumber_text_check: true
+  pypdf_metadata_and_font_check: true
+  manual_contact_sheet_review: required
+  clipping_overlap_missing_glyphs: forbidden
+
+phase_gate:
+  after_pass: AWAITING_USER_APPROVAL
+  completed_without_user_confirmation: forbidden
+  push_without_user_confirmation: forbidden

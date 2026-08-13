@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 import numpy as np
@@ -11,6 +12,7 @@ from lidc_baseline.p10_private_appendix import (
     _load_roi,
     _verify_selected_case_index,
     _verify_private_visual_qa,
+    _verify_private_manual_review_provenance,
     record_private_visual_qa,
     re_case_label,
     select_concept_cases,
@@ -202,3 +204,28 @@ def test_private_visual_qa_binds_all_four_pdfs(tmp_path, monkeypatch) -> None:
     (root / "qualitative_appendix_en.pdf").write_bytes(b"tampered")
     with pytest.raises(ValueError, match="VISUAL_QA_BINDING_INVALID"):
         _verify_private_visual_qa(tmp_path)
+
+
+def test_private_manual_visual_review_provenance_is_fail_closed() -> None:
+    from lidc_baseline.p10_private_appendix import PRIVATE_MANUAL_VISUAL_REVIEWER
+
+    pages = {"appendix": [{"page": 1, "png_sha256": "b" * 64}]}
+    rendered_sha = hashlib.sha256(
+        json.dumps(pages, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    valid = {
+        "manual_reviewer": PRIVATE_MANUAL_VISUAL_REVIEWER,
+        "manual_review_timestamp_utc": "2026-08-13T01:02:03+00:00",
+        "rendered_page_manifest_sha256": rendered_sha,
+        "pdfs": {"appendix": {"rendered_pages": pages["appendix"]}},
+    }
+    _verify_private_manual_review_provenance(valid)
+    for key in (
+        "manual_reviewer",
+        "manual_review_timestamp_utc",
+        "rendered_page_manifest_sha256",
+    ):
+        tampered = dict(valid)
+        tampered[key] = "incorrect"
+        with pytest.raises(ValueError, match="P10_PRIVATE_VISUAL_QA_"):
+            _verify_private_manual_review_provenance(tampered)

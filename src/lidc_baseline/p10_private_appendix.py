@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,10 @@ OOF_FILENAMES = {
 }
 CASE_COUNT = 14
 PRIVATE_VISUAL_QA_NAME = "private_visual_qa.json"
+PRIVATE_MANUAL_VISUAL_REVIEWER = (
+    "Codex primary agent (visual inspection of contact sheets and "
+    "original-resolution critical pages)"
+)
 ROLE_LABELS_ZH = {
     "median_error_representative": "中位绝对误差代表案例",
     "maximum_error_failure": "最大绝对误差失败案例",
@@ -581,6 +586,15 @@ def record_private_visual_qa(
         "rendered_page_count": total_pages,
         "pdfplumber_text_gate": "PASS",
         "manual_visual_review": "PASS" if manual_review_pass else "PENDING",
+        "manual_reviewer": PRIVATE_MANUAL_VISUAL_REVIEWER,
+        "manual_review_timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "rendered_page_manifest_sha256": hashlib.sha256(
+            json.dumps(
+                {name: row["rendered_pages"] for name, row in sorted(pdfs.items())},
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest(),
         "manual_checklist": {
             "clipping": "PASS" if manual_review_pass else "PENDING",
             "overlap": "PASS" if manual_review_pass else "PENDING",
@@ -600,6 +614,32 @@ def record_private_visual_qa(
     return payload
 
 
+def _verify_private_manual_review_provenance(evidence: Mapping[str, Any]) -> None:
+    if evidence.get("manual_reviewer") != PRIVATE_MANUAL_VISUAL_REVIEWER:
+        raise ValueError("P10_PRIVATE_VISUAL_QA_REVIEWER_INVALID")
+    timestamp = evidence.get("manual_review_timestamp_utc")
+    if not isinstance(timestamp, str):
+        raise ValueError("P10_PRIVATE_VISUAL_QA_TIMESTAMP_INVALID")
+    try:
+        parsed = datetime.fromisoformat(timestamp)
+    except ValueError as error:
+        raise ValueError("P10_PRIVATE_VISUAL_QA_TIMESTAMP_INVALID") from error
+    if parsed.tzinfo is None or parsed.utcoffset() != timezone.utc.utcoffset(parsed):
+        raise ValueError("P10_PRIVATE_VISUAL_QA_TIMESTAMP_INVALID")
+    expected_manifest = hashlib.sha256(
+        json.dumps(
+            {
+                name: row["rendered_pages"]
+                for name, row in sorted(evidence.get("pdfs", {}).items())
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    if evidence.get("rendered_page_manifest_sha256") != expected_manifest:
+        raise ValueError("P10_PRIVATE_VISUAL_QA_RENDER_MANIFEST_INVALID")
+
+
 def _verify_private_visual_qa(archive_root: Path) -> dict[str, Any]:
     root = archive_root / PRIVATE_ROOT_NAME
     evidence = json.loads(
@@ -611,6 +651,7 @@ def _verify_private_visual_qa(archive_root: Path) -> dict[str, Any]:
         "technical_en_with_appendix",
         "technical_zh_with_appendix",
     }
+    _verify_private_manual_review_provenance(evidence)
     if (
         evidence.get("status") != "PASS"
         or evidence.get("manual_visual_review") != "PASS"
@@ -698,6 +739,12 @@ def build_private_appendix(
 
 def verify_private_appendices(archive_root: Path = LOCAL_ROOT_DEFAULT) -> dict[str, Any]:
     root = archive_root / PRIVATE_ROOT_NAME
+    revision_manifest_path = root / "catalogue_private_report_manifest.json"
+    revision_manifest = (
+        json.loads(revision_manifest_path.read_text(encoding="utf-8"))
+        if revision_manifest_path.is_file()
+        else None
+    )
     payload = json.loads((root / "private_case_index.json").read_text(encoding="utf-8"))
     cases = payload["cases"]
     expected_cases = select_private_cases(archive_root)
@@ -736,13 +783,50 @@ def verify_private_appendices(archive_root: Path = LOCAL_ROOT_DEFAULT) -> dict[s
         markdown_text = markdown.read_text(encoding="utf-8")
         appendix_text, _ = _pdf_text_and_font_evidence(appendix)
         combined_text, _ = _pdf_text_and_font_evidence(combined)
+        public_technical = Path("reports/baseline_v2/p10/public") / f"technical_{language}.pdf"
+        try:
+            from pypdf import PdfReader
+        except ImportError as error:
+            raise RuntimeError("P10_REPORT_DEPENDENCIES_REQUIRED") from error
+        expected_combined_pages = [
+            page.extract_text() or ""
+            for source in (public_technical, appendix)
+            for page in PdfReader(str(source)).pages
+        ]
+        observed_combined_pages = [
+            page.extract_text() or "" for page in PdfReader(str(combined)).pages
+        ]
+        if observed_combined_pages != expected_combined_pages:
+            raise ValueError("P10_PRIVATE_COMBINED_NOT_EXACT_CONCATENATION")
         markdown_by_language[language] = markdown_text
         appendix_text_by_language[language] = appendix_text
         combined_text_by_language[language] = combined_text
-        if _pdf_page_count(appendix) != CASE_COUNT or _pdf_page_count(combined) != technical_pages + CASE_COUNT:
+        appendix_pages = _pdf_page_count(appendix)
+        combined_pages = _pdf_page_count(combined)
+        if revision_manifest is None:
+            expected_appendix_pages = CASE_COUNT
+        else:
+            report_evidence = revision_manifest.get("reports", {})
+            appendix_evidence = report_evidence.get(f"qualitative_appendix_{language}", {})
+            combined_evidence = report_evidence.get(f"technical_{language}_with_appendix", {})
+            if (
+                revision_manifest.get("status") != "PRIVATE_APPENDICES_BUILT_PENDING_QA"
+                or revision_manifest.get("case_count") != CASE_COUNT
+                or revision_manifest.get("case_labels") != expected_labels
+                or revision_manifest.get("model_forward") is not False
+                or revision_manifest.get("scientific_recomputation") is not False
+                or revision_manifest.get("p11_started") is not False
+                or appendix_evidence.get("sha256") != sha256_file(appendix)
+                or appendix_evidence.get("markdown_sha256") != sha256_file(markdown)
+                or combined_evidence.get("sha256") != sha256_file(combined)
+            ):
+                raise ValueError("P10_PRIVATE_REVISION_MANIFEST_INVALID")
+            expected_appendix_pages = appendix_pages
+        if appendix_pages != expected_appendix_pages or combined_pages != technical_pages + appendix_pages:
             raise ValueError("P10_PRIVATE_PDF_PAGE_COUNT_INVALID")
         for label in expected_labels:
-            if markdown_text.count(label) != 3 or appendix_text.count(label) != 1:
+            expected_markdown_count = 3 if revision_manifest is None else 1
+            if markdown_text.count(label) != expected_markdown_count or label not in appendix_text:
                 raise ValueError("P10_PRIVATE_CASE_CORRESPONDENCE_INVALID")
             if label not in combined_text:
                 raise ValueError("P10_PRIVATE_COMBINED_CASE_MISSING")
@@ -752,22 +836,25 @@ def verify_private_appendices(archive_root: Path = LOCAL_ROOT_DEFAULT) -> dict[s
         if language == "zh":
             _verify_chinese_pdf_fonts(appendix)
             _verify_chinese_pdf_fonts(combined)
-    for payload in (
-        markdown_by_language,
-        appendix_text_by_language,
-        combined_text_by_language,
-    ):
+    # The combined PDFs are proved above to be exact page-for-page
+    # concatenations. Public technical-report bilingual parity is independently
+    # verified by verify_public_outputs, so this private gate compares the two
+    # private evidence layers it owns rather than conflating language-specific
+    # TOC/footer page numbers with scientific values.
+    for payload in (markdown_by_language, appendix_text_by_language):
         if extract_numeric_tokens(payload["en"]) != extract_numeric_tokens(payload["zh"]):
             raise ValueError("P10_PRIVATE_BILINGUAL_NUMERIC_MISMATCH")
     visual_qa = _verify_private_visual_qa(archive_root)
+    appendix_pages = _pdf_page_count(root / "qualitative_appendix_en.pdf")
+    combined_pages = _pdf_page_count(root / "technical_en_with_appendix.pdf")
     return {
         "status": "PASS",
         "case_count": CASE_COUNT,
         "same_cases": True,
         "model_forward": False,
         "private_identifiers_only_in_index": True,
-        "appendix_pages": CASE_COUNT,
-        "combined_pages": technical_pages + CASE_COUNT,
+        "appendix_pages": appendix_pages,
+        "combined_pages": combined_pages,
         "chinese_fonts_embedded": True,
         "page_render_visual_qa": visual_qa["status"],
         "pdfplumber_text_gate": visual_qa["pdfplumber_text_gate"],

@@ -45,9 +45,15 @@ P10_DEVELOPMENT_FILES = {
     "configs/experiments/baseline_v2_p10_catalogue.yaml",
     "configs/experiments/baseline_v2_p10_catalogue.resolved.yaml",
     "configs/experiments/baseline_v2_p10_catalogue.sha256",
+    "configs/experiments/baseline_v2_p10_report_revision.yaml",
+    "configs/experiments/baseline_v2_p10_report_revision.resolved.yaml",
+    "configs/experiments/baseline_v2_p10_report_revision.sha256",
     "scripts/p10_catalogue_xlsx.mjs",
     "src/lidc_baseline/p10_catalogue.py",
+    "src/lidc_baseline/p10_catalogue_report.py",
+    "src/lidc_baseline/p10_catalogue_private.py",
     "tests/test_p10_catalogue.py",
+    "tests/test_p10_catalogue_report.py",
 }
 P10_CATALOGUE_PUBLIC_FILES = {
     "docs/results/RESULTS_MASTER_CATALOGUE.md",
@@ -176,6 +182,12 @@ def verify_git_candidate_whitelist(
     allowed.update(
         (public_relative / path.relative_to(public_root)).as_posix()
         for path in public_root.rglob("*")
+        if path.is_file()
+    )
+    manifests_root = repository_root / "reports/baseline_v2/p10/manifests"
+    allowed.update(
+        path.relative_to(repository_root).as_posix()
+        for path in manifests_root.glob("SEC-*.json")
         if path.is_file()
     )
     allowed.update(

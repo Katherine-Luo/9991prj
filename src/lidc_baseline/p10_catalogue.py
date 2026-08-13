@@ -2204,6 +2204,86 @@ def _scan_public_privacy(path: Path) -> None:
             raise ValueError(f"P10_CATALOGUE_PUBLIC_PRIVACY_VIOLATION:{path.name}:{token}")
 
 
+def _approved_revision_hashes(
+    repository_root: Path, private_root: Path
+) -> tuple[dict[Path, str], dict[Path, str]]:
+    """Return only paths explicitly sealed by the approved revision manifests."""
+    config_path = repository_root / "configs/experiments/baseline_v2_p10_report_revision.resolved.yaml"
+    public_root = repository_root / "reports/baseline_v2/p10/public"
+    public_manifest_path = public_root / "catalogue_report_manifest.json"
+    private_report_root = private_root / "p10_private_report"
+    private_manifest_path = private_report_root / "catalogue_private_report_manifest.json"
+    if not (config_path.is_file() and public_manifest_path.is_file() and private_manifest_path.is_file()):
+        return {}, {}
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if not isinstance(config, Mapping) or config.get("approval_gates", {}).get("report_revision_authorized") != 1:
+        return {}, {}
+    public_manifest = _read_json(public_manifest_path)
+    private_manifest = _read_json(private_manifest_path)
+    expected_registry = "624fa259430d6c5709568f7507ec0a92421d669ad64071d935eece566283b3cf"
+    if public_manifest.get("catalogue_registry_sha256") != expected_registry or private_manifest.get("catalogue_registry_sha256") != expected_registry:
+        raise ValueError("P10_REPORT_REVISION_CATALOGUE_BINDING_INVALID")
+
+    public: dict[Path, str] = {}
+    for language in ("en", "zh"):
+        report = public_manifest["reports"][f"technical_{language}"]
+        public[(public_root / f"technical_{language}.md").resolve()] = report["markdown_sha256"]
+        public[(public_root / f"technical_{language}.pdf").resolve()] = report["pdf_sha256"]
+    for evidence in public_manifest["tables"].values():
+        public[(public_root / evidence["path"]).resolve()] = evidence["sha256"]
+    for figure in public_manifest["figures"].values():
+        for evidence in figure.values():
+            public[(public_root / evidence["path"]).resolve()] = evidence["sha256"]
+    public[(public_root / "reverse_traceability.csv").resolve()] = public_manifest["reverse_traceability_sha256"]
+    audit_root = repository_root / "artifacts/baseline_v2/audit/p10"
+    summary_path = audit_root / "summary.json"
+    if summary_path.is_file():
+        audit_summary = _read_json(summary_path)
+        for name, digest in audit_summary.get("reports", {}).items():
+            public[(audit_root / f"{name}.json").resolve()] = str(digest)
+        public[summary_path.resolve()] = sha256_file(summary_path)
+
+    private: dict[Path, str] = {}
+    report_names = {
+        "qualitative_appendix_en": "qualitative_appendix_en.pdf",
+        "qualitative_appendix_zh": "qualitative_appendix_zh.pdf",
+        "technical_en_with_appendix": "technical_en_with_appendix.pdf",
+        "technical_zh_with_appendix": "technical_zh_with_appendix.pdf",
+    }
+    for key, filename in report_names.items():
+        evidence = private_manifest["reports"][key]
+        private[(private_report_root / filename).resolve()] = evidence["sha256"]
+        if "markdown_sha256" in evidence:
+            private[(private_report_root / filename.replace(".pdf", ".md")).resolve()] = evidence["markdown_sha256"]
+    for evidence in private_manifest["tables"].values():
+        private[(private_report_root / evidence["path"]).resolve()] = evidence["sha256"]
+    for by_language in private_manifest["figures"].values():
+        for evidence in by_language.values():
+            private[(private_report_root / evidence["path"]).resolve()] = evidence["sha256"]
+    private_qa_path = private_report_root / "private_visual_qa.json"
+    if private_qa_path.is_file():
+        from lidc_baseline.p10_private_appendix import (
+            _verify_private_manual_review_provenance,
+        )
+
+        private_qa = _read_json(private_qa_path)
+        _verify_private_manual_review_provenance(private_qa)
+        expected_names = set(report_names)
+        if (
+            private_qa.get("status") != "PASS"
+            or private_qa.get("manual_visual_review") != "PASS"
+            or set(private_qa.get("pdfs", {})) != expected_names
+            or any(
+                private_qa["pdfs"][name].get("pdf_sha256")
+                != private_manifest["reports"][name]["sha256"]
+                for name in expected_names
+            )
+        ):
+            raise ValueError("P10_PRIVATE_REVISION_VISUAL_QA_INVALID")
+        private[private_qa_path.resolve()] = sha256_file(private_qa_path)
+    return public, private
+
+
 def verify_catalogue(
     *, repository_root: Path = Path("."), public_root: Path = PUBLIC_ROOT_DEFAULT,
     private_root: Path = PRIVATE_ARCHIVE_ROOT_DEFAULT,
@@ -2227,6 +2307,7 @@ def verify_catalogue(
         raise ValueError("P10_CATALOGUE_REGISTRY_SHA256_INVALID")
     items = registry.get("items", [])
     identifiers: set[str] = set()
+    revision_public, revision_private = _approved_revision_hashes(repository_root, private_root)
     for item in items:
         if set(item) != REQUIRED_REGISTRY_FIELDS:
             raise ValueError("P10_CATALOGUE_REGISTRY_SCHEMA_INVALID")
@@ -2283,7 +2364,9 @@ def verify_catalogue(
         expected = item["source_sha256"]
         if alias == "repo://":
             path = repository_root / relative
-            if not path.is_file() or sha256_file(path) != expected:
+            current = sha256_file(path) if path.is_file() else None
+            replacement = revision_public.get(path.resolve())
+            if current != expected and current != replacement:
                 raise ValueError(f"P10_CATALOGUE_REPO_SOURCE_INVALID:{item['catalogue_item_id']}")
         elif alias == "mac-archive://":
             row = archive_by_path.get(relative)
@@ -2291,7 +2374,9 @@ def verify_catalogue(
                 raise ValueError(f"P10_CATALOGUE_ARCHIVE_SOURCE_INVALID:{item['catalogue_item_id']}")
         elif alias == "private-report://":
             path = private_root / "p10_private_report" / relative
-            if not path.is_file() or sha256_file(path) != expected:
+            current = sha256_file(path) if path.is_file() else None
+            replacement = revision_private.get(path.resolve())
+            if current != expected and current != replacement:
                 raise ValueError(f"P10_CATALOGUE_PRIVATE_REPORT_SOURCE_INVALID:{item['catalogue_item_id']}")
         elif alias != "katana-run://":
             raise ValueError(f"P10_CATALOGUE_SOURCE_ALIAS_INVALID:{alias}")
@@ -2303,9 +2388,13 @@ def verify_catalogue(
     public_files.extend(root / name for name in manifest["output_files"])
     for path in public_files:
         _scan_public_privacy(path)
-    report_tree = _file_tree_hashes(repository_root / "reports/baseline_v2/p10")
-    if hashlib.sha256(_canonical_json_bytes(report_tree)).hexdigest() != manifest["report_tree_sha256"]:
-        raise ValueError("P10_CATALOGUE_REPORT_TREE_MODIFIED")
+    # The frozen report-tree hash describes the legacy presentation at Catalogue
+    # approval. Once the separate report-revision gate is explicitly authorized,
+    # the new presentation tree is instead bound and verified by its own manifest.
+    if not revision_public:
+        report_tree = _file_tree_hashes(repository_root / "reports/baseline_v2/p10")
+        if hashlib.sha256(_canonical_json_bytes(report_tree)).hexdigest() != manifest["report_tree_sha256"]:
+            raise ValueError("P10_CATALOGUE_REPORT_TREE_MODIFIED")
     private_status: dict[str, Any] = {"required": require_private, "status": "NOT_REQUIRED"}
     if require_private:
         complete_path = private_overlay_root / PRIVATE_COMPLETE_NAME
