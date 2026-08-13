@@ -1,13 +1,14 @@
 # 可解释肺结节恶性评分：Prediction、WHERE、WHAT、WHY 与 HOW
 
-**Author / 作者:** [To be completed]
+**作者:** [To be completed]
 
-**Affiliation / 单位:** [To be completed]
+**单位:** [To be completed]
 
-**Supervisor / 导师:** [To be completed]
-**Date / 日期:** 2026-08-13
+**导师:** [To be completed]
 
-**Keywords / 关键词:** LIDC-IDRI; concept bottleneck; Grad-CAM; intervention; explainability
+**日期:** 2026-08-13
+
+**关键词:** LIDC-IDRI; concept bottleneck; Grad-CAM; intervention; explainability
 
 ## 摘要
 
@@ -31,7 +32,7 @@ Learned-softmax GAM 的主要 MAE 点估计最低，为 0.480；Black-box 为 0.
 
 ## 2. 相关工作
 
-三维卷积网络能够把体积 CT patch 直接映射为恶性评分，但其内部表示并不天然对应影像学术语。Dense connectivity 有助于特征复用与梯度传播，因此四个模型共享 DenseNet-121 编码器。Black-box 模型用于建立不施加概念约束时的图像优先基准。
+LIDC-IDRI 提供带有多读者结节标注的公开胸部 CT 参考数据库 [1]。既往肺结节系统使用局部图像 patch 与卷积网络预测恶性可疑度；例如 MC-CNN 把多尺度图像特征与可疑度及部分语义属性联系起来 [9]。这些研究支持体积图像建模，也强化本研究保留的关键边界：LIDC malignancy 是读者评估，不是病理确诊。
 
 **RPT-T01. 相关工作比较**
 
@@ -42,11 +43,15 @@ Learned-softmax GAM 的主要 MAE 点估计最低，为 0.480；Black-box 为 0.
 | Concept Embedding Model | Yes | Mixed-type embeddings | Concept/task Grad-CAM | Mixture-weight replacement | Project-specific Mixed-type CEM |
 | Additive local experts | Yes | Explicit | Concept/task Grad-CAM | Local-expert re-evaluation | Preregistered Learned-softmax GAM |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T01.csv`._
+DenseNet 改善特征复用与梯度流 [2]，因此四个模型采用共同的 DenseNet-121 编码器。概念瓶颈模型让中间变量可直接检查和纠正 [3]；概念嵌入模型用样本条件化表示替代标量瓶颈，并展示不同的准确度–干预 trade-off [4]。本研究的 Mixed-type CEM 是针对六个连续目标和两个分类投票分布目标的项目特定扩展，并不声称原样复现原始 CEM。
 
-概念瓶颈模型暴露可评估、可干预的中间变量。概念嵌入模型通过构造样本条件化概念状态放宽标量瓶颈，而本项目进一步扩展到连续与分类读者目标混合的情形。Learned-softmax GAM 则保留显式概念预测，并把每组概念送入五个局部专家，其混合权重在每折学习。
+广义加性模型把输出表示为分量函数之和 [5]。Dumaev 等人把概念学习和加性决策解释用于 LIDC-IDRI 肺结节恶性评分 [8]，是最接近本研究任务的先例。本研究预注册的 Learned-softmax GAM 有实质差异：每个概念组包含五个局部神经专家，由逐折学习的 softmax 权重混合，并在当前冻结的患者分组协议下训练和评估。
 
-Grad-CAM 在卷积特征层定位梯度，但视觉上集中的热图并不自动等于忠实解释。因此，本研究把确定性显著区域遮挡与 20 个等大小随机遮挡比较，并同时保存 output_sensitivity 和 error_increase。二者区别至关重要：输出发生变化并不能证明预测变差。表 RPT-T01 对这些组成进行定位，但不会把既往研究结果当作当前队列证据。
+Grad-CAM 使用卷积层的目标梯度生成粗粒度空间敏感图 [6]，但视觉集中的 map 并不自动代表忠实。本研究因此把确定性显著遮挡与 20 个等大小随机遮挡比较，并把 output_sensitivity 与 error_increase 分开保存。概念干预同样不保证改善；后续研究显示其效果强烈依赖选择策略与粒度 [7]。表 RPT-T01 对这些方法定位，但不把既往结果当作本队列证据。
+
+这些模型家族暴露的对象不同。标量 CBM 暴露概念预测值，CEM 暴露样本条件化概念状态，加性模型暴露评分分量，Grad-CAM 则暴露依赖目标的空间敏感性。这些对象都不自动成为 ground-truth explanation。概念可以预测得准却被脆弱地使用，贡献可以重建评分却仍不具备临床因果性，空间图也可能视觉合理而无法通过遮挡比较。因此本研究把这些 claim 分开，不把透明性当成单一二值属性。
+
+肺结节研究在队列身份、标签构建、split unit 与报告量尺上也存在差异。当既往工作使用不同的实体结节 reconciliation、二分可疑度目标或图像抽样协议时，直接比较数值并不安全。因此既往工作只用于方法动机与解读边界；所有性能 claim 只来自冻结的 2,633 结节 Baseline-v2 分析。这对相近的 Dumaev 研究 [8] 尤其重要：其已发表队列统计不会进入本研究的 cohort flow。
 
 ## 3. 数据集与预处理
 
@@ -56,12 +61,8 @@ Grad-CAM 在卷积特征层定位梯度，但视觉上集中的热图并不自�
 
 | Cohort component | Nodules | Patients | Role |
 | --- | --- | --- | --- |
-| Reference physical nodules | 2651 | 875 | Reconciliation only |
-| Missing required target | 1 | NA | Excluded |
 | Primary regression | 2633 | 868 | Main five-fold evaluation |
 | Secondary extreme subset | 1073 | 578 | 782 low / 291 high |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T02.csv`._
 
 Malignancy 是下游 1–5 目标，不属于八个瓶颈概念。八个概念为 subtlety、internalStructure、calcification、sphericity、margin、lobulation、spiculation 和 texture。六个目标是连续的归一化读者均值；internalStructure 与 calcification 保留完整读者投票分布，训练与 soft metrics 中包括真实众数并列。
 
@@ -78,8 +79,6 @@ Malignancy 是下游 1–5 目标，不属于八个瓶颈概念。八个概念�
 | texture | Bottleneck concept | Continuous | Normalized valid-reader mean |
 | internalStructure | Bottleneck concept | Categorical (4 classes) | Full reader vote distribution |
 | calcification | Bottleneck concept | Categorical (6 classes) | Full reader vote distribution |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T03.csv`._
 
 每个模型接收 64 × 64 × 64 的局部肺结节 ROI，该输入由 consensus mask 裁剪、立方体 padding 与确定性重采样生成。ROI 不是完整轴位 CT slice，经过裁剪与重采样后可能显得分辨率更低。只有在冻结的 series、slice、bounding box 与坐标 provenance 完整时，完整轴位 CT 才用于私有上下文可视化。图 RPT-F02 与表 RPT-T02–RPT-T03 展示本研究队列与变量。
 
@@ -100,66 +99,42 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Mixed-type CEM | Sample-conditioned concept embeddings → linear score | Mixed-type dynamic states | Embedding block dot product | Replace mixture weights only |
 | Learned-softmax GAM | Predicted concepts → local experts → additive score | 6 sigmoid + 2 softmax groups | Softmax-weighted local experts | Ground-truth concept through experts |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T04.csv`._
-
 概念模型贡献使用仅由当前训练折计算的均值进行中心化。中心化 bias 与八个中心化贡献重建归一化评分；把贡献乘以 4 后重建原始评分点量尺。这些有符号项描述训练模型如何组成输出；centering constants 是记账统计量，不是特征重要性。未持久化的 mean absolute aggregate 不会为展示而重算。
-
-**RPT-T06. 评估协议**
-
-| Component | Unit | Metric | Selection/uncertainty |
-| --- | --- | --- | --- |
-| Primary regression | Nodule; patient-cluster bootstrap | Unclipped original-scale MAE (primary), RMSE, normalized MAE, Pearson, Spearman | 2,000 shared patient draws |
-| Secondary extreme | 1,073 extreme nodules / 578 patients | AUROC, AUPRC; threshold metrics | Fold-validation extreme-only Youden-J; 2,000 valid draws |
-| Concept fidelity | Nodule | Continuous MAE/RMSE/correlation; categorical CE/Brier/macro-F1 | Hard F1 excludes true modal ties |
-| Spatial faithfulness | Valid Grad-CAM target | output_sensitivity and error_increase | 26,215 voxels; 20 matched random masks |
-| Intervention | Pooled OOF | iMAE/Delta_iMAE; iAUC/Delta_iAUC | k=0…8; random and error-first orderings |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T06.csv`._
-
-Grad-CAM 使用最终预注册卷积层、空间均值梯度、加权 activation 求和、ReLU 与到 64³ 的三线性上采样。原始 FP32 map 保持为科学产物；display overlay 只允许为了可视化进行归一化。post-ReLU 全零图被标记为 undefined，并从遮挡分母中排除；冻结产物未保存 pre-ReLU、gradient norm、activation norm 或 channel-weight decomposition，因此无法推断精确机制。
 
 ![RPT-F03. 四种模型架构及其预注册解释接口。](figures_catalogue/RPT-F03_zh.png)
 
 **RPT-F03.** 四种模型架构及其预注册解释接口。
 
-遮挡把热图最高的 26,215 个 voxel 置为归一化零，并与 20 个等大小、全 ROI 均匀无放回随机遮挡比较。output_sensitivity 是输出绝对移动；error_increase 是绝对目标误差的变化，只有正值表示预测误差变大。干预曲线在共享随机 permutation 或 error-first 排序下替换 0…8 个概念组；正 Delta_iMAE 与 Delta_iAUC 始终表示改善。图 RPT-F03 与表 RPT-T04、RPT-T06 汇总这些预注册语义。
+Grad-CAM 使用最终预注册卷积层、空间均值梯度、加权 activation 求和、ReLU 与到 64³ 的三线性上采样。原始 FP32 map 保持为科学产物；display overlay 只允许为了可视化进行归一化。post-ReLU 全零图被标记为 undefined，并从遮挡分母中排除；冻结产物未保存 pre-ReLU、gradient norm、activation norm 或 channel-weight decomposition，因此无法推断精确机制。
+
+遮挡把热图最高的 26,215 个 voxel 置为归一化零，并与 20 个等大小、全 ROI 均匀无放回随机遮挡比较。output_sensitivity 是输出绝对移动；error_increase 是绝对目标误差的变化，只有正值表示预测误差变大。干预曲线在共享随机 permutation 或 error-first 排序下替换 0…8 个概念组；正 Delta_iMAE 与 Delta_iAUC 始终表示改善。图 RPT-F03 与表 RPT-T04 汇总模型语义；统计协议只在 Experimental Setup 中呈现一次。
+
+连续与分类目标需要不同的统计处理。连续属性使用 sigmoid prediction 与归一化读者均值；分类属性使用 softmax probability 与完整读者投票分布，因此用于方便展示的 modal label 不会替代科学目标。Pooled metrics 分别使用独立量尺：连续概念报告误差与相关，分类概念报告 soft cross-entropy、multiclass Brier score 与考虑并列的 hard modal macro-F1。
+
+各架构也支持不同的 intervention semantics。Standard CBM 在线性 head 前替换 activated concept value；Mixed-type CEM 替换 mixture weight 而保留 sample-conditioned state；Learned-softmax GAM 用 ground-truth concept 重算受影响的 local expert，并保留 learned alpha。这些操作检验模型对各自 concept interface 的依赖，不会被强制同质化成数学上不同的共同干预。
 
 ## 5. 实验设置
 
 评估采用患者分组五折 outer cross-validation，固定 test 结节数为 479、502、539、549、564。每折 partition 内患者互斥，每个主要结节在 canonical OOF test set 中恰好出现一次。逐折 validation subset 用于选择 checkpoint 和 Youden-J threshold；test labels 不参与任何选择。
 
-**RPT-T05. 冻结训练配置与完成情况**
+**RPT-T05. 冻结训练配置**
 
-| Model | Fold | Best epoch | Epochs complete | Test transactions | Scientific status |
-| --- | --- | --- | --- | --- | --- |
-| Black-box | 0 | 14 | NA | 1 | PASS |
-| Black-box | 1 | 19 | NA | 1 | PASS |
-| Black-box | 2 | 10 | NA | 1 | PASS |
-| Black-box | 3 | 15 | NA | 1 | PASS |
-| Black-box | 4 | 38 | NA | 1 | PASS |
-| Standard CBM | 0 | concept=10;task=78 | NA | 1 | PASS |
-| Standard CBM | 1 | concept=16;task=79 | NA | 1 | PASS |
-| Standard CBM | 2 | concept=38;task=77 | NA | 1 | PASS |
-| Standard CBM | 3 | concept=6;task=79 | NA | 1 | PASS |
-| Standard CBM | 4 | concept=18;task=78 | NA | 1 | PASS |
-| Mixed-type CEM | 0 | 28 | NA | 1 | PASS |
-| Mixed-type CEM | 1 | 21 | NA | 1 | PASS |
-| Mixed-type CEM | 2 | 18 | NA | 1 | PASS |
-| Mixed-type CEM | 3 | 15 | NA | 1 | PASS |
-| Mixed-type CEM | 4 | 44 | NA | 1 | PASS |
-| Learned-softmax GAM | 0 | 10 | NA | 1 | PASS |
-| Learned-softmax GAM | 1 | 28 | NA | 1 | PASS |
-| Learned-softmax GAM | 2 | 32 | NA | 1 | PASS |
-| Learned-softmax GAM | 3 | 15 | NA | 1 | PASS |
-| Learned-softmax GAM | 4 | 22 | NA | 1 | PASS |
-| Black-box | None | NA | NA | 1 | PASS |
-| Learned-softmax GAM | None | NA | NA | 1 | PASS |
-| Mixed-type CEM | None | NA | NA | 1 | PASS |
-| Standard CBM | None | NA | NA | 1 | PASS |
+| Setting | Frozen value |
+| --- | --- |
+| Input / encoder | 64³ nodule ROI / DenseNet-121 (shared fold initialization) |
+| Optimizer | Adam; β=(0.9, 0.999); ε=1e-7; weight decay=0 |
+| Initial learning rate / batch | 1e-4 / true micro-batch 16; no accumulation; drop_last=False |
+| Epoch budget | 80 per registered stage; no early stopping |
+| Scheduler | validation objective; factor 0.9 after 4 bad epochs; min_delta=1e-4; minimum LR=0 |
+| Train-only augmentation | axial rotation ±15° (p=0.5); H/W flips p=0.5; z reversal p=0.5 |
+| Precision / determinism | FP32; AMP/BF16/CUDA-matmul-TF32/cuDNN-TF32 off; deterministic warn-only |
+| Formal accelerator | NVIDIA H200 |
+| Black-box objective | MSE on unclipped normalized malignancy score |
+| Standard CBM objective | 80-epoch concept loss, then 80-epoch linear task-head MSE on frozen predicted concepts |
+| Mixed-type CEM objective | task MSE + 0.01 × mean eight-group concept loss |
+| Learned-softmax GAM objective | task MSE + mean eight-group concept loss |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T05.csv`._
-
-每个 model/fold 训练使用一个冻结 seed，最多 80 epochs。固定 best checkpoint 后，test evaluation 只提交一次。历史 scheduler failure 和 verifier recovery 作为 provenance 保留，但与科学有效性明确区分；报告阶段绝不覆盖已完成的 history、checkpoint、prediction、metric 或 evaluation。
+冻结训练配置采用 DenseNet-121、Adam 1e-4、真实 batch 16、80-epoch budget、仅训练期确定性 augmentation、FP32 且关闭 AMP/BF16/TF32，并使用 NVIDIA H200。模型特定 loss 结构见表 RPT-T05。固定 best checkpoint 后，test evaluation 只提交一次；逐折 best epoch 与 scheduler provenance 留在可复现性证据中，而不混入科学训练配置表。
 
 **RPT-T06. 评估协议**
 
@@ -171,9 +146,7 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Spatial faithfulness | Valid Grad-CAM target | output_sensitivity and error_increase | 26,215 voxels; 20 matched random masks |
 | Intervention | Pooled OOF | iMAE/Delta_iMAE; iAUC/Delta_iAUC | k=0…8; random and error-first orderings |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T06.csv`._
-
-不确定性使用 2,000 次患者聚类 bootstrap，配对比较共享患者 draws。每个被抽中的患者携带其全部结节；若 secondary AUROC draw 只有单一类别，则重新抽样。表 RPT-T05 记录逐折完成情况；表 RPT-T06 把统计定义与执行历史分开。
+不确定性使用 2,000 次患者聚类 bootstrap，配对比较共享患者 draws。每个被抽中的患者携带其全部结节；若 secondary AUROC draw 只有单一类别，则重新抽样。表 RPT-T05 记录冻结训练设置；表 RPT-T06 定义评估与不确定性，并避免和 Methods 重复。
 
 ### 6.1 结果——Prediction
 
@@ -188,22 +161,18 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Mixed-type CEM | 0.484 (0.467–0.502) | 0.628 (0.604–0.654) | 0.121 (0.117–0.126) | 0.730 (0.701–0.757) | 0.640 (0.604–0.673) | 0.823–4.935 | 2633 |
 | Standard CBM | 0.502 (0.483–0.522) | 0.650 (0.625–0.675) | 0.126 (0.121–0.131) | 0.708 (0.677–0.735) | 0.609 (0.570–0.648) | 0.858–4.580 | 2633 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T07.csv`._
-
 观察到了什么？配对 Delta-MAE 支持 Learned-softmax GAM 优于 Black-box 和 Standard CBM，因为对应区间不跨零；较小差异则需要谨慎解读。Black-box 与 Standard CBM 的区间跨零，说明加入解释结构并不会自动改善点预测。表 RPT-T08 与图 RPT-F05 保留全部六组比较以及 MAE_A − MAE_B 符号约定。
 
 **RPT-T08. 六组配对 Delta-MAE 比较**
 
-| Comparison (A vs B) | Delta-MAE (A−B) | 95% CI | Crosses zero | Direction |
-| --- | --- | --- | --- | --- |
-| Black-box vs Learned-softmax GAM | 0.020 | 0.010–0.031 | False | Positive supports B |
-| Black-box vs Mixed-type CEM | 0.016 | 0.006–0.027 | False | Positive supports B |
-| Black-box vs Standard CBM | -0.002 | -0.015–0.012 | True | Positive supports B |
-| Mixed-type CEM vs Learned-softmax GAM | 0.004 | -0.006–0.013 | True | Positive supports B |
-| Standard CBM vs Learned-softmax GAM | 0.022 | 0.011–0.033 | False | Positive supports B |
-| Standard CBM vs Mixed-type CEM | 0.018 | 0.006–0.030 | False | Positive supports B |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T08.csv`._
+| Comparison (A vs B) | Delta-MAE (A−B) | 95% CI | Crosses zero | Sign convention | Supported conclusion |
+| --- | --- | --- | --- | --- | --- |
+| Black-box vs Learned-softmax GAM | 0.020 | 0.010–0.031 | False | Positive Δ favors B | SUPPORTS_B |
+| Black-box vs Mixed-type CEM | 0.016 | 0.006–0.027 | False | Positive Δ favors B | SUPPORTS_B |
+| Black-box vs Standard CBM | -0.002 | -0.015–0.012 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Mixed-type CEM vs Learned-softmax GAM | 0.004 | -0.006–0.013 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Standard CBM vs Learned-softmax GAM | 0.022 | 0.011–0.033 | False | Positive Δ favors B | SUPPORTS_B |
+| Standard CBM vs Mixed-type CEM | 0.018 | 0.006–0.030 | False | Positive Δ favors B | SUPPORTS_B |
 
 在 1,073 个结节的极端子集上，四个连续评分均能区分低分与高分，但配对 Delta-AUROC 证据不如 MAE 证据明确。多个区间跨零；在预注册 B−A 约定下，Standard CBM 低于 Black-box。因此，表 RPT-T09、表 RPT-T10 与图 RPT-F06 把绝对 AUROC/AUPRC 性能和模型间不确定性分开。
 
@@ -216,22 +185,18 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Mixed-type CEM | 0.942 (0.920–0.960) | 0.877 (0.833–0.916) | 0.832 | 0.923 | 0.877 | 1073 |
 | Standard CBM | 0.933 (0.911–0.951) | 0.866 (0.826–0.900) | 0.825 | 0.866 | 0.845 | 1073 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T09.csv`._
-
 这意味着什么？Learned-softmax GAM 是本实验中点估计最好的回归模型，但该结果不能支持跨终点的普遍排名。未裁剪评分范围与少量越界比例属于模型行为的一部分，不应被 post-hoc clipping 隐藏。目标是放射科医师均值，因此预测精度不能解释为病理层级诊断精度。
 
 **RPT-T10. 六组配对 Delta-AUROC 比较**
 
-| Comparison (A vs B) | Delta-AUROC (B−A) | 95% CI | Crosses zero | Direction |
-| --- | --- | --- | --- | --- |
-| Black-box vs Learned-softmax GAM | 0.004 | -0.005–0.014 | True | Positive supports B |
-| Black-box vs Mixed-type CEM | -0.004 | -0.013–0.005 | True | Positive supports B |
-| Black-box vs Standard CBM | -0.013 | -0.022–-0.004 | False | Positive supports B |
-| Mixed-type CEM vs Learned-softmax GAM | 0.008 | -0.001–0.018 | True | Positive supports B |
-| Standard CBM vs Learned-softmax GAM | 0.017 | 0.006–0.027 | False | Positive supports B |
-| Standard CBM vs Mixed-type CEM | 0.009 | -0.002–0.020 | True | Positive supports B |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T10.csv`._
+| Comparison (A vs B) | Delta-AUROC (B−A) | 95% CI | Crosses zero | Sign convention | Supported conclusion |
+| --- | --- | --- | --- | --- | --- |
+| Black-box vs Learned-softmax GAM | 0.004 | -0.005–0.014 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Black-box vs Mixed-type CEM | -0.004 | -0.013–0.005 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Black-box vs Standard CBM | -0.013 | -0.022–-0.004 | False | Positive Δ favors B | SUPPORTS_A |
+| Mixed-type CEM vs Learned-softmax GAM | 0.008 | -0.001–0.018 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
+| Standard CBM vs Learned-softmax GAM | 0.017 | 0.006–0.027 | False | Positive Δ favors B | SUPPORTS_B |
+| Standard CBM vs Mixed-type CEM | 0.009 | -0.002–0.020 | True | Positive Δ favors B | NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO |
 
 ![RPT-F04. 主要 pooled MAE 及 2,000 次患者聚类 bootstrap 95% 区间。](figures_catalogue/RPT-F04_zh.png)
 
@@ -244,8 +209,6 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 ![RPT-F06. 极端任务 AUROC/AUPRC 与六组配对 Delta-AUROC。](figures_catalogue/RPT-F06_zh.png)
 
 **RPT-F06.** 极端任务 AUROC/AUPRC 与六组配对 Delta-AUROC。
-
-**Scientific conclusion codes:** GAM_LOWEST_POINT_ESTIMATE_MAE, PAIRED_MAE_SUPPORTS_GAM_OVER_BLACKBOX_AND_CBM, AUROC_DIFFERENCES_MOSTLY_UNCERTAIN
 
 ### 6.2 结果——WHERE
 
@@ -396,82 +359,22 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Standard CBM | 4 | subtlety | 564 | 563 | 1 | 0.002 |
 | Standard CBM | 4 | texture | 564 | 561 | 3 | 0.005 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T13.csv`._
-
 观察到了什么？undefined maps 并非均匀分布，而是集中在特定 model-target 组合，因此冻结 root-cause label 是 SYSTEMATIC_MODEL/TARGET_ISSUE，而不是笼统的 implementation failure。所有 undefined map 均为 finite 且 ReLU 后精确全零；没有观察到 NaN、Inf、loading error 或 target-path mismatch。然而，持久化产物未包含 pre-ReLU CAM 或 gradient/channel-weight norm。
 
-**RPT-T14. 空间忠实度**
+**RPT-T14. 恶性度目标空间忠实度**
 
 | Model | Target | Quantity | Saliency mean | Saliency median | Saliency−random mean | Saliency > random rate | Valid maps |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Black-box | malignancy | output_sensitivity | 0.025 | 0.017 | -0.323 | 0.009 | 2429 |
 | Black-box | malignancy | error_increase | 0.003 | 0.000 | -0.235 | 0.144 | 2429 |
-| Black-box | None | output_sensitivity | 0.025 | 0.017 | -0.323 | 0.009 | 2429 |
-| Black-box | None | error_increase | 0.003 | 0.000 | -0.235 | 0.144 | 2429 |
-| Learned-softmax GAM | calcification | output_sensitivity | 0.206 | 0.136 | -0.968 | 0.106 | 2062 |
-| Learned-softmax GAM | calcification | error_increase | 0.064 | 0.022 | 0.522 | 0.702 | 2062 |
-| Learned-softmax GAM | internalStructure | output_sensitivity | 0.210 | 0.153 | -1.065 | 0.081 | 2393 |
-| Learned-softmax GAM | internalStructure | error_increase | -0.169 | -0.124 | 0.720 | 0.751 | 2393 |
-| Learned-softmax GAM | lobulation | output_sensitivity | 0.268 | 0.195 | -1.687 | 0.007 | 2353 |
-| Learned-softmax GAM | lobulation | error_increase | -0.260 | -0.194 | 1.414 | 0.958 | 2353 |
 | Learned-softmax GAM | malignancy | output_sensitivity | 0.025 | 0.020 | -0.302 | 0.004 | 2361 |
 | Learned-softmax GAM | malignancy | error_increase | 0.002 | 0.000 | -0.214 | 0.157 | 2361 |
-| Learned-softmax GAM | margin | output_sensitivity | 0.219 | 0.172 | -1.081 | 0.035 | 2559 |
-| Learned-softmax GAM | margin | error_increase | -0.109 | -0.090 | -0.253 | 0.362 | 2559 |
-| Learned-softmax GAM | None | output_sensitivity | 0.192 | 0.114 | -1.123 | 0.045 | 21611 |
-| Learned-softmax GAM | None | error_increase | -0.103 | -0.041 | 0.194 | 0.526 | 21611 |
-| Learned-softmax GAM | sphericity | output_sensitivity | 0.123 | 0.087 | -0.461 | 0.070 | 2602 |
-| Learned-softmax GAM | sphericity | error_increase | -0.074 | -0.033 | -0.049 | 0.408 | 2602 |
-| Learned-softmax GAM | spiculation | output_sensitivity | 0.317 | 0.237 | -2.059 | 0.005 | 2284 |
-| Learned-softmax GAM | spiculation | error_increase | -0.309 | -0.237 | 1.584 | 0.960 | 2284 |
-| Learned-softmax GAM | subtlety | output_sensitivity | 0.153 | 0.101 | -1.673 | 0.010 | 2523 |
-| Learned-softmax GAM | subtlety | error_increase | 0.037 | 0.008 | -1.350 | 0.139 | 2523 |
-| Learned-softmax GAM | texture | output_sensitivity | 0.218 | 0.145 | -0.871 | 0.089 | 2474 |
-| Learned-softmax GAM | texture | error_increase | -0.106 | -0.068 | -0.349 | 0.393 | 2474 |
-| Mixed-type CEM | calcification | output_sensitivity | 0.103 | 0.044 | -0.684 | 0.048 | 1916 |
-| Mixed-type CEM | calcification | error_increase | -0.041 | -0.001 | 0.130 | 0.494 | 1916 |
-| Mixed-type CEM | internalStructure | output_sensitivity | 0.060 | 0.028 | -0.241 | 0.169 | 1747 |
-| Mixed-type CEM | internalStructure | error_increase | -0.003 | -0.004 | -0.229 | 0.283 | 1747 |
-| Mixed-type CEM | lobulation | output_sensitivity | 0.086 | 0.055 | -0.408 | 0.039 | 2486 |
-| Mixed-type CEM | lobulation | error_increase | -0.085 | -0.055 | 0.351 | 0.864 | 2486 |
 | Mixed-type CEM | malignancy | output_sensitivity | 0.026 | 0.020 | -0.318 | 0.007 | 1267 |
 | Mixed-type CEM | malignancy | error_increase | 0.005 | 0.003 | -0.247 | 0.154 | 1267 |
-| Mixed-type CEM | margin | output_sensitivity | 0.046 | 0.018 | -0.336 | 0.075 | 2626 |
-| Mixed-type CEM | margin | error_increase | -0.006 | 0.002 | -0.278 | 0.378 | 2626 |
-| Mixed-type CEM | None | output_sensitivity | 0.057 | 0.026 | -0.373 | 0.058 | 20316 |
-| Mixed-type CEM | None | error_increase | -0.028 | -0.006 | -0.037 | 0.487 | 20316 |
-| Mixed-type CEM | sphericity | output_sensitivity | 0.028 | 0.015 | -0.197 | 0.050 | 2446 |
-| Mixed-type CEM | sphericity | error_increase | -0.005 | -0.002 | -0.062 | 0.412 | 2446 |
-| Mixed-type CEM | spiculation | output_sensitivity | 0.083 | 0.049 | -0.439 | 0.039 | 2633 |
-| Mixed-type CEM | spiculation | error_increase | -0.080 | -0.049 | 0.337 | 0.871 | 2633 |
-| Mixed-type CEM | subtlety | output_sensitivity | 0.042 | 0.029 | -0.504 | 0.031 | 2595 |
-| Mixed-type CEM | subtlety | error_increase | -0.004 | -0.001 | -0.323 | 0.290 | 2595 |
-| Mixed-type CEM | texture | output_sensitivity | 0.035 | 0.019 | -0.235 | 0.069 | 2600 |
-| Mixed-type CEM | texture | error_increase | -0.016 | -0.001 | -0.128 | 0.412 | 2600 |
-| Standard CBM | calcification | output_sensitivity | 0.158 | 0.084 | -0.978 | 0.088 | 1938 |
-| Standard CBM | calcification | error_increase | 0.057 | 0.017 | 0.589 | 0.792 | 1938 |
-| Standard CBM | internalStructure | output_sensitivity | 0.145 | 0.106 | -0.990 | 0.060 | 2506 |
-| Standard CBM | internalStructure | error_increase | -0.064 | -0.051 | 0.576 | 0.755 | 2506 |
-| Standard CBM | lobulation | output_sensitivity | 0.191 | 0.131 | -1.262 | 0.006 | 2545 |
-| Standard CBM | lobulation | error_increase | -0.181 | -0.127 | 1.191 | 0.980 | 2545 |
 | Standard CBM | malignancy | output_sensitivity | 0.018 | 0.012 | -0.218 | 0.005 | 2398 |
 | Standard CBM | malignancy | error_increase | 0.003 | 0.001 | -0.140 | 0.227 | 2398 |
-| Standard CBM | margin | output_sensitivity | 0.177 | 0.126 | -1.024 | 0.026 | 2623 |
-| Standard CBM | margin | error_increase | -0.085 | -0.051 | -0.320 | 0.347 | 2623 |
-| Standard CBM | None | output_sensitivity | 0.149 | 0.086 | -1.064 | 0.037 | 22413 |
-| Standard CBM | None | error_increase | -0.070 | -0.024 | 0.133 | 0.545 | 22413 |
-| Standard CBM | sphericity | output_sensitivity | 0.114 | 0.073 | -0.506 | 0.053 | 2631 |
-| Standard CBM | sphericity | error_increase | -0.068 | -0.023 | -0.133 | 0.380 | 2631 |
-| Standard CBM | spiculation | output_sensitivity | 0.207 | 0.137 | -1.930 | 0.002 | 2576 |
-| Standard CBM | spiculation | error_increase | -0.197 | -0.132 | 1.493 | 0.967 | 2576 |
-| Standard CBM | subtlety | output_sensitivity | 0.129 | 0.077 | -1.666 | 0.012 | 2576 |
-| Standard CBM | subtlety | error_increase | 0.019 | 0.001 | -1.400 | 0.149 | 2576 |
-| Standard CBM | texture | output_sensitivity | 0.198 | 0.131 | -0.939 | 0.093 | 2620 |
-| Standard CBM | texture | error_increase | -0.077 | -0.049 | -0.515 | 0.366 | 2620 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T14.csv`._
-
-忠实度给出了具有科学意义的负面结果。对 output_sensitivity 与 error_increase 而言，pooled saliency-minus-random mean 经常为负；只有少数有效 case 中显著区域超过匹配随机均值。表 RPT-T14 与图 RPT-F08 把输出移动和预测误差恶化分开。较大的 output_sensitivity 本身不能证明预测准确度下降。
+忠实度给出了具有科学意义的负面结果。对 output_sensitivity 与 error_increase 而言，saliency-minus-random mean 经常为负；只有少数有效 case 中显著区域超过匹配随机均值。表 RPT-T14 仅统计 malignancy target，而图 RPT-F08 在各模型内汇总全部注册 target，因此二者数值按设计不同。两个视图都把输出移动和预测误差恶化分开：较大的 output_sensitivity 本身不能证明预测误差增加。
 
 ![RPT-F07. 按模型、折和目标分解的 post-ReLU 全零 Grad-CAM 比例。](figures_catalogue/RPT-F07_zh.png)
 
@@ -479,11 +382,9 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 
 这意味着什么？Grad-CAM 是空间敏感度 proxy，不是 ground-truth localisation claim。即使 task prediction 准确，全零图集中与较弱的 matched-random 优势也限制了强空间解释。Display overlay 仅为定性阅读进行归一化；所有定量遮挡结果仍使用原始未归一化 FP32 map。
 
-![RPT-F08. output_sensitivity 与 error_increase 相对匹配随机遮挡的空间忠实度。](figures_catalogue/RPT-F08_zh.png)
+![RPT-F08. 汇总全部目标的模型级空间忠实度：output_sensitivity 与 error_increase 相对匹配随机遮挡。](figures_catalogue/RPT-F08_zh.png)
 
-**RPT-F08.** output_sensitivity 与 error_increase 相对匹配随机遮挡的空间忠实度。
-
-**Scientific conclusion codes:** SALIENCY_NOT_UNIFORMLY_MORE_FAITHFUL_THAN_RANDOM, SYSTEMATIC_MODEL_TARGET_ZERO_MAP_LIMITATION
+**RPT-F08.** 汇总全部目标的模型级空间忠实度：output_sensitivity 与 error_increase 相对匹配随机遮挡。
 
 ### 6.3 结果——WHAT
 
@@ -512,8 +413,6 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Standard CBM | subtlety | 0.169 | 0.223 | 0.567 | 0.573 | 2633 |
 | Standard CBM | texture | 0.116 | 0.180 | 0.783 | 0.581 | 2633 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T11.csv`._
-
 观察到了什么？连续忠实度随 concept 与 model 显著变化，并不存在单一的全模型模式。部分形态学概念表现出有用相关性，而更微妙或读者变异较大的概念保留较高绝对误差。这种异质性很重要，因为下游概念模型只能解释自身预测表示，而不是无误差的影像学真实状态。
 
 **RPT-T12. 分类概念指标**
@@ -526,8 +425,6 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | Mixed-type CEM | internalStructure | 0.083 | 0.014 | 0.250 | 2633 | 2625 | 8 |
 | Standard CBM | calcification | 0.207 | 0.049 | 0.314 | 2633 | 2578 | 55 |
 | Standard CBM | internalStructure | 0.039 | 0.007 | 0.250 | 2633 | 2625 | 8 |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T12.csv`._
 
 分类结果更有限。internalStructure 与 calcification 保留完整投票分布，因此 soft loss 与 Brier score 是权威分布证据。hard modal macro-F1 便于阅读，但排除真实并列，在稀有类别困难时可能较低。把 modal label 当作单一专家 ground truth 会错误描述冻结目标。
 
@@ -547,34 +444,14 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 
 **RPT-T15. 中心化贡献汇总**
 
-| Model | Concept | Pooled signed mean (rating points) | Fold train-centering constants (rating points) | Mean |contribution| | Interpretation |
-| --- | --- | --- | --- | --- | --- |
-| Learned-softmax GAM | calcification | 0.402 | 0.450; 0.247; 0.397; 0.498; 0.419 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | internalStructure | 0.041 | -0.275; 0.289; 0.032; -0.160; 0.321 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | lobulation | -0.016 | 0.336; 0.133; -0.834; -0.039; 0.325 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | margin | 0.370 | 0.526; 0.290; 0.647; 0.226; 0.162 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | sphericity | 0.106 | -0.127; 0.055; 0.449; 0.109; 0.045 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | spiculation | 0.323 | 0.058; 0.178; 0.502; 0.611; 0.265 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | subtlety | 0.229 | 0.254; 0.172; 0.257; 0.160; 0.299 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Learned-softmax GAM | texture | 0.190 | 0.355; 0.351; 0.181; 0.275; -0.209 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | calcification | 0.263 | 0.215; 0.511; 0.245; 0.201; 0.146 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | internalStructure | 0.486 | 0.371; 0.153; 0.585; 0.473; 0.848 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | lobulation | 0.279 | 0.321; 0.155; 0.217; 0.390; 0.310 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | margin | 0.123 | 0.219; 0.046; 0.007; 0.338; 0.006 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | sphericity | 0.155 | 0.440; 0.057; 0.188; 0.090; -0.001 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | spiculation | 0.141 | 0.042; 0.195; 0.213; 0.112; 0.145 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | subtlety | 0.133 | -0.039; 0.185; 0.298; 0.091; 0.127 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Mixed-type CEM | texture | 0.101 | 0.147; 0.221; 0.044; 0.045; 0.050 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | calcification | 0.400 | 0.941; 0.633; 0.387; 0.145; -0.104 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | internalStructure | 0.281 | -0.005; 0.479; 0.482; -0.254; 0.704 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | lobulation | 0.246 | 0.260; 0.129; 0.211; 0.243; 0.385 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | margin | 0.137 | 0.152; -0.041; -0.131; 0.397; 0.310 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | sphericity | -0.072 | 0.482; 0.104; -0.251; -0.334; -0.362 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | spiculation | 0.159 | 0.227; 0.231; 0.080; 0.144; 0.113 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | subtlety | 0.285 | 0.038; -0.027; 0.793; 0.559; 0.063 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-| Standard CBM | texture | -0.122 | -0.155; 0.261; -0.227; -0.349; -0.137 | DATA_NOT_PERSISTED | Signed centering evidence; constants are not importance |
-
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T15.csv`._
+| Model | Concept | Pooled signed mean (rating points) | Role within model |
+| --- | --- | --- | --- |
+| Standard CBM | calcification | 0.400 | Most positive |
+| Standard CBM | texture | -0.122 | Most negative |
+| Mixed-type CEM | internalStructure | 0.486 | Most positive |
+| Mixed-type CEM | texture | 0.101 | Most positive |
+| Learned-softmax GAM | calcification | 0.402 | Most positive |
+| Learned-softmax GAM | lobulation | -0.016 | Most negative |
 
 观察到了什么？不同 concept 与 model 的有符号贡献方向不同，说明相同 concept name 不一定具有相同决策角色。图 RPT-F10 把冻结逐样本点做成经验 OOF profile。该 profile 仅为描述性展示，不能读作 global causal shape function。权威 model-by-concept mean absolute aggregate 未持久化，因此报告将其标记为 DATA_NOT_PERSISTED，而不重新计算。
 
@@ -623,13 +500,11 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 | 4 | subtlety | 0.196 | 0.200 | 0.200 | 0.203 | 0.201 | 0.196–0.203 | 1.000 |
 | 4 | texture | 0.199 | 0.199 | 0.200 | 0.202 | 0.200 | 0.199–0.202 | 1.000 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T16.csv`._
-
 Learned-softmax GAM 增加第二层 WHY：每个 concept 的五个 expert output 由非负且和为一的权重混合。表 RPT-T16 与图 RPT-F11 表明，权重偏离均匀的 0.2 初始化，但很多变化较小且依赖 fold。学习到的 mixture 是 optimisation evidence，并不能证明每个 expert 对应不同临床机制。
 
-![RPT-F10. 经验 OOF 贡献剖面；仅为描述性呈现，并非因果 shape function。](figures_catalogue/RPT-F10_zh.png)
+![RPT-F10. 经验 OOF 贡献剖面：连续概念分箱均值与分类概念贡献分布；仅为描述性结果，并非因果关系。](figures_catalogue/RPT-F10_zh.png)
 
-**RPT-F10.** 经验 OOF 贡献剖面；仅为描述性呈现，并非因果 shape function。
+**RPT-F10.** 经验 OOF 贡献剖面：连续概念分箱均值与分类概念贡献分布；仅为描述性结果，并非因果关系。
 
 这意味着什么？贡献分解让评分构成可审计，并支持病例层面有符号 bar，但 magnitude 与 sign 仍是训练决策函数的属性，不能验证底层概念或建立临床因果关系。私有定性附录把 contribution bar 与 CT context、concept prediction/target evidence 配对，避免 WHY 脱离 WHAT 与 Prediction。
 
@@ -652,9 +527,7 @@ Learned-softmax GAM 增加第二层 WHY：每个 concept 的五个 expert output
 | Standard CBM | error_first | 0.502 | 0.510 | 0.508 | 0.506 | -0.004 | 0.933 | 0.922 | -0.011 |
 | Standard CBM | random_permutation | 0.502 | 0.500 | 0.508 | 0.501 | 0.001 | 0.933 | 0.929 | -0.004 |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T17.csv`._
-
-观察到了什么？Standard CBM 在随机顺序下平均 MAE 改善很小，在 error-first 积分下反而恶化。Mixed-type CEM 与 Learned-softmax GAM 在随机 permutation 下具有更大的正 Delta_iMAE，次要 Delta_iAUC pattern 同样依赖模型。表 RPT-T17 保留 baseline、intermediate、k=8、iMAE、Delta_iMAE、iAUC 与 Delta_iAUC；图 RPT-F12 展示完整 k=0…8 曲线。
+观察到了什么？Mixed-type CEM 是唯一表现出强而一致 integrated MAE 收益的模型：random permutation 下 Delta_iMAE 为 +0.028，error-first 下为 +0.040。Standard CBM 在随机顺序下近似中性（+0.001），error-first 下轻微不利（−0.004）。Learned-softmax GAM 在部分早期 k 位置有有限收益，但 integrated Delta_iMAE 总体为负（random −0.003；error-first −0.016）。表 RPT-T17 保留 baseline、intermediate、k=8、iMAE、Delta_iMAE、iAUC 与 Delta_iAUC；图 RPT-F12 展示完整 k=0…8 曲线。
 
 ![RPT-F12. 随机顺序与 error-first 顺序下的 k=0…8 概念干预曲线。](figures_catalogue/RPT-F12_zh.png)
 
@@ -662,9 +535,7 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 
 error-first 并不始终优于随机顺序。首先纠正当前预测误差最大的概念，可能暴露模型其他位置的补偿误差；后续干预还可能逆转早期收益。这是重要负面结果，表明概念纠正不是单调 repair operation。
 
-这意味着什么？HOW 证据检验模型对概念表示的依赖，而不是改变患者影像学表现的因果效应。正 Delta_iMAE 与 Delta_iAUC 始终表示改善，但 magnitude 依赖 architecture、ordering 与 metric。RPT-FA06 所需病例级 before/after intervention 未持久化，因此私有图把 HOW 标记为 DATA_NOT_PERSISTED，而不是伪造 trajectory。
-
-**Scientific conclusion codes:** INTERVENTION_BENEFIT_MODEL_DEPENDENT
+这意味着什么？概念忠实度与可干预性不能互换。GAM 可以较好预测概念，但 integrated substitution 传播后总体不利；CEM 的部分概念忠实度较弱，却从纠正中获益最大。HOW 检验模型对内部概念表示的依赖，而不是改变患者影像学表现的因果效应。RPT-FA06 的病例级 before/after 值未持久化，因此 HOW 继续标记为 DATA_NOT_PERSISTED，不作重算。
 
 ### 6.6 综合解释
 
@@ -678,11 +549,9 @@ Prediction、WHERE、WHAT、WHY、HOW 回答不同问题，不能压缩为单一
 | WHERE | Where is the output spatially sensitive? | 66,769 valid maps; saliency often did not exceed matched random masks. | 6,955 post-ReLU zero maps; exact mechanism unavailable. |
 | WHAT | Which concepts were predicted? | Continuous fidelity varied by concept; categorical hard-F1 was limited. | Categorical targets are reader-vote distributions. |
 | WHY | How do concepts enter the score? | Signed centered terms and learned GAM mixtures reconstruct the score. | Centering constants are not importance; mean absolute aggregate was not persisted. |
-| HOW | How does correcting concepts alter prediction? | Intervention benefit was strongest for CEM/GAM and ordering-dependent. | Interventions test model dependence, not causal clinical effects. |
+| HOW | How does correcting concepts alter prediction? | Benefit was strong and consistent for CEM, near-neutral for CBM, and unfavorable overall for GAM despite limited early gains. | Concept fidelity and intervenability are not interchangeable; interventions are not causal clinical effects. |
 
-_来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-T18.csv`._
-
-只有把这些层一起阅读，才能形成对模型最强的综合解释。Learned-softmax GAM 具有最佳主要点估计和可审计加性评分，但空间与干预证据仍有局限。Mixed-type CEM 即使分类概念忠实度不完美，仍从干预中明显获益。Standard CBM 简单、可追溯，却未相对 Black-box 获得预测优势。
+只有把这些层一起阅读，才能形成对模型最强的综合解释。Learned-softmax GAM 具有最佳主要点估计，多个概念组忠实度较强，但 integrated intervention response 总体不利。Mixed-type CEM 的主要 MAE 优于 Black-box 与 Standard CBM，并且即使部分概念忠实度较弱，仍从干预中获得最一致收益。Standard CBM 简单、可追溯，却几乎没有 task 或 intervention 优势。
 
 ![RPT-F13. Prediction-WHERE-WHAT-WHY-HOW 的综合解释及其边界。](figures_catalogue/RPT-F13_zh.png)
 
@@ -694,11 +563,15 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 
 主要结果在点估计层面支持 Learned-softmax GAM；配对 MAE 比较支持其相对 Black-box 与 Standard CBM 的实质改善。这说明显式 concept-local nonlinearity 可以在保留加性分解的同时改善连续评分。然而，confidence interval 与次要判别结果阻止过度简单的排名：最佳回归点估计不等于在所有配对中 AUROC 都具有统计优势。
 
-解释层揭示了单独预测指标看不到的 trade-off。概念模型提供 Black-box 缺少的 WHAT 与 WHY 证据，但概念准确度不均，分类 hard-F1 仍有限。CEM 与 GAM 的干预改善说明不完美预测概念会限制 task path，而其他设置中的恶化表明模型可能利用相关或补偿性概念误差。
+解释层揭示了单独预测指标看不到的 trade-off。GAM 同时具有最佳 task 点估计和多个组较强概念忠实度，但 integrated intervention 总体为负。CEM 的 task 点估计优于 Black-box 与 Standard CBM，并在部分概念忠实度较弱的同时获得最强纠正收益。Standard CBM 透明且某些概念预测较好，却几乎没有 task 或 intervention 优势。因此，prediction、concept fidelity、intervenability 与 spatial faithfulness 是不同属性，不能互换为同一个解释性定义。
 
 空间证据提供最明确的谨慎信号。数千个合法 post-ReLU 全零图，以及总体较弱的 saliency-versus-random difference，意味着视觉上漂亮的 overlay 不应主导科学故事。Grad-CAM overlay 最适合被视为局部 sensitivity view；只有定量忠实度与 map-validity accounting 同时支持时，其可信度才增强。
 
 从临床角度看，该框架提供的是规范沟通模型行为的方法，而不是诊断。读者评分编码影像学评估与分歧，并不建立组织病理学真实。任何临床主张都需要外部验证、部署校准、前瞻性流程测试与病理关联结局。
+
+模型选择因此取决于预期科学用途。若只选最低 MAE，会偏向 GAM；若只看 intervention response，会偏向 CEM；若只看架构简单性，则可能偏向 Standard CBM。现有证据不支持把这些准则事后合并成单一排名。预测基准、concept error 检查、评分构成分解，以及表示依赖的受控测试，是相关但不同的目标。
+
+负面结果因此不是附带现象，而是重要信息。概念忠实度与干预收益之间的不匹配说明，预测较好的 bottleneck 不一定是有效纠错接口；较弱或负的 matched-random 空间对比说明 heatmap 需要定量核验；undefined map 集中则说明缺失空间解释必须被计数，不能静默丢弃。这些发现缩小了 claim，却使最终解读更可复现。
 
 ## 8. 局限性
 
@@ -708,13 +581,13 @@ _来源：已批准 Catalogue items；完整字段级 provenance 保存在 `RPT-
 
 第三，Grad-CAM 是结节层面空间 proxy。6,955 个 undefined map 被确认为 finite post-ReLU 全零图，但精确 pre-ReLU/gradient mechanism 未持久化。因此，观察到的集中分布被报告为 SYSTEMATIC_MODEL/TARGET_ISSUE；在不允许新增 forward pass 的情况下，不能进一步断言是 zero gradient、zero channel weight 或 negative weighted sum。
 
-最后，部分展示目标受冻结内容限制。model-by-concept mean absolute centered contribution aggregate 与病例级 intervention before/after trajectory 未持久化。报告明确标记这些条目为 DATA_NOT_PERSISTED，不会把描述性绘图或叙述记忆转成新的权威科学结果。
+最后，部分展示目标受冻结内容限制。model-by-concept mean absolute centered contribution aggregate 与病例级 intervention before/after trajectory 未持久化。因此贡献表只报告有来源支持的 signed mean，并仅在一处说明该限制；报告不会把描述性绘图或叙述记忆转成新的权威科学结果。
 
 ## 9. 结论
 
 这项统一比较表明，预测与解释应作为一系列不同问题进行评估。Learned-softmax GAM 获得最低主要 MAE 点估计；配对不确定性同时指出该优势在哪些比较中明确、哪些比较中不明确。概念模型增加 Black-box predictor 无法提供的可检查表示、有符号评分分解与干预实验。
 
-解释证据也带来具有实际意义的限制。概念忠实度不均、干预收益并非单调或普遍、Grad-CAM map 可能 undefined、显著区域遮挡经常不能优于匹配随机遮挡。这些不是边缘审计细节，而是决定每类解释能被多强地解读。
+解释证据也带来具有实际意义的限制。只有 CEM 表现出强而一致的 integrated intervention benefit；CBM 近似中性，GAM 尽管早期有有限收益但总体不利。因此，概念忠实度不能预测可干预性。Grad-CAM map 也可能 undefined，显著区域遮挡经常不能优于匹配随机遮挡。这些结果决定每类解释能被多强地解读。
 
 最终框架支持对放射科医师评估肺结节恶性程度进行透明、可复现的研究报告。它不建立病理层级诊断、因果概念、ground-truth localisation 或临床就绪性。其核心贡献是构建连接 Prediction、WHERE、WHAT、WHY、HOW 的可复现证据结构，同时让每个 claim 绑定冻结来源与解释边界。
 
@@ -728,14 +601,22 @@ Archive 包含 1,698 个文件、14,386,651,621 bytes，并由完成的 SHA-veri
 
 ## 参考文献
 
-[1] S. G. Armato III et al., "The Lung Image Database Consortium (LIDC) and Image Database Resource Initiative (IDRI): A completed reference database of lung nodules on CT scans," Med. Phys., vol. 38, no. 2, pp. 915-931, 2011, doi: 10.1118/1.3528204.
+[1] S. G. Armato III et al., "The Lung Image Database Consortium (LIDC) and Image Database Resource Initiative (IDRI): A completed reference database of lung nodules on CT scans," Med. Phys., vol. 38, no. 2, pp. 915–931, 2011, doi: 10.1118/1.3528204.
 
-[2] G. Huang, Z. Liu, L. van der Maaten, and K. Q. Weinberger, "Densely Connected Convolutional Networks," in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), pp. 4700-4708, 2017, doi: 10.1109/CVPR.2017.243.
+[2] G. Huang, Z. Liu, L. van der Maaten, and K. Q. Weinberger, "Densely Connected Convolutional Networks," in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), pp. 4700–4708, 2017, doi: 10.1109/CVPR.2017.243.
 
-[3] P. W. Koh et al., "Concept Bottleneck Models," in Proc. 37th Int. Conf. Mach. Learn. (ICML), PMLR, vol. 119, pp. 5338-5348, 2020.
+[3] P. W. Koh et al., "Concept Bottleneck Models," in Proc. 37th Int. Conf. Mach. Learn. (ICML), PMLR, vol. 119, pp. 5338–5348, 2020.
 
-[4] M. Espinosa Zarlenga et al., "Concept Embedding Models: Beyond the Accuracy-Explainability Trade-Off," in Adv. Neural Inf. Process. Syst., vol. 35, pp. 21400-21413, 2022.
+[4] M. Espinosa Zarlenga et al., "Concept Embedding Models: Beyond the Accuracy–Explainability Trade-Off," in Adv. Neural Inf. Process. Syst., vol. 35, pp. 21400–21413, 2022.
 
-[5] R. R. Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based Localization," in Proc. IEEE Int. Conf. Comput. Vis. (ICCV), pp. 618-626, 2017, doi: 10.1109/ICCV.2017.74.
+[5] T. Hastie and R. Tibshirani, "Generalized Additive Models," Stat. Sci., vol. 1, no. 3, pp. 297–318, 1986, doi: 10.1214/ss/1177013604.
 
-[6] B. Efron, "Bootstrap Methods: Another Look at the Jackknife," Ann. Stat., vol. 7, no. 1, pp. 1-26, 1979, doi: 10.1214/aos/1176344552.
+[6] R. R. Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based Localization," in Proc. IEEE Int. Conf. Comput. Vis. (ICCV), pp. 618–626, 2017, doi: 10.1109/ICCV.2017.74.
+
+[7] S. Shin, Y. Jo, S. Ahn, and N. Lee, "A Closer Look at the Intervention Procedure of Concept Bottleneck Models," in Proc. 40th Int. Conf. Mach. Learn. (ICML), PMLR, vol. 202, pp. 31504–31520, 2023.
+
+[8] R. I. Dumaev, S. A. Molodyakov, and L. V. Utkin, "Concept-based Explainable Malignancy Scoring on Pulmonary Nodules in CT Images," arXiv:2405.17483, 2024, doi: 10.48550/arXiv.2405.17483.
+
+[9] W. Shen et al., "Multi-crop Convolutional Neural Networks for Lung Nodule Malignancy Suspiciousness Classification," Pattern Recognit., vol. 61, pp. 663–673, 2017, doi: 10.1016/j.patcog.2016.05.029.
+
+[10] B. Efron, "Bootstrap Methods: Another Look at the Jackknife," Ann. Stat., vol. 7, no. 1, pp. 1–26, 1979, doi: 10.1214/aos/1176344552.

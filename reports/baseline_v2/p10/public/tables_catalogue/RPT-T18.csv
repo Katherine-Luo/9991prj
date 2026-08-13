@@ -3,4 +3,4 @@ Prediction,How accurately is malignancy scored?,Learned-softmax GAM has the lowe
 WHERE,Where is the output spatially sensitive?,"66,769 valid maps; saliency often did not exceed matched random masks.","6,955 post-ReLU zero maps; exact mechanism unavailable."
 WHAT,Which concepts were predicted?,Continuous fidelity varied by concept; categorical hard-F1 was limited.,Categorical targets are reader-vote distributions.
 WHY,How do concepts enter the score?,Signed centered terms and learned GAM mixtures reconstruct the score.,Centering constants are not importance; mean absolute aggregate was not persisted.
-HOW,How does correcting concepts alter prediction?,Intervention benefit was strongest for CEM/GAM and ordering-dependent.,"Interventions test model dependence, not causal clinical effects."
+HOW,How does correcting concepts alter prediction?,"Benefit was strong and consistent for CEM, near-neutral for CBM, and unfavorable overall for GAM despite limited early gains.",Concept fidelity and intervenability are not interchangeable; interventions are not causal clinical effects.

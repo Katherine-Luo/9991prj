@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+import matplotlib.pyplot as plt
 
 from lidc_baseline.p10_catalogue_private import (
     _case_science,
@@ -26,10 +27,47 @@ from lidc_baseline.p10_catalogue_report import (
     MANUAL_VISUAL_REVIEWER,
     verify_bilingual_numeric_parity,
     _verify_manual_review_provenance,
+    _contribution_profiles,
+    _pdf_table_layout,
 )
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_pdf_table_layout_preserves_all_intervention_and_alpha_columns() -> None:
+    intervention = [{
+        "Model": "Mixed-type CEM",
+        "Ordering": "error_first",
+        "Baseline MAE": "0.1",
+        "k=4 MAE": "0.1",
+        "k=8 MAE": "0.1",
+        "iMAE": "0.1",
+        "Delta_iMAE": "0.1",
+        "Baseline AUROC": "0.9",
+        "iAUC": "0.9",
+        "Delta_iAUC": "0.0",
+    }]
+    cols, widths = _pdf_table_layout("RPT-T17", intervention, 480.0)
+    assert cols[-2:] == ["iAUC", "Delta_iAUC"]
+    assert len(cols) == len(widths) == 10
+    assert sum(widths) == pytest.approx(480.0)
+
+    alpha = [{
+        "Fold": 0,
+        "Concept": "texture",
+        "Expert 1": "0.2",
+        "Expert 2": "0.2",
+        "Expert 3": "0.2",
+        "Expert 4": "0.2",
+        "Expert 5": "0.2",
+        "Min–max": "0.2–0.2",
+        "Simplex": "1.0",
+    }]
+    alpha_cols, alpha_widths = _pdf_table_layout("RPT-T16", alpha, 480.0)
+    assert alpha_cols[-1] == "Simplex"
+    assert len(alpha_cols) == len(alpha_widths) == 9
+    assert sum(alpha_widths) == pytest.approx(480.0)
 
 
 def test_revision_config_binds_approved_catalogue_and_gates() -> None:
@@ -145,7 +183,29 @@ def test_public_table_and_figure_inventory_is_exact() -> None:
     assert "RPT-F09A" in PUBLIC_FIGURE_IDS
     assert "RPT-F09B" in PUBLIC_FIGURE_IDS
     assert "RPT-F09" not in PUBLIC_FIGURE_IDS
-    assert all(row.get("Mean |contribution|") == "DATA_NOT_PERSISTED" for row in tables["RPT-T15"])
+    assert len(tables["RPT-T15"]) == 6
+    assert {row["Role within model"] for row in tables["RPT-T15"]} == {"Most positive", "Most negative"}
+    assert all(row["Target"] == "malignancy" for row in tables["RPT-T14"])
+
+
+def test_correction_round_scientific_semantics_are_fail_closed() -> None:
+    tables = build_public_table_rows(load_catalogue_context(REPOSITORY_ROOT))
+    assert all(row["Cohort component"] != "Reference physical nodules" for row in tables["RPT-T02"])
+    for table_id in ("RPT-T08", "RPT-T10"):
+        for row in tables[table_id]:
+            assert row["Sign convention"] == "Positive Δ favors B"
+            if row["Crosses zero"]:
+                assert row["Supported conclusion"] == "NO_SUPPORTED_DIFFERENCE_CI_CROSSES_ZERO"
+            elif float(row[next(key for key in row if key.startswith("Delta-"))]) > 0:
+                assert row["Supported conclusion"] == "SUPPORTS_B"
+            else:
+                assert row["Supported conclusion"] == "SUPPORTS_A"
+    how = next(row for row in tables["RPT-T18"] if row["Layer"] == "HOW")
+    assert "strong and consistent for CEM" in how["Main evidence"]
+    assert "unfavorable overall for GAM" in how["Main evidence"]
+    assert len(tables["RPT-T05"]) == 12
+    assert all("Best epoch" not in row for row in tables["RPT-T05"])
+    assert next(row for row in tables["RPT-T05"] if row["Setting"] == "Standard CBM objective")["source_artifact_id"] != next(row for row in tables["RPT-T05"] if row["Setting"] == "Mixed-type CEM objective")["source_artifact_id"]
 
 
 def test_bilingual_manuscript_has_same_numbers_and_interleaved_story() -> None:
@@ -165,6 +225,11 @@ def test_bilingual_manuscript_has_same_numbers_and_interleaved_story() -> None:
     for identifier in (*PUBLIC_TABLE_IDS, *PUBLIC_FIGURE_IDS):
         assert english.count(identifier) >= 2
         assert chinese.count(identifier) >= 2
+    assert "Scientific conclusion codes" not in english
+    assert "Full machine-readable rows" not in english
+    assert "Author / 作者" not in english
+    assert "作者 /" not in chinese
+    assert english.count("RPT-T06. Evaluation protocol") == 1
 
 
 def test_results_sections_have_substantive_explanation() -> None:
@@ -182,6 +247,11 @@ def test_results_sections_have_substantive_explanation() -> None:
         assert len(section.paragraphs_en) >= 3
         assert len(section.paragraphs_en) == len(section.paragraphs_zh)
         assert sum(len(value.split()) for value in section.paragraphs_en) >= 120
+    all_en="\n".join(paragraph for section in sections for paragraph in section.paragraphs_en)
+    assert "Mixed-type CEM uniquely showed strong, consistent integrated MAE benefit" in all_en
+    assert "integrated Delta_iMAE was negative overall" in all_en
+    assert "Intervention improvements in CEM and GAM" not in all_en
+    assert "Dumaev et al." in all_en
 
 
 def test_private_case_selection_and_fa06_are_catalogue_locked() -> None:
@@ -241,6 +311,16 @@ def test_mapped_map_slice_is_deterministic_and_fail_closed_scalar_parser() -> No
     assert _parse_scalar("[0.25]") == 0.25
     with pytest.raises(ValueError, match="P10_PRIVATE_SCALAR_INVALID"):
         _parse_scalar("[0.25, 0.75]")
+
+
+def test_categorical_contribution_profiles_do_not_connect_category_order() -> None:
+    figure = _contribution_profiles("en")
+    try:
+        for axis in (figure.axes[1], figure.axes[2]):
+            assert not axis.lines or all(len(line.get_xdata()) <= 2 for line in axis.lines)
+            assert len(axis.patches) > 0
+    finally:
+        plt.close(figure)
 
 
 def test_manual_visual_review_provenance_is_fail_closed() -> None:

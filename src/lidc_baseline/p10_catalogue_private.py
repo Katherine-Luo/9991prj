@@ -25,6 +25,7 @@ import pandas as pd
 import pydicom
 from matplotlib import font_manager
 from matplotlib.patches import Rectangle
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from PIL import Image as PILImage
 
 from lidc_baseline.p10_catalogue_report import (
@@ -281,6 +282,26 @@ def _display_normalize(values: np.ndarray) -> np.ndarray:
     return np.asarray(values / maximum, dtype=np.float32)
 
 
+def _native_context_crop(
+    ct: np.ndarray, y0: int, y1: int, x0: int, x1: int
+) -> tuple[np.ndarray, tuple[int, int, int, int]]:
+    """Return a native-pixel context crop and ROI coordinates within it.
+
+    The crop is never resampled or sharpened.  Padding makes the tiny frozen
+    ROI legible in a paper panel while retaining native CT pixels and enough
+    surrounding anatomy to distinguish it from the 64³ model input.
+    """
+    height = y1 - y0
+    width = x1 - x0
+    pad_y = max(height, 12)
+    pad_x = max(width, 12)
+    cy0 = max(0, y0 - pad_y)
+    cy1 = min(ct.shape[0], y1 + pad_y)
+    cx0 = max(0, x0 - pad_x)
+    cx1 = min(ct.shape[1], x1 + pad_x)
+    return ct[cy0:cy1, cx0:cx1], (y0 - cy0, y1 - cy0, x0 - cx0, x1 - cx0)
+
+
 def _case_panel(
     case: Mapping[str, Any],
     values: Mapping[str, Any],
@@ -309,22 +330,36 @@ def _case_panel(
     roi_index = int(np.clip(round((z_index - int(bbox[0][0])) / max(int(bbox[0][1]) - int(bbox[0][0]) - 1, 1) * 63), 0, 63))
     roi_slice = roi[roi_index]
 
-    figure, axes = plt.subplots(1, 5, figsize=(17, 4.25), dpi=180)
+    native_zoom, native_box = _native_context_crop(ct, y0, y1, x0, x1)
+    figure, axes = plt.subplots(1, 6, figsize=(19, 4.4), dpi=180)
     axes[0].imshow(ct, cmap="gray", vmin=0, vmax=1)
     axes[0].add_patch(Rectangle((x0, y0), x1-x0, y1-y0, fill=False, edgecolor="#00E5FF", linewidth=1.5))
     axes[0].set_title("完整 CT + ROI 框" if language == "zh" else "Full CT + ROI box")
-    axes[1].imshow(ct, cmap="gray", vmin=0, vmax=1)
+    axes[1].imshow(native_zoom, cmap="gray", vmin=0, vmax=1, interpolation="nearest")
+    ny0, ny1, nx0, nx1 = native_box
+    axes[1].add_patch(Rectangle((nx0, ny0), nx1-nx0, ny1-ny0, fill=False, edgecolor="#00E5FF", linewidth=1.2))
+    axes[1].set_title("原生分辨率放大" if language == "zh" else "Native-resolution zoom")
+    axes[2].imshow(ct, cmap="gray", vmin=0, vmax=1)
     if status == "valid":
-        axes[1].imshow(np.ma.masked_where(full_map <= 0, full_map), cmap="magma", alpha=0.58, vmin=0, vmax=1)
-    axes[1].add_patch(Rectangle((x0, y0), x1-x0, y1-y0, fill=False, edgecolor="#00E5FF", linewidth=1.2))
-    axes[1].set_title("全切片叠加" if language == "zh" else "Full-slice overlay")
-    axes[2].imshow(roi_slice, cmap="gray")
-    axes[2].set_title("64³ 局部输入" if language == "zh" else "64³ model-input ROI")
+        axes[2].imshow(np.ma.masked_where(full_map <= 0, full_map), cmap="magma", alpha=0.62, vmin=0, vmax=1)
+    axes[2].add_patch(Rectangle((x0, y0), x1-x0, y1-y0, fill=False, edgecolor="#00E5FF", linewidth=1.2))
+    zoom_axis = inset_axes(axes[2], width="43%", height="43%", loc="lower right", borderpad=.7)
+    zoom_axis.imshow(native_zoom, cmap="gray", vmin=0, vmax=1, interpolation="nearest")
+    if status == "valid":
+        zoom_axis.imshow(np.ma.masked_where(display_map <= 0, display_map), cmap="magma", alpha=.62, vmin=0, vmax=1)
+    zoom_axis.set_xticks([]); zoom_axis.set_yticks([])
+    for spine in zoom_axis.spines.values(): spine.set_edgecolor("#00E5FF"); spine.set_linewidth(1.0)
+    axes[2].set_title("全切片叠加 + inset" if language == "zh" else "Full-slice overlay + inset")
     axes[3].imshow(roi_slice, cmap="gray")
+    axes[3].set_title("64³ 局部输入" if language == "zh" else "64³ model-input ROI")
     if status == "valid":
-        axes[3].imshow(display_map, cmap="magma", alpha=0.58, vmin=0, vmax=1)
-    axes[3].set_title(("ROI + Grad-CAM" if status == "valid" else "全零 Grad-CAM") if language == "zh" else ("ROI + Grad-CAM" if status == "valid" else "Zero Grad-CAM"))
-    axes[4].axis("off")
+        axes[4].imshow(roi_slice, cmap="gray")
+        axes[4].imshow(display_map, cmap="magma", alpha=0.62, vmin=0, vmax=1)
+        axes[4].set_title("ROI + Grad-CAM")
+    else:
+        axes[4].imshow(np.zeros_like(display_map), cmap="magma", vmin=0, vmax=1, interpolation="nearest")
+        axes[4].text(.5,.5,"Undefined\npost-ReLU all-zero",ha="center",va="center",transform=axes[4].transAxes,color="white",fontsize=9,fontweight="bold",bbox={"facecolor":"black","alpha":.5,"edgecolor":"white"})
+        axes[4].set_title("未定义：全零 Grad-CAM" if language == "zh" else "Undefined: all-zero Grad-CAM")
     lines = [
         MODEL_LABELS[str(case["model"])],
         f"Prediction: {values['malignancy_prediction']:.3f}",
@@ -334,16 +369,23 @@ def _case_panel(
         f"Map: {status}",
     ]
     if values["contributions"]:
-        ranked = sorted(values["contributions"].items(), key=lambda item: abs(item[1]), reverse=True)[:4]
-        lines.extend(["", "Top signed contributions:", *[f"{name}: {value:+.3f}" for name, value in ranked]])
-    axes[4].text(0.02, 0.97, "\n".join(lines), va="top", fontsize=9.2, linespacing=1.35)
-    for axis in axes[:4]:
+        names=list(values["contributions"]); scores=np.asarray([values["contributions"][name] for name in names]); order=np.argsort(np.abs(scores))
+        axes[5].barh(np.arange(len(order)),scores[order],color=["#C44E52" if scores[index]>0 else "#4C78A8" for index in order])
+        axes[5].set_yticks(np.arange(len(order)),[names[index] for index in order],fontsize=6.8)
+        axes[5].axvline(0,color="black",lw=.8); axes[5].grid(axis="x",alpha=.2); axes[5].tick_params(axis="x",labelsize=7)
+        axes[5].set_title("有符号中心化贡献" if language=="zh" else "Signed centered contributions")
+        axes[5].set_xlabel("rating points",fontsize=7)
+    else:
+        axes[5].axis("off"); axes[5].text(0.02,0.97,"\n".join(lines),va="top",fontsize=9.2,linespacing=1.35)
+    for axis in axes[:5]:
         axis.axis("off")
     title = f"{case['case_label']} — {case['target']} — {status}"
     figure.suptitle(title, fontsize=14, fontweight="bold")
     note = ("显示叠加仅作可视化归一化；定量忠实度使用未归一化 raw FP32 map。ROI 是 64³ 局部模型输入，并非完整 CT 切片。" if language == "zh" else "Display overlays use visualization-only normalization; quantitative faithfulness used the unnormalized raw FP32 map. The ROI is the 64³ local model input, not a full CT slice.")
     figure.text(0.5, 0.01, note, ha="center", fontsize=7.8)
-    figure.tight_layout(rect=(0, 0.06, 1, 0.93))
+    # Explicit margins avoid Matplotlib's inset-axis/tight-layout warning and
+    # keep the visual QA run warning-free.
+    figure.subplots_adjust(left=0.025, right=0.985, bottom=0.12, top=0.84, wspace=0.30)
     destination.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(destination, metadata={"Title": str(case["case_label"]), "Author": "P10"}, bbox_inches="tight")
     plt.close(figure)
@@ -377,6 +419,33 @@ def _group_figure(figure_id: str, panel_paths: Sequence[Path], destination: Path
     return destination
 
 
+def _fa03_figure(case: Mapping[str, Any], values: Mapping[str, Any], source: pd.Series, repository_root: Path, destination: Path, language: str) -> Path:
+    """Paper-style case explanation from already persisted case evidence."""
+    _configure_font(language)
+    details=case["catalogue_details"]; bbox=details["roi_bbox_dhw"]; z_index=int(details["frozen_context_z_index"])
+    ct=_full_ct_slice(source,z_index); roi=_load_roi(str(case["nodule_uid"]),repository_root/ROI_ROOT)
+    y0,y1=(int(value) for value in bbox[1]); x0,x1=(int(value) for value in bbox[2])
+    roi_index=int(np.clip(round((z_index-int(bbox[0][0]))/max(int(bbox[0][1])-int(bbox[0][0])-1,1)*63),0,63)); roi_slice=roi[roi_index]
+    figure=plt.figure(figsize=(17,8.4),dpi=180); grid=figure.add_gridspec(2,4,height_ratios=[1.05,1],hspace=.28,wspace=.28)
+    ax=figure.add_subplot(grid[0,0]); ax.imshow(ct,cmap="gray",vmin=0,vmax=1); ax.add_patch(Rectangle((x0,y0),x1-x0,y1-y0,fill=False,edgecolor="#00E5FF",linewidth=1.5)); ax.set_title("完整 CT + ROI" if language=="zh" else "Full CT + ROI box"); ax.axis("off")
+    native_zoom,native_box=_native_context_crop(ct,y0,y1,x0,x1)
+    ax=figure.add_subplot(grid[0,1]); ax.imshow(native_zoom,cmap="gray",vmin=0,vmax=1,interpolation="nearest"); ny0,ny1,nx0,nx1=native_box; ax.add_patch(Rectangle((nx0,ny0),nx1-nx0,ny1-ny0,fill=False,edgecolor="#00E5FF",linewidth=1.2)); ax.set_title("原生分辨率结节放大" if language=="zh" else "Native-resolution nodule zoom"); ax.axis("off")
+    ax=figure.add_subplot(grid[0,2]); ax.axis("off")
+    pred_lines=[f"Malignancy: {values['malignancy_prediction']:.2f} / {values['malignancy_target']:.2f}"]
+    for concept in CONTINUOUS_CONCEPTS: pred_lines.append(f"{concept}: {values['concepts'][concept]['prediction']:.2f} / {values['concepts'][concept]['target']:.2f}")
+    for concept in CATEGORICAL_CONCEPTS: pred_lines.append(f"{concept}: {values['concepts'][concept]['predicted_label']} / {values['concepts'][concept]['target_modal_label']}")
+    ax.text(.01,.99,("Pred / reader target\n" if language=="en" else "预测 / 读者目标\n")+"\n".join(pred_lines),va="top",fontsize=8.6,linespacing=1.25)
+    ax=figure.add_subplot(grid[0,3]); names=list(values["contributions"]); scores=np.asarray([values["contributions"][name] for name in names]); order=np.argsort(np.abs(scores)); ax.barh(np.arange(len(order)),scores[order],color=["#C44E52" if scores[index]>0 else "#4C78A8" for index in order]); ax.set_yticks(np.arange(len(order)),[names[index] for index in order],fontsize=7); ax.axvline(0,color="black",lw=.8); ax.grid(axis="x",alpha=.2); ax.set_title("有符号中心化贡献" if language=="zh" else "Signed centered contributions"); ax.set_xlabel("rating points",fontsize=8)
+    for column,target in enumerate(("spiculation","margin","texture")):
+        map_case=dict(case); map_case["target"]=target; heatmap,status=_find_map_record(PRIVATE_ARCHIVE,map_case)
+        if status!="valid": raise ValueError(f"P10_PRIVATE_MORPHOLOGY_MAP_INVALID:{target}:{status}")
+        display=_display_normalize(_mapped_map_slice(heatmap,bbox,z_index)); ax=figure.add_subplot(grid[1,column]); ax.imshow(roi_slice,cmap="gray"); ax.imshow(display,cmap="magma",alpha=.62,vmin=0,vmax=1); ax.set_title(f"{target} Grad-CAM"); ax.axis("off")
+    ax=figure.add_subplot(grid[1,3]); ax.axis("off"); ax.text(.02,.98,("WHERE + WHAT + WHY\n\nExisting frozen concept maps\nNo new model forward\n\nDisplay-only map normalization\nFaithfulness used raw FP32 maps" if language=="en" else "WHERE + WHAT + WHY\n\n使用既有冻结概念图\n未运行新 model forward\n\n仅显示层归一化\n忠实度使用 raw FP32 map"),va="top",fontsize=10,linespacing=1.35,bbox={"boxstyle":"round","facecolor":"#F1F5F9","edgecolor":"#64748B"})
+    figure.suptitle(f"RPT-FA03 — {case['case_label']} — "+("Case-level morphology and contribution explanation" if language=="en" else "病例级形态概念与贡献解释"),fontsize=15,fontweight="bold")
+    figure.text(.5,.02,("CT context, concept Pred/target, signed contributions, and existing spiculation/margin/texture maps are shown together." if language=="en" else "同图呈现 CT 背景、概念预测/目标、有符号贡献及既有 spiculation/margin/texture maps。"),ha="center",fontsize=8.5)
+    destination.parent.mkdir(parents=True,exist_ok=True); figure.savefig(destination,metadata={"Title":"RPT-FA03","Author":"P10"},bbox_inches="tight"); plt.close(figure); return destination
+
+
 def _fa06_figure(case: Mapping[str, Any], values: Mapping[str, Any], panel_path: Path, destination: Path, language: str) -> Path:
     _configure_font(language)
     figure = plt.figure(figsize=(16, 7), dpi=170)
@@ -390,10 +459,11 @@ def _fa06_figure(case: Mapping[str, Any], values: Mapping[str, Any], panel_path:
     image = plt.imread(panel_path)
     height, width = image.shape[:2]
     prediction = figure.add_subplot(grid[1, 0]); prediction.axis("off")
-    prediction.imshow(image[int(0.10*height):int(0.90*height), :int(0.20*width)])
+    column=width/6
+    prediction.imshow(image[int(0.10*height):int(0.90*height), :int(column)])
     prediction.set_title(f"Pred {values['malignancy_prediction']:.3f}\nReader mean {values['malignancy_target']:.3f}",fontsize=9)
     where = figure.add_subplot(grid[1, 1]); where.axis("off")
-    where.imshow(image[int(0.10*height):int(0.90*height), int(0.20*width):int(0.40*width)])
+    where.imshow(image[int(0.10*height):int(0.90*height), int(2*column):int(3*column)])
     where.set_title(f"{case['target']} Grad-CAM",fontsize=9)
     what = figure.add_subplot(grid[1, 2]); what.axis("off")
     concept_lines=[]
@@ -467,12 +537,17 @@ def _render_appendix_pdf(cases: Sequence[Mapping[str, Any]], science: Mapping[st
     for figure_id in PRIVATE_FIGURE_IDS[:-1]:
         selected = [case for case in cases if figure_id in case["report_figure_ids"]]
         story.append(Paragraph(figure_id, heading))
-        for case in selected:
+        display_cases=selected
+        if figure_id=="RPT-FA03":
+            display_cases=[next(case for case in selected if str(case["case_label"])=="CASE-0004")]
+        for case in display_cases:
             label = str(case["case_label"])
+            source_figure=figures[figure_id] if figure_id=="RPT-FA03" else panels[label]
+            image_width,image_height=((170*mm,84*mm) if figure_id=="RPT-FA03" else (170*mm,39.4*mm))
             story.extend([
-                Image(str(panels[label]), width=170*mm, height=42.5*mm),
+                Image(str(source_figure), width=image_width, height=image_height),
                 Paragraph(
-                    (f"{label}: paper-style full-slice context, ROI, existing {case['target']} Grad-CAM, and frozen prediction/contribution evidence." if language == "en" else f"{label}：论文式完整切片背景、ROI、既有 {case['target']} Grad-CAM 与冻结 prediction/contribution 证据。"),
+                    ((f"{label}: full CT context, native-resolution zoom, Pred/reader-target concepts, horizontal signed contributions, and existing spiculation/margin/texture Grad-CAM maps." if language == "en" else f"{label}：完整 CT 背景、原生分辨率放大、概念预测/读者目标、水平有符号贡献，以及既有 spiculation/margin/texture Grad-CAM maps。") if figure_id=="RPT-FA03" else (f"{label}: paper-style full-slice context, native-resolution zoom, ROI, existing {case['target']} Grad-CAM, and frozen evidence." if language == "en" else f"{label}：论文式完整切片背景、原生分辨率放大、ROI、既有 {case['target']} Grad-CAM 与冻结证据。")),
                     caption,
                 ),
             ])
@@ -581,7 +656,11 @@ def build_catalogue_private_appendices(repository_root: Path = Path("."), privat
             selected = [case for case in cases if figure_id in case["report_figure_ids"]]
             if not selected:
                 raise ValueError(f"P10_PRIVATE_FIGURE_CASES_MISSING:{figure_id}")
-            figures[language][figure_id] = _group_figure(figure_id, [panels[language][str(case["case_label"])] for case in selected], figure_root / f"{figure_id}_{language}.png", language)
+            if figure_id == "RPT-FA03":
+                selected_case=next(case for case in selected if str(case["case_label"])=="CASE-0004")
+                figures[language][figure_id]=_fa03_figure(selected_case,science["CASE-0004"],manifest_by_uid.loc[str(selected_case["nodule_uid"])],repository_root,figure_root/f"{figure_id}_{language}.png",language)
+            else:
+                figures[language][figure_id] = _group_figure(figure_id, [panels[language][str(case["case_label"])] for case in selected], figure_root / f"{figure_id}_{language}.png", language)
         fa06 = [case for case in cases if "RPT-FA06" in case["report_figure_ids"]]
         if len(fa06) != 1 or str(fa06[0]["case_label"]) != "CASE-0004":
             raise ValueError("P10_FA06_CATALOGUE_SELECTION_INVALID")

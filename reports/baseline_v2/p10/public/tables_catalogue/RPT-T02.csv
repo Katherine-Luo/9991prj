@@ -1,5 +1,3 @@
 Cohort component,Nodules,Patients,Role
-Reference physical nodules,2651,875,Reconciliation only
-Missing required target,1,NA,Excluded
 Primary regression,2633,868,Main five-fold evaluation
 Secondary extreme subset,1073,578,782 low / 291 high
