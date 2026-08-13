@@ -15,12 +15,12 @@ active_bug_ids: []
 resume_phase: P10
 next_phase: null
 last_updated: 2026-08-13
-last_verified_commit: f5c8e58
+last_verified_commit: 931c72c
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P9均已完成、获用户确认并推送。P9 completion commit `2223aea`及post-delivery状态commit `0b92e76`已fast-forward合并至`main`并推送GitHub；P9为`COMPLETED / ON_TRACK / DELIVERED`。P10既有中英双版本报告、执行溯源、Mac私有备份与技术证据保持完整，但用户已用Catalogue驱动的报告总修订和双计划独立审批流程取代先前的最终交付确认门；P10现为`IN_PROGRESS / ON_TRACK`。Gate 1仅建立两份计划，二者均未获批准且implementation authorization为0；批准前禁止Catalogue实现、报告重建、科学改动、合并或推送。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P9均已完成、获用户确认并推送。P9 completion commit `2223aea`及post-delivery状态commit `0b92e76`已fast-forward合并至`main`并推送GitHub；P9为`COMPLETED / ON_TRACK / DELIVERED`。P10两份Catalogue/report plans已按精确SHA获批，Results Catalogue已实现并通过Gate 3技术验证；P10保持`IN_PROGRESS / ON_TRACK`，当前必须停下等待用户批准实际生成的Catalogue。`GENERATED_CATALOGUE_APPROVED=0`、`REPORT_REVISION_AUTHORIZED=0`，报告/PDF/table/figure/qualitative rendering总修订尚未开始；不得运行新科学计算、修改P5–P9 artifacts或创建P11。
 
 ## 1. 阅读规则
 
@@ -38,21 +38,21 @@ last_verified_commit: f5c8e58
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P10 Results Catalogue与Catalogue驱动双语报告总修订 Gate 1` |
+| 当前开发阶段 | `P10 Results Catalogue Gate 3：已验证，等待生成Catalogue用户批准` |
 | 阶段状态 | `IN_PROGRESS / ON_TRACK` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P9-001`已`RESOLVED`。 |
-| 当前阻塞项 | Gate 1等待用户分别、明确批准两份计划的精确SHA-256版本。`RESULTS_CATALOGUE_PLAN_APPROVED=0`、`P10_REPORT_PLAN_APPROVED=0`、两份计划内`IMPLEMENTATION_AUTHORIZED=0`；Catalogue和report implementation均禁止。 |
+| 当前阻塞项 | 两份plans已批准且Catalogue implementation已完成；当前唯一阶段门为用户审核并明确批准实际生成的Catalogue。`GENERATED_CATALOGUE_APPROVED=0`、`REPORT_REVISION_AUTHORIZED=0`；报告修订和所有新PDF/table/figure/qualitative rendering禁止。 |
 | 恢复阶段 | `P10` |
 | 下一阶段 | 无；P10为当前Baseline-v2协议的最终阶段，不创建未定义的P11。 |
 | 最近更新 | 2026-08-13 |
-| 状态依据 | 本地`p10-final-report` HEAD=`f5c8e58d4f2758985b3cec9a30d38fd015d5acdd`且本次审查前worktree clean。Gate 1两份plan-only文件已补充并独立原子提交：`docs/results/RESULTS_CATALOGUE_PLAN.md` final-additions commit=`bf53295`、SHA-256=`eb3aa9110fc06acd8cd9e2a375b64bcfa5a60d768ef6f37f16e1c693576c5c93`；`docs/results/P10_CATALOGUE_DRIVEN_BILINGUAL_REPORT_PLAN.md` final-additions commit=`f5c8e58`、SHA-256=`be33c07d566914d40bd50fba65b347118e706940a64495782cf0245f7914629c`。上一版SHA `f7a17572...bd9a`/`b960a841...f167`及更早版本均已失效。当前计划固定CAT-A..T=20、18个main tables+private `RPT-TA01/TA02`、14个public figure IDs、6个private figure types与6 mandatory PDFs。`RPT-TA02`登记case-level malignancy与8 concept Pred/GT，categorical GT保留完整reader-vote distribution，modal label仅display aid；`RPT-F09A/B`分开连续/类别量纲；`RPT-FA06`整合Prediction-WHERE-WHAT-WHY-HOW，HOW仅使用persisted case-level evidence，缺失即`DATA_NOT_PERSISTED`。Full CT只读渲染必须同时验证original frozen source、exact series/slice provenance与exact ROI-to-full-volume mapping，禁止heuristic placement。两approval flags与implementation authorization均为0。最新独立Phase Compliance Reviewer=`PASS`：仅计划补充，无Catalogue/report implementation、report regeneration、scientific changes或P11。 |
+| 状态依据 | 本地`p10-final-report` HEAD=`931c72c251a4bfc44accf6d9a4208fa467ea586f`且本次审查前worktree clean。Approved plan gates=`1/1`，精确绑定Catalogue plan SHA=`eb3aa9110fc06acd8cd9e2a375b64bcfa5a60d768ef6f37f16e1c693576c5c93`与report plan SHA=`be33c07d566914d40bd50fba65b347118e706940a64495782cf0245f7914629c`。Functional commit `931c72c`生成并验证CAT-A–T共2,395 registry items；Grad-CAM identity=`73,724=66,769+6,955`。Registry SHA-256=`981747f9c1d8edad1108bb4c227a9884d272e058ae7307977fbd0a9756771fb8`，public Catalogue manifest SHA-256=`7f78a0096789c260d7f49295b212f2bd139435c48dbf278b2ed1cc38ff957369`，private completion SHA-256=`7ed881704b1aacad8f4fb2f88daf9f0c32d27bcb525d5164bcf562ee79b34027`。Private archive仍为1,698 files / `14,386,651,621` bytes / manifest `67731d14...df4`；P5–P9 source manifest仍为`7f2b5694...d9af`。FA06选择`CASE-0004`，HOW为`DATA_NOT_PERSISTED` placeholder；full CT triple gate保持。Direct/full=`19/412 passed`，仅3条既有dependency warnings，Phase Compliance=`PASS`。`GENERATED_CATALOGUE_APPROVED=0`、`REPORT_REVISION_AUTHORIZED=0`；未开始report revision/PDF/table/figure/qualitative rendering，无scientific changes或P11。 |
 
-## 3. 当前阶段：P10 Results Catalogue与Catalogue驱动双语报告总修订 Gate 1
+## 3. 当前阶段：P10 Results Catalogue Gate 3
 
 ### 阶段目标
 
-在保持P5–P9科学产物、既有P10 archive与报告证据只读的前提下，先建立可双向追溯的Results & Artifacts Master Catalogue设计，再以已批准Catalogue为唯一科学清单重建中英双语最终报告。当前仅为双计划Gate 1：不得实现Catalogue、重建报告、重新训练、执行model forward/test inference、形成第二个committed test evaluation、修改任何P4–P9科学产物或创建P11。
+在保持P5–P9科学产物、既有P10 archive与报告证据只读的前提下，完成可双向追溯的Results & Artifacts Master Catalogue实现和验证，随后停下等待用户审核实际生成的Catalogue。只有用户明确批准该Catalogue后，才可授权Catalogue驱动的中英双语报告修订；当前不得重建报告、运行model forward/test inference、形成第二个committed test evaluation、修改P4–P9科学产物或创建P11。
 
 ### 已完成前置条件
 
@@ -140,14 +140,16 @@ last_verified_commit: f5c8e58
 
 - P9 completion与post-delivery commits `2223aea`/`0b92e76`已推送；P9保持`COMPLETED / ON_TRACK / DELIVERED`。
 - 既有P10 report/archive、双语报告、私有附录与audit由先前commits实现并封存；用户提出的Catalogue驱动总修订流程取代先前的最终确认门，但不撤销或改写这些历史证据。P10现为`IN_PROGRESS / ON_TRACK`。
-- Gate 1两份plan-only文件已完成最终补充并独立提交：`docs/results/RESULTS_CATALOGUE_PLAN.md` commit=`bf53295`、SHA-256=`eb3aa9110fc06acd8cd9e2a375b64bcfa5a60d768ef6f37f16e1c693576c5c93`；`docs/results/P10_CATALOGUE_DRIVEN_BILINGUAL_REPORT_PLAN.md` commit=`f5c8e58`、SHA-256=`be33c07d566914d40bd50fba65b347118e706940a64495782cf0245f7914629c`。此前所有SHA版本均由内容变更作废，不可批准旧版本。
+- Gate 1两份plan-only文件已按最终精确SHA获得用户批准：`RESULTS_CATALOGUE_PLAN_APPROVED=1`绑定`eb3aa911...c5c93`，`P10_REPORT_PLAN_APPROVED=1`绑定`be33c07d...629c`；Catalogue implementation authorization已用于本次Catalogue-only实现，不授权report revision。
 - Results Catalogue计划固定CAT-A..T共20类Catalogue表、registry驱动的`RESULTS_ARTIFACTS_MASTER_TABLE`人类可读MD/CSV/private XLSX视图、P0–P4 lightweight provenance/index与P5–P9 full scientific coverage；CT/ROI/z-index/bbox/windowing、valid/undefined Grad-CAM、ROI overlay与full-slice reprojection均使用明确renderability/availability states，缺失内容不得触发new inference。
 - 报告修订计划固定18个main public tables及private `RPT-TA01/TA02`、14个public figure IDs（`RPT-F09A/B`分别展示continuous与categorical fidelity）和6个paper-style private figure types。Mandatory PDF gate仍仅覆盖2份中英文public technical reports、2份中英文private appendices和2份combined PDFs，共6份；中英文short reports为`OPTIONAL_LATER_DERIVATIVE`，不阻断P10且不进入当前mandatory QA。技术正文约25–35页仅为nonblocking editorial target，科学完整性与清晰度优先。
 - `RPT-TA02`只读展示病例级malignancy prediction/target和全部8个concept Pred/GT；internalStructure/calcification必须绑定完整frozen reader-vote distribution，modal label仅可作为明确标注的显示辅助，不能替代distributional target。
 - `RPT-FA06`是独立private integrated case figure，按Prediction→WHERE→WHAT→WHY→HOW串联既有证据；HOW仅在P9已持久化足够case-level intervention evidence时可展示，否则必须显式标为`DATA_NOT_PERSISTED`，不得重算、近似或静默省略。
 - Full axial CT或full-slice reprojection的只读渲染必须同时满足original frozen CT/DICOM source存在、exact series/slice provenance存在、frozen ROI-to-full-volume coordinate mapping可精确恢复；任一条件失败即登记不可用状态，禁止启发式推断series、slice、ROI或heatmap位置。
 - 报告只描述本项目冻结的2,633-nodule/868-patient cohort；related-work cohort仅作引用，不得混入本项目cohort flow。Malignancy明确为radiologist-assessed downstream target，不是八个bottleneck concepts之一；不得新增XAI、forward或科学估计，private case panels仅使用Catalogue验证的full CT/ROI/overlay/reprojection与既有concept/contribution evidence。
-- 两份计划必须由用户按各自精确SHA独立批准；当前`RESULTS_CATALOGUE_PLAN_APPROVED=0`、`P10_REPORT_PLAN_APPROVED=0`、`IMPLEMENTATION_AUTHORIZED=0`。即使两计划未来均获批准，也只能先实现Catalogue，完成验证后必须再次停下等待用户批准实际Catalogue，方可开始报告修订。
+- Results Catalogue functional commit=`931c72c`。Canonical registry精确包含2,395 items并覆盖CAT-A–T；human master table、public CSV/Markdown views、private XLSX overlays、source/hash/privacy/availability gates均已生成并verify。Registry/manifest/private completion SHA分别为`981747f9...71fb8`/`7f78a009...957369`/`7ed88170...b34027`。
+- Catalogue重建`73,724=66,769 valid+6,955 undefined`并保持P5–P9 source manifest=`7f2b5694...d9af`、Mac archive 1,698 files / `14,386,651,621` bytes / manifest `67731d14...df4`不变。FA06稳定选择`CASE-0004`，Prediction/WHERE/WHAT/WHY已有冻结证据，HOW因无case-level persisted intervention evidence显式登记`DATA_NOT_PERSISTED`；full CT渲染继续要求source+exact series/slice provenance+exact ROI mapping三门。
+- Catalogue direct/full=`19/412 passed`且仅3条既有dependency warnings；Phase Compliance Reviewer=`PASS`。没有training、test inference、scientific recomputation、P5–P9 artifact rewrite、report regeneration或P11。
 - P10 report/archive source supplement、canonical resolved config与digest已冻结；resolved SHA-256=`09a6e99c78c5aed9f75a2d054b90235b5a8d065f61b8d702e599d0102feaae6a`。P5–P9只读source manifest始末一致，SHA-256=`7f2b569480e5f044e45bcd2b3295e1a72836ce67bfa136f9f46363926d6fd9af`；没有新training、test inference、H200/CPU scientific jobs、第二个committed test evaluation或P5–P9 artifact rewrite。
 - Mac private archive已完成并verify：1,698 files / `14,386,651,621` bytes，manifest SHA-256=`67731d14d26d5ff1cbbf36afa903490662f7c130abbc76421a3ebd39edf37df4`，remote只读且无delete/write；private archive与case index未进入Git。
 - 四份public中英文报告均已生成Markdown/PDF：短论文各12页、技术报告各32页。两份private中英文附录各14页、两份技术报告+附录合并PDF各46页；14个private cases、slice/map/panel layout在中英文间一致。合计208页rendered visual QA均`PASS`，中文字体嵌入、双语数值/CI/章节/图表/引用一致性及public privacy gates均通过。
@@ -156,9 +158,9 @@ last_verified_commit: f5c8e58
 
 ### 尚未完成
 
-- 两份计划虽已独立提交，但均尚未获得用户按精确SHA的独立批准；当前不得实现Catalogue、扫描private results生成Catalogue views、导出private XLSX、修改report generator或重建任何Markdown/PDF/figure。
-- 两计划获批后仍须严格执行多重门：仅实现并验证Catalogue→停下交付实际Catalogue→等待用户明确批准实际Catalogue→才允许报告修订→完整科学/双语/privacy/layout/6-PDF mandatory QA与双agent审查→仅转为最终`AWAITING_USER_APPROVAL`。
-- 最终用户确认前P10不得转为`COMPLETED`，不得fast-forward合并至`main`或推送GitHub；当前Gate 1绝不构成最终P10批准。
+- 实际生成的Catalogue尚未获用户批准：`GENERATED_CATALOGUE_APPROVED=0`。当前必须停下交付Catalogue paths、SHA、counts、gaps与验证证据，不得修改Catalogue或越过此门。
+- `REPORT_REVISION_AUTHORIZED=0`；Catalogue驱动的manuscript/report generator修改、PDF/table/figure/qualitative rendering均尚未开始且不得开始。用户批准实际Catalogue后才可进入报告修订与6-PDF mandatory QA。
+- 最终报告修订完成后仍须完整科学/双语/privacy/layout QA、双agent审查与最终用户确认；此前P10不得转为`COMPLETED`、fast-forward合并或推送GitHub。
 - P10为Baseline-v2定义的最终阶段；没有已定义或已批准的P11，不得创建或启动P11。
 
 ### 验收边界
@@ -171,8 +173,8 @@ last_verified_commit: f5c8e58
 - P9只读取P5–P8既有best checkpoints和OOF/test artifacts；不得重训、形成第二个committed test evaluation或修改既有training/checkpoint/history/predictions/metrics/evaluation。
 - Spatial Stage A只使用fold 0 validation；formal spatial gate在CLI与PBS两层默认阻断。本次只在Stage A `PASS`、exact approval record与用户再次明确批准后，对已核验的20个formal jobs设置`P9_SPATIAL_APPROVED=1`；该值不授权replacement或P10。
 - `BUG-P9-001`不改变20个formal jobs的成功终态或spatial artifacts有效性。Validation auxiliary predictions可合法在不同outers folds间出现同一UID，必须按fold精确验证；outer test/canonical OOF仍必须全局exactly once。
-- P10 supplement只冻结报告、execution provenance与private archive执行边界；它不运行或授权训练、test inference、H200/CPU scientific jobs、P5–P9 artifact rewrite或P11。既有四份public报告、14个private cases、private archive与audit保持只读；新的双计划Gate 1意味着这些报告不再是等待最终确认的当前交付候选，但也不得在审批前重建或覆盖。
-- 两份plan-only文件本身不授予实现权限。任一计划内容变化仅使该计划审批失效并重置相应flag；只有两个精确SHA版本均被明确批准，Catalogue implementation才可开始，report implementation仍必须等待实际Catalogue的后续独立批准。
+- P10 supplement只冻结报告、execution provenance与private archive执行边界；它不运行或授权训练、test inference、H200/CPU scientific jobs、P5–P9 artifact rewrite或P11。既有四份public报告、14个private cases、private archive与audit保持只读；Gate 3 Catalogue approval之前，这些报告不是当前交付候选，也不得重建或覆盖。
+- 两份plan已批准且Catalogue implementation已完成；其批准不自动批准生成Catalogue或报告修订。当前只有用户对actual Catalogue的独立批准可将`GENERATED_CATALOGUE_APPROVED`置1并解锁后续report revision authorization。
 
 ## 4. 下一阶段
 
@@ -518,13 +520,13 @@ Bug 修复后：
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
 | P9 | 统一评估、干预与空间解释 | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：20个formal jobs、唯一CPU recovery `8987554`、2,633/868 aggregate、map accounting、九份deidentified reports、完整`348 passed`及阶段级双agent审查均`PASS`；`BUG-P9-001`已解决，用户于2026-08-13明确确认。Completion commit `2223aea`已fast-forward合并并推送；合并后完整测试`348 passed`，三方SHA一致 | 0 | 0 |
-| P10 | Results Catalogue与Catalogue驱动双语报告总修订 | `IN_PROGRESS` | `ON_TRACK` | `GATE_1_PENDING_DUAL_PLAN_APPROVAL`：Catalogue final-additions commit/SHA=`bf53295`/`eb3aa911...c5c93`、report final-additions commit/SHA=`f5c8e58`/`be33c07d...629c`；CAT-A..T=20、18 main tables+TA01/TA02、14 public figure IDs、6 private figure types与6 mandatory PDFs。TA02病例级malignancy+8 concept Pred/GT保留categorical reader distributions；F09A/B分离量纲；FA06的HOW仅限persisted case evidence，否则`DATA_NOT_PERSISTED`；full CT需source+exact series/slice provenance+exact ROI mapping。独立Phase Compliance=`PASS`；两plan approval flags与implementation authorization均为0，无implementation/report regeneration/scientific changes/P11 | 0 | 0 |
+| P10 | Results Catalogue与Catalogue驱动双语报告总修订 | `IN_PROGRESS` | `ON_TRACK` | `GATE_3_CATALOGUE_VERIFIED_PENDING_USER_APPROVAL`：plan gates=`1/1`绑定`eb3aa911...c5c93`/`be33c07d...629c`；functional commit=`931c72c`。Registry=2,395 CAT-A–T items，`73,724=66,769+6,955`，registry/manifest/private completion=`981747f9...71fb8`/`7f78a009...957369`/`7ed88170...b34027`；FA06=`CASE-0004`且HOW=`DATA_NOT_PERSISTED`，full CT triple gate PASS。Direct/full=`19/412 passed`、3条既有warnings、Phase Compliance=`PASS`。`GENERATED_CATALOGUE_APPROVED=0`、`REPORT_REVISION_AUTHORIZED=0`；report/PDF/table/figure/qualitative revision未开始，无scientific changes/P11 | 0 | 0 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9为`COMPLETED / ON_TRACK / DELIVERED`；P10的Catalogue/report总修订处于`IN_PROGRESS / ON_TRACK`，当前仅有双计划Gate 1且implementation未获授权。
+当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9为`COMPLETED / ON_TRACK / DELIVERED`；P10的Catalogue/report总修订处于`IN_PROGRESS / ON_TRACK`，Catalogue已实现并验证，当前停在Gate 3等待generated Catalogue用户批准，report revision未授权。
 
 ### Bug 状态
 
@@ -538,7 +540,7 @@ Bug 修复后：
 - 影响阶段：P9
 - 影响验收标准：是；20个formal spatial jobs均已成功并且existing artifacts有效，但final P9 audit/summary必须由CPU aggregate成功构建与验证。
 - 恢复阶段：P9
-- 受影响下游阶段：风险已解除；P9已完成确认与交付。P10现为Catalogue/report总修订`IN_PROGRESS / ON_TRACK`并停在双计划Gate 1；该计划流程不改变本Bug的历史recovery事实。
+- 受影响下游阶段：风险已解除；P9已完成确认与交付。P10现为Catalogue/report总修订`IN_PROGRESS / ON_TRACK`并停在Gate 3 generated Catalogue用户审批；该流程不改变本Bug的历史recovery事实。
 - 现象：CPU-only aggregate job `8987452`以`ngpus=0`、8 CPU、64 GB、`run_count=1`运行。`p9_katana verify-stage-a`和`p9_spatial verify --scope all`均`PASS`；`p9_audit build`调用`build_task_results`时，`_p9_evaluation._validation_frame`对Black-box pooled validation frame抛出`P9_VALIDATION_FRAME_INVALID:blackbox`，job终态`F / Exit_status=1`。Final audit与summary未生成。
 - 科学执行证据：jobs `8986218`–`8986237`全部`F / Exit_status=0 / run_count=1`，每个model×fold strict verifier已通过。原始20份spatial artifacts、Grad-CAM、occlusion、intervention与faithfulness证据保持有效且只读；本Bug不是model、checkpoint、spatial execution或scientific result失败。
 - 诊断：pooled validation共1,315 rows与226个cross-fold repeated UIDs。四模型的每fold内duplicate=0，每fold UID set精确等于P4 validation membership，所有数值finite。同一patient/nodule在不同outer development folds中合法可进入多个validation partitions，因此pooled validation不应全局UID唯一。
@@ -1112,3 +1114,4 @@ Bug 修复后：
 | 2026-08-13 | `LOCAL_CONFIG_VERIFIED` | P10 | P10 report/archive source supplement、canonical resolved config与digest已生成并验证；resolved SHA=`09a6e99c...aae6a`。配置固定四份双语public报告、14个Mac-private cases、P5–P9五目录只读archive与SHA manifest、existing-job scheduler/scientific状态分离、public privacy及no-training/no-test/no-new-scientific-job/no-artifact-rewrite/no-P11 gates。Direct/full=`8/356 passed`且完整套件仅3条既有dependency warnings；canonical/hash、diff/whitespace、冻结文件检查与Phase Compliance均`PASS`。Config/test diff仍未提交；report/archive代码、Mac备份、报告产物及整个P10阶段门尚未实现，P10保持`IN_PROGRESS / ON_TRACK`且没有P11。 | supplement SHA `09a6e99c...aae6a`；Phase Compliance `PASS`；本次状态同步commit待创建 |
 | 2026-08-13 | `IMPLEMENTATION_ARCHIVE_REPORTS_PASS` / `PHASE_AWAITING_APPROVAL` | P10 | `p10-final-report` HEAD=`3ca3ee606fc7554cda1dcdb0010b053e40078ba2`完成report/archive实现与生成产物。P5–P9 immutable manifest始末=`7f2b5694...d9af`；Mac archive=`1,698` files / `14,386,651,621` bytes / manifest=`67731d14...df4`且只读verify PASS。四份public MD/PDF页数=`12/12/32/32`，两份private appendices与两份combined PDFs页数=`14/14/46/46`，14 cases固定，208 rendered pages visual QA、字体、双语parity与privacy均PASS。Report data=`d9ae6d45...2807`，public manifest=`9d3c77e4...7583`，四份P10 audit JSON均PASS。Direct/full=`50/398 passed`且仅3条既有warnings；83 exact allowed Git files、diff/frozen及Phase Compliance最终审查均PASS。无新compute、第二次test、P5–P9 artifact rewrite或P11。P10转为`AWAITING_USER_APPROVAL / ON_TRACK`；仅待用户最终确认，确认前不得`COMPLETED`、merge或push。 | HEAD `3ca3ee6`；config `09a6e99c...aae6a`；archive `67731d14...df4`；report data `d9ae6d45...2807`；public manifest `9d3c77e4...7583`；Phase Compliance `PASS`；本次状态同步commit待创建 |
 | 2026-08-13 | `REPORT_TOTAL_REVISION_REQUESTED` / `CATALOGUE_GATE_1_ESTABLISHED` / `FINAL_PLAN_ADDITIONS_RECORDED` | P10 | 用户以Results Catalogue和Catalogue-driven bilingual report总修订流程取代先前P10最终确认门；最终plan additions由`RESULTS_CATALOGUE_PLAN.md` commit/SHA=`bf53295`/`eb3aa911...c5c93`与`P10_CATALOGUE_DRIVEN_BILINGUAL_REPORT_PLAN.md` commit/SHA=`f5c8e58`/`be33c07d...629c`封存，上一版`f7a17572...bd9a`/`b960a841...f167`及更早SHA均失效。当前契约为CAT-A..T=20、18 main tables+`TA01/TA02`、14 public figure IDs、6 private figure types和6 mandatory PDFs。`TA02`绑定case-level malignancy与8 concept Pred/GT及categorical full reader distributions；`F09A/B`分离continuous/categorical scales；`FA06`整合Prediction-WHERE-WHAT-WHY-HOW且HOW缺失时必须`DATA_NOT_PERSISTED`；full CT/reprojection需frozen source、exact series/slice provenance和exact ROI mapping三门全过。Own-cohort-only、malignancy-not-concept、no-new-XAI、paper-style panels与strict Catalogue dependency保持。两计划仍须按当前SHA独立获批；`RESULTS_CATALOGUE_PLAN_APPROVED=0`、`P10_REPORT_PLAN_APPROVED=0`、`IMPLEMENTATION_AUTHORIZED=0`。无implementation、report regeneration、scientific changes或P11；独立Phase Compliance=`PASS`。P10保持`IN_PROGRESS / ON_TRACK`，P9保持`COMPLETED / DELIVERED`。 | HEAD `f5c8e58`；final-additions commits `bf53295`/`f5c8e58`；plan SHAs `eb3aa911...c5c93`/`be33c07d...629c`；Phase Compliance `PASS`；本次状态同步commit待创建 |
+| 2026-08-13 | `DUAL_PLANS_APPROVED` / `CATALOGUE_IMPLEMENTATION_PASS` / `GENERATED_CATALOGUE_AWAITING_APPROVAL` | P10 | 用户按精确SHA批准两份plans：Catalogue=`eb3aa911...c5c93`、report=`be33c07d...629c`，两plan gates=`1/1`；批准仅授权Catalogue-first实现。Functional commit `931c72c`生成并验证2,395-item CAT-A–T registry、human-facing MD/CSV、private XLSX overlays与source/privacy/availability views。Grad-CAM accounting=`73,724=66,769+6,955`；registry/manifest/private completion SHA=`981747f9...71fb8`/`7f78a009...957369`/`7ed88170...b34027`。P5–P9 manifest=`7f2b...d9af`与archive 1,698 files / `14,386,651,621` bytes / `67731d...df4`保持不变。FA06稳定选择`CASE-0004`且HOW为`DATA_NOT_PERSISTED`；full CT triple gate有效。Direct/full=`19/412 passed`、3条既有warnings，Phase Compliance=`PASS`。当前`GENERATED_CATALOGUE_APPROVED=0`、`REPORT_REVISION_AUTHORIZED=0`，报告/PDF/table/figure/qualitative rendering修订未开始；必须等待用户批准actual Catalogue，无scientific changes或P11。P10保持`IN_PROGRESS / ON_TRACK`，P9保持`COMPLETED / DELIVERED`。 | HEAD/functional commit `931c72c`；registry `981747f9...71fb8`；manifest `7f78a009...957369`；private completion `7ed88170...b34027`；Phase Compliance `PASS`；本次状态同步commit待创建 |
