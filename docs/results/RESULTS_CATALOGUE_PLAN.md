@@ -30,14 +30,24 @@ What was run
 -> where it belongs in the final report
 ```
 
-The catalogue covers P0-P10 for phase continuity and gives full scientific detail for P5-P10.
+The catalogue covers P0-P10 for phase continuity, with deliberately asymmetric depth:
+
+```text
+P0-P4 = lightweight provenance and index coverage only
+P5-P9 = full scientific result and artifact coverage
+P10 = reporting, catalogue, archive, and rendered-asset coverage
+```
+
+P0-P4 continuity rows must not expand into unnecessary scientific-catalogue complexity or displace the P5-P9 scientific results that the user needs to inspect.
 
 Hard boundaries:
 
 - Do not train a model, create an optimizer, or modify a checkpoint.
 - Do not run a model forward pass or test inference.
+- Do not reselect checkpoints or rerun any committed test transaction.
+- Do not recompute bootstrap draws, intervention results, contributions, Grad-CAM, occlusion, faithfulness, or any other scientific estimate for presentation purposes.
 - Do not recompute scientific results when the registered value is absent.
-- Read existing frozen aggregate values only; deterministic formatting and indexing are allowed.
+- Read existing frozen values only; deterministic formatting, indexing, and explicitly registered non-destructive display transformations are allowed.
 - Do not modify P4 splits/initializations or any P5-P9 checkpoint, history, prediction, metric, evaluation, OOF, intervention, Grad-CAM, occlusion, or faithfulness artifact.
 - Do not invent scientific interpretation or convert an unavailable value into a numeric placeholder.
 - Do not create or start P11.
@@ -49,9 +59,11 @@ Hard boundaries:
 ```text
 docs/results/
   RESULTS_MASTER_CATALOGUE.md
+  RESULTS_ARTIFACTS_MASTER_TABLE.md
   results_catalogue_registry.json
   catalogue_manifest.json
   results_master_catalogue.csv
+  RESULTS_ARTIFACTS_MASTER_TABLE.csv
   tables_inventory.csv
   figures_inventory.csv
   artifacts_inventory.csv
@@ -81,11 +93,48 @@ docs/results/
 
 `RESULTS_MASTER_CATALOGUE.md` contains section headings, one-line legends, and tables only. It must not become a narrative report.
 
+`RESULTS_ARTIFACTS_MASTER_TABLE.md`, its public CSV twin, and its private XLSX twin are the human-facing top-level views. They must answer, without requiring the user to understand the registry implementation:
+
+```text
+What did I run?
+What result or artifact did it produce?
+Where is the frozen source?
+Is it public or private?
+Can it render a table?
+Can it render a figure?
+Has the visualization already been rendered?
+Where should it appear in the report?
+```
+
+The three views are deterministic projections of `results_catalogue_registry.json`; they are never maintained by hand.
+
+Required human-readable columns:
+
+- `Catalogue Item ID`
+- `Phase`
+- `Model`
+- `Fold`
+- `Result / Artifact type`
+- `Scientific content`
+- `Exists?`
+- `Frozen source`
+- `Public / Private`
+- `Report placement` (`Main report`, `Appendix`, `Private appendix`, `Audit-only`, or `No`)
+- `Table renderable?`
+- `Figure renderable?`
+- `Existing visualization?`
+- `Visualization status`
+- `New inference required?`
+- `Assigned report section`
+- `Integrity status`
+- `Notes`
+
 ### 3.2 Private local catalogue overlay
 
 ```text
 mac-archive://p10_private_report/
   RESULTS_MASTER_CATALOGUE.xlsx
+  RESULTS_ARTIFACTS_MASTER_TABLE.xlsx
   results_catalogue_private_locations.csv
 ```
 
@@ -103,6 +152,16 @@ Only the private overlay may contain exact Mac/Katana absolute paths, restricted
 ## 4. Canonical data model
 
 `results_catalogue_registry.json` is the canonical normalized registry. Markdown, CSV, and private XLSX are deterministic views of this registry and must never be edited independently.
+
+The authoritative architecture is fixed:
+
+```text
+frozen P5-P9 artifacts
+-> verified structured report data
+-> Results Catalogue registry
+-> deterministic Markdown/CSV/private XLSX views
+-> report mappings
+```
 
 ### 4.1 Stable identifiers
 
@@ -149,6 +208,27 @@ Every item records:
 - `approval_reference`
 - `integrity_status`
 
+Qualitative and spatial items additionally record, where applicable:
+
+- `case_role`
+- `full_ct_slice_available`
+- `full_ct_slice_source`
+- `full_ct_slice_z_index`
+- `roi_bbox_available`
+- `roi_bbox_coordinates`
+- `zoomed_roi_available`
+- `roi_source_available`
+- `gradcam_target`
+- `gradcam_valid_or_undefined`
+- `gradcam_overlay_renderable`
+- `full_slice_reprojection_renderable`
+- `concept_specific_targets_available`
+- `display_windowing_available`
+- `display_windowing_policy`
+- `visualization_normalization_policy`
+- `caption_warning_required`
+- `new_inference_required`
+
 ### 4.3 Controlled states
 
 ```text
@@ -170,6 +250,14 @@ integrity_status:
   MISSING
   HASH_MISMATCH
   NOT_APPLICABLE
+
+qualitative_renderability:
+  FULL_CT_CONTEXT_AVAILABLE
+  ROI_ONLY_AVAILABLE
+  FULL_SLICE_REPROJECTION_AVAILABLE
+  GRADCAM_AVAILABLE
+  GRADCAM_UNDEFINED_ZERO_MAP
+  NOT_RENDERABLE_FROM_FROZEN_DATA
 ```
 
 No scientifically important item may remain unclassified. `INTENTIONALLY_OMITTED_WITH_REASON` requires an explicit user approval reference. `DATA_NOT_PERSISTED` and `WOULD_REQUIRE_NEW_SCIENTIFIC_COMPUTE` remain unavailable and must not trigger new compute.
@@ -179,6 +267,8 @@ No scientifically important item may remain unclassified. `INTENTIONALLY_OMITTED
 ### CAT-A - Experimental phase overview
 
 Include 11 phase-summary rows for P0-P10 and child rows for the P9 task evaluation, bootstrap, concept fidelity, intervention, contribution centering, Grad-CAM, occlusion faithfulness, and undefined-map RCA components.
+
+P0-P4 rows remain lightweight provenance/index entries. P5-P9 rows carry full scientific/artifact detail, and P10 rows cover catalogue, report, archive, figures, tables, QA, and approval evidence.
 
 Columns:
 
@@ -255,7 +345,9 @@ The global identity must be:
 73,724 requested = 66,769 valid + 6,955 undefined
 ```
 
-Record raw FP32 storage, occlusion availability, private shard alias, and CT-overlay feasibility.
+Record raw FP32 storage, occlusion availability, private shard alias, and qualitative CT/overlay feasibility.
+
+Do not reduce feasibility to a single yes/no field. For each relevant model/fold/target/case binding, register full-slice availability and source, frozen z index, ROI source and bounding box, zoomed ROI availability, map valid/undefined state, display-window policy, ROI-overlay renderability, full-slice reprojection renderability, concept-specific target availability, display-only normalization policy, required caption warning, and whether a missing component would require prohibited new inference.
 
 ### CAT-M - Undefined-map RCA inventory
 
@@ -273,9 +365,30 @@ Inventory every existing table and every planned report table, including current
 
 Inventory every existing figure and every planned figure that can be rendered from frozen artifacts. Record question, source, existing path, revision need, privacy, report section, and whether new inference is required.
 
+For every qualitative figure component, record whether frozen evidence supports:
+
+1. original full axial CT slice;
+2. full CT slice with ROI bounding box;
+3. zoomed ROI crop;
+4. ROI plus Grad-CAM overlay;
+5. full-slice Grad-CAM reprojection;
+6. malignancy Grad-CAM;
+7. spiculation Grad-CAM;
+8. margin Grad-CAM;
+9. texture Grad-CAM;
+10. case-level concept prediction-versus-GT table;
+11. case-level centered contribution bars;
+12. undefined/zero-map limitation panel.
+
+Each component receives a controlled renderability state. Missing components must be `DATA_NOT_PERSISTED` or `WOULD_REQUIRE_NEW_SCIENTIFIC_COMPUTE`; they must never be silently synthesized.
+
 ### CAT-Q - Qualitative case inventory
 
 Include the 14 frozen cases using opaque `CASE-####` labels only. Record role, model, fold, available prediction/concept/contribution/Grad-CAM evidence, map status, and intended panel. UID/patient mappings remain private.
+
+For every frozen case and target, also record `case_role` (`representative`, `failure`, `intervention_worsening`, `limitation`, or `undefined_zero_map`), full CT/ROI/z-index/bounding-box metadata, zoomed-ROI availability, display windowing, Grad-CAM validity, ROI-overlay and full-slice-reprojection feasibility, concept-specific map availability, caption warnings, and the complete twelve-component support checklist defined in CAT-P.
+
+The Catalogue must therefore function as a paper-style qualitative-asset manifest, not merely state that a Grad-CAM artifact exists.
 
 ### CAT-R - Complete artifact storage map
 
@@ -311,6 +424,8 @@ At the top of the Markdown catalogue, provide one compact table with output coun
 - existing/planned tables and figures;
 - qualitative cases;
 - private and public artifacts.
+
+Immediately after this compact index, embed or link the deterministic `RESULTS_ARTIFACTS_MASTER_TABLE` human-readable view so the user can move from high-level counts to every run/result/artifact without opening machine-oriented registry files.
 
 ## 7. Planned interfaces
 
