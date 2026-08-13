@@ -9,6 +9,7 @@ from lidc_baseline.p10_catalogue import (
     CATEGORY_FILE_NAMES,
     CONTROLLED_AVAILABILITY,
     P10_REPORT_PLAN_SHA256,
+    PHASE_STATUS_SNAPSHOT_NAME,
     PUBLIC_MANIFEST_NAME,
     PUBLIC_REGISTRY_NAME,
     REQUIRED_REGISTRY_FIELDS,
@@ -50,6 +51,12 @@ def test_registry_has_cat_a_through_t_and_required_schema() -> None:
         assert item["availability_status"] in CONTROLLED_AVAILABILITY
         identifiers.append(item["catalogue_item_id"])
     assert len(identifiers) == len(set(identifiers)) == 2395
+    phase_rows = [item for item in registry["items"] if item["entity_type"] == "phase_overview"]
+    assert phase_rows
+    assert {item["source_relative_path"] for item in phase_rows} == {
+        f"docs/results/{PHASE_STATUS_SNAPSHOT_NAME}"
+    }
+    assert all(item["source_relative_path"] != "docs/PROJECT_STATUS.md" for item in phase_rows)
 
 
 def test_scientific_catalogue_cardinalities_and_gradcam_identity() -> None:

@@ -69,6 +69,7 @@ ARCHIVE_MANIFEST_NAME = "ARCHIVE_MANIFEST.json"
 ARCHIVE_COMPLETE_NAME = "ARCHIVE_COMPLETE.json"
 PUBLIC_REGISTRY_NAME = "results_catalogue_registry.json"
 PUBLIC_MANIFEST_NAME = "catalogue_manifest.json"
+PHASE_STATUS_SNAPSHOT_NAME = "catalogue_phase_status_snapshot.json"
 PRIVATE_COMPLETE_NAME = "PRIVATE_CATALOGUE_COMPLETE.json"
 PRIVATE_LOCATIONS_NAME = "results_catalogue_private_locations.csv"
 PRIVATE_MASTER_XLSX = "RESULTS_MASTER_CATALOGUE.xlsx"
@@ -397,9 +398,28 @@ def _item(
     }
 
 
+def _phase_status_snapshot() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "snapshot_kind": "P10_RESULTS_CATALOGUE_GATE_3",
+        "phase_statuses": {
+            **{f"P{phase}": "COMPLETED" for phase in range(10)},
+            "P10": "IN_PROGRESS_CATALOGUE_VERIFIED_PENDING_USER_APPROVAL",
+        },
+        "p9_delivery_status": "DELIVERED",
+        "generated_catalogue_approved": 0,
+        "report_revision_authorized": 0,
+        "p11_started": False,
+        "evidence_policy": (
+            "This immutable Catalogue snapshot indexes phase state; full completion evidence is "
+            "bound separately in CAT-B through CAT-R and the P5-P9 source manifest."
+        ),
+    }
+
+
 def _phase_rows(repository_root: Path) -> list[dict[str, Any]]:
-    status_path = "docs/PROJECT_STATUS.md"
-    status_sha = _source_hash(repository_root, status_path)
+    snapshot_path = f"docs/results/{PHASE_STATUS_SNAPSHOT_NAME}"
+    snapshot_sha = hashlib.sha256(_canonical_json_bytes(_phase_status_snapshot())).hexdigest()
     purposes = {
         "P0": "Environment and deterministic regression smoke",
         "P1": "Canonical DICOM/XML mapping and geometry audit",
@@ -423,11 +443,11 @@ def _phase_rows(repository_root: Path) -> list[dict[str, Any]]:
                 phase=phase,
                 result_name=purpose,
                 scientific_question="What was completed in this protocol phase?",
-                source_artifact_id="ART-PROJECT-STATUS",
+                source_artifact_id="ART-CATALOGUE-PHASE-STATUS-SNAPSHOT",
                 source_root_alias="repo://",
-                source_relative_path=status_path,
-                source_field_path=f"phase_history.{phase}",
-                source_sha256=status_sha,
+                source_relative_path=snapshot_path,
+                source_field_path=f"phase_statuses.{phase}",
+                source_sha256=snapshot_sha,
                 report_usage_status="AUDIT_ONLY" if phase in {"P0", "P1", "P2", "P3", "P4"} else "USED_APPENDIX",
                 details={"component": "phase_summary", "purpose": purpose},
             )
@@ -1613,7 +1633,7 @@ def _storage_rows(
                             "tables_inventory.csv", "figures_inventory.csv",
                             "qualitative_case_inventory.csv", "missing_incomplete_outputs.csv",
                             "report_evidence_map.csv", "public_private_storage_map.csv",
-                            "catalogue_to_report_plan.csv",
+                            "catalogue_to_report_plan.csv", PHASE_STATUS_SNAPSHOT_NAME,
                         }
                     )
                 )
@@ -1948,10 +1968,16 @@ def build_public_catalogue(
     private_root: Path = PRIVATE_ARCHIVE_ROOT_DEFAULT, raw_data_root: Path = RAW_DATA_ROOT_DEFAULT,
 ) -> dict[str, Any]:
     report_tree_before = _file_tree_hashes(repository_root / "reports/baseline_v2/p10")
+    output_root = repository_root / public_root
+    snapshot_path = output_root / PHASE_STATUS_SNAPSHOT_NAME
+    if snapshot_path.is_file():
+        if _read_json(snapshot_path) != _phase_status_snapshot():
+            raise ValueError("P10_CATALOGUE_PHASE_STATUS_SNAPSHOT_TAMPER")
+    else:
+        _atomic_write_json(snapshot_path, _phase_status_snapshot())
     registry, private_cases, private_locations = build_registry(
         repository_root=repository_root, private_root=private_root, raw_data_root=raw_data_root
     )
-    output_root = repository_root / public_root
     items = registry["items"]
     human = _human_rows(items)
     by_category = {letter: [item for item in items if item["category"] == f"CAT-{letter}"] for letter in CATEGORY_FILE_NAMES}

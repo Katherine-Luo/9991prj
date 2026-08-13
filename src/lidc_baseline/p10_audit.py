@@ -56,6 +56,7 @@ P10_CATALOGUE_PUBLIC_FILES = {
     "docs/results/results_catalogue_registry.json",
     "docs/results/results_master_catalogue.csv",
     "docs/results/catalogue_manifest.json",
+    "docs/results/catalogue_phase_status_snapshot.json",
     "docs/results/artifacts_inventory.csv",
     "docs/results/tables_inventory.csv",
     "docs/results/figures_inventory.csv",
