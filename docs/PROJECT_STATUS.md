@@ -15,12 +15,12 @@ active_bug_ids: []
 resume_phase: P10
 next_phase: null
 last_updated: 2026-08-14
-last_verified_commit: 14a631a
+last_verified_commit: 87c2ccf
 ---
 
 # LIDC-IDRI Baseline-v2 项目状态
 
-本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P9均已完成、获用户确认并推送。P9 completion commit `2223aea`及post-delivery状态commit `0b92e76`已fast-forward合并至`main`并推送GitHub；P9为`COMPLETED / ON_TRACK / DELIVERED`。用户于2026-08-14明确确认P10最终交付；最后一轮presentation-only微修由本地功能commit `9a88578`完成，等待门状态由`14a631a`封存，最终Phase Compliance及全部报告门均为`PASS`。P10现为`COMPLETED / ON_TRACK`但尚未`DELIVERED`；completion状态commit、fast-forward合并、`main`复测及GitHub push仍待执行。P5–P9冻结科学产物保持只读，未运行scientific recomputation或model forward；不创建P11。
+本文件是项目开发状态的唯一事实来源。当前所有开发只依据已批准并冻结的 [Baseline-v2 需求文档](./LIDC_IDRI_BASELINE_V2_REQUIREMENTS.md)和 `configs/baseline_v2.yaml`；Baseline-v1 已被取代，仅保留用于历史审计，不得作为后续实现依据。V2M与P3–P10均已完成、获用户确认并推送。P10 completion commit `87c2ccf`已fast-forward合并至`main`并推送GitHub；合并后完整测试为`430 passed`且仅有3条既有dependency warnings，冻结检查与post-delivery Phase Compliance均`PASS`，首次交付核对`HEAD=main=origin/main=87c2ccf2a89c8b4cc4e0e52aec13380f1660b505`且ahead/behind=`0/0`。P10现为`COMPLETED / ON_TRACK / DELIVERED`。P5–P9冻结科学产物保持只读，未运行scientific recomputation或model forward；P11不存在且未启动。
 
 ## 1. 阅读规则
 
@@ -38,21 +38,21 @@ last_verified_commit: 14a631a
 | 阅读范围 | `CURRENT_AND_NEXT` |
 | Active protocol | `Baseline-v2` |
 | Historical protocol | `Baseline-v1`（`SUPERSEDED`，audit-only） |
-| 当前开发阶段 | `P10 Catalogue-driven bilingual final report：用户已确认，等待完成状态封存与Git交付` |
-| 阶段状态 | `COMPLETED / ON_TRACK`（尚未`DELIVERED`） |
+| 当前开发阶段 | `P10 Catalogue-driven bilingual final report：已完成并交付` |
+| 阶段状态 | `COMPLETED / ON_TRACK / DELIVERED` |
 | 维护目标阶段 | 无 |
 | 活动 Bug | 无；`BUG-P9-001`已`RESOLVED`。 |
-| 当前阻塞项 | 无技术阻塞；尚待completion状态commit、fast-forward合并、`main`复测与GitHub push。 |
+| 当前阻塞项 | 无。 |
 | 恢复阶段 | `P10` |
 | 下一阶段 | 无；P10为当前Baseline-v2协议的最终阶段，不创建未定义的P11。 |
 | 最近更新 | 2026-08-14 |
-| 状态依据 | 用户于2026-08-14明确确认P10。当前`p10-final-report` HEAD=`14a631a6ce891f0da4789563cc765e3419758af0`；功能/报告commit=`9a88578`，等待门状态commit=`14a631a`，当前唯一未提交diff为本completion状态同步。六份最终PDF页数/SHA-256为technical EN=`25 / 20be47d11b8c5f46796a47da202a6a22e363b52ed615e32cb75765dfa4b72d36`、ZH=`25 / 2b217e7d96ed36d1ae88bafbf52d5993a1c854a120400d44a83d35b5aa94c215`，appendix EN=`10 / 6b8cef13a27934b2964f16275fdb11cc9a18fd7f8d70bf840666af78bec25f98`、ZH=`10 / 257d4d780c3eba7cac6e807d2d54acbb19a56de8b6d9f54334a69db2b87009b0`，combined EN=`35 / 14bbaa9687ea832de2d0fac008bba2ca5fafc5ee30aaabf89db953d8ec434edd`、ZH=`35 / 15a2287da5d9c89fd42b86c79266e6841836d7419928712dc0107422075f013a`。Strict report、audit、bilingual/semantic/privacy/visual QA及final Phase Compliance均`PASS`；public manifest SHA-256=`4c540d3d0446e63e420de2e71d2ab20ba09555d6f9cbc4e78d9f815039957b5b`；P10 targeted=`82 passed`并仅有2条既有环境dependency warnings。P5–P9 immutable，`scientific_recomputation=false`、`model_forward=false`、P11=false。P10为`COMPLETED / ON_TRACK`但尚未交付；不得在merge、`main`复测与push完成前写为`DELIVERED`。 |
+| 状态依据 | 用户于2026-08-14明确确认P10；completion commit `87c2ccf2a89c8b4cc4e0e52aec13380f1660b505`已fast-forward合并至`main`并推送GitHub。合并后使用项目依赖环境完整测试=`430 passed`且仅3条既有dependency warnings；冻结V1/V2 requirements/config及P10 supplements检查与post-delivery Phase Compliance均`PASS`。首次交付核对`HEAD=main=origin/main=87c2ccf2a89c8b4cc4e0e52aec13380f1660b505`且ahead/behind=`0/0`。六份最终PDF页数/SHA-256为technical EN=`25 / 20be47d11b8c5f46796a47da202a6a22e363b52ed615e32cb75765dfa4b72d36`、ZH=`25 / 2b217e7d96ed36d1ae88bafbf52d5993a1c854a120400d44a83d35b5aa94c215`，appendix EN=`10 / 6b8cef13a27934b2964f16275fdb11cc9a18fd7f8d70bf840666af78bec25f98`、ZH=`10 / 257d4d780c3eba7cac6e807d2d54acbb19a56de8b6d9f54334a69db2b87009b0`，combined EN=`35 / 14bbaa9687ea832de2d0fac008bba2ca5fafc5ee30aaabf89db953d8ec434edd`、ZH=`35 / 15a2287da5d9c89fd42b86c79266e6841836d7419928712dc0107422075f013a`。Strict report、audit、bilingual/semantic/privacy/visual QA及final Phase Compliance均`PASS`；public manifest SHA-256=`4c540d3d0446e63e420de2e71d2ab20ba09555d6f9cbc4e78d9f815039957b5b`。P5–P9 immutable，`scientific_recomputation=false`、`model_forward=false`、P11=false。 |
 
-## 3. 当前阶段：P10 Catalogue-driven bilingual final report completed, pending delivery
+## 3. 当前阶段：P10 Catalogue-driven bilingual final report delivered
 
 ### 阶段目标
 
-在保持P5–P9科学产物与private archive只读的前提下，Catalogue-driven中英双语技术报告、private appendices、combined PDFs、tables、figures、case evidence和audit均已生成并通过最终验收。用户已明确确认P10；当前只执行completion状态封存、fast-forward合并、`main`复测和GitHub push，不再修改科学值、运行model forward/test inference、形成第二个committed test evaluation、修改P4–P9 artifacts或创建P11。
+在保持P5–P9科学产物与private archive只读的前提下，Catalogue-driven中英双语技术报告、private appendices、combined PDFs、tables、figures、case evidence和audit均已生成、通过最终验收并完成Git交付。用户已明确确认P10；不再修改科学值、运行model forward/test inference、形成第二个committed test evaluation或修改P4–P9 artifacts。P10是当前Baseline-v2最终阶段，P11不存在。
 
 ### 已完成前置条件
 
@@ -139,7 +139,7 @@ last_verified_commit: 14a631a
 ### 正在进行
 
 - P9 completion与post-delivery commits `2223aea`/`0b92e76`已推送；P9保持`COMPLETED / ON_TRACK / DELIVERED`。
-- 既有P10 report/archive历史产物未被当作当前planned IDs复用；Catalogue-driven总修订现已完成并通过所有技术与人工QA。用户已确认，P10现为`COMPLETED / ON_TRACK`并等待Git交付。
+- 既有P10 report/archive历史产物未被当作当前planned IDs复用；Catalogue-driven总修订现已完成、通过所有技术与人工QA并完成Git交付。P10现为`COMPLETED / ON_TRACK / DELIVERED`。
 - 两份plans、generated Catalogue与report revision均已明确批准：revision resolved config的approval gates=`1/1/1/1`，SHA-256=`e0b790b7...b35d`；该授权已用于本次只读Catalogue-driven rendering，不授权任何新科学计算。
 - Results Catalogue计划固定CAT-A..T共20类Catalogue表、registry驱动的`RESULTS_ARTIFACTS_MASTER_TABLE`人类可读MD/CSV/private XLSX视图、P0–P4 lightweight provenance/index与P5–P9 full scientific coverage；CT/ROI/z-index/bbox/windowing、valid/undefined Grad-CAM、ROI overlay与full-slice reprojection均使用明确renderability/availability states，缺失内容不得触发new inference。
 - 报告修订计划固定18个main public tables及private `RPT-TA01/TA02`、14个public figure IDs（`RPT-F09A/B`分别展示continuous与categorical fidelity）和6个paper-style private figure types。Mandatory PDF gate仍仅覆盖2份中英文public technical reports、2份中英文private appendices和2份combined PDFs，共6份；中英文short reports为`OPTIONAL_LATER_DERIVATIVE`，不阻断P10且不进入当前mandatory QA。技术正文约25–35页仅为nonblocking editorial target，科学完整性与清晰度优先。
@@ -156,7 +156,7 @@ last_verified_commit: 14a631a
 - 用户要求的第二轮scientific/presentation correction已全部关闭：T02 cohort修正；T08/T10改为actual supported direction；intervention解释明确为CEM benefit、CBM near-neutral、GAM unfavorable overall；T14/F08 scope、T05/T06、F10 categorical、Dumaev与扩展正文、正文去audit化、zero-map、FA03、FA06、native zoom/full CT/inset、TA01/TA02及T17十列clipping均完成。
 - 最终presentation-only微调严格限于T15 extrema role、WHY prose、T08/T10 reader labels与CI note；controlled codes仅用于traceability，T16未移动，private outputs/cases保持不变。
 - Mandatory 6-PDF gate在微调后重新全部通过：public technical EN/ZH各25页（SHA-256=`20be47d1...72d36`/`2b217e7d...4c215`）、private appendix EN/ZH各10页（`6b8cef13...25f98`/`257d4d78...009b0`）、combined EN/ZH各35页（`14bbaa96...34edd`/`15a2287d...013a`）。Public/private visual QA、bilingual/semantic/privacy及strict report均`PASS`。
-- Audit=`PASS`，public manifest SHA-256=`4c540d3d0446e63e420de2e71d2ab20ba09555d6f9cbc4e78d9f815039957b5b`；P10 targeted=`82 passed`且仅2条既有环境dependency warnings。Final Phase Compliance与P5–P9 immutable均`PASS`，`scientific_recomputation=false`、`model_forward=false`、P11=false。功能代码与产物已由本地未推送commit `9a88578`原子封存，但尚未merge或push。
+- Audit=`PASS`，public manifest SHA-256=`4c540d3d0446e63e420de2e71d2ab20ba09555d6f9cbc4e78d9f815039957b5b`；最终微调targeted=`82 passed`，合并后完整测试=`430 passed`，均仅有既有环境dependency warnings。Final Phase Compliance与P5–P9 immutable均`PASS`，`scientific_recomputation=false`、`model_forward=false`、P11=false。功能代码与产物已随completion commit `87c2ccf`合并并推送。
 - P10 report/archive source supplement、canonical resolved config与digest已冻结；resolved SHA-256=`09a6e99c78c5aed9f75a2d054b90235b5a8d065f61b8d702e599d0102feaae6a`。P5–P9只读source manifest始末一致，SHA-256=`7f2b569480e5f044e45bcd2b3295e1a72836ce67bfa136f9f46363926d6fd9af`；没有新training、test inference、H200/CPU scientific jobs、第二个committed test evaluation或P5–P9 artifact rewrite。
 - Mac private archive已完成并verify：1,698 files / `14,386,651,621` bytes，manifest SHA-256=`67731d14d26d5ff1cbbf36afa903490662f7c130abbc76421a3ebd39edf37df4`，remote只读且无delete/write；private archive与case index未进入Git。
 - 先前pre-revision报告交付（现全部为`LEGACY_PRESENTATION_ONLY / AUDIT_ONLY`）曾包含12/32页public reports、14页private appendices与46页combined PDFs；这些历史页数、manifest与`50/398 passed`证据不满足当前planned IDs，不能替代本次六PDF/20-table/14+6-figure最终证据。
@@ -164,9 +164,8 @@ last_verified_commit: 14a631a
 
 ### 尚未完成
 
-- 用户已明确确认P10，阶段已转为`COMPLETED / ON_TRACK`；completion状态commit、fast-forward合并、`main`复测和GitHub push尚未完成，因此不得提前称为`DELIVERED`。
-- 功能代码、配置与生成产物已由本地未推送commit `9a88578`封存；等待门状态commit为`14a631a`，当前completion状态同步尚未commit。
-- P10为Baseline-v2定义的最终阶段；没有已定义或已批准的P11，不得创建或启动P11。
+- P10无尚未完成项；阶段已`COMPLETED / ON_TRACK / DELIVERED`。
+- P10为Baseline-v2定义的最终阶段；没有已定义或已批准的P11。
 
 ### 验收边界
 
@@ -525,13 +524,13 @@ Bug 修复后：
 | P7 | Mixed-type CEM | `COMPLETED` | `ON_TRACK` | Stage A、五折80 epochs、valid committed tests、final verifies、2,633/868 OOF、0 leakage、reconstruction≤`1e-6`、专项`31 passed`、合并后完整`246 passed`、阶段合规审查及用户2026-08-12确认均`PASS`；completion `e195a94`已合并并推送，三方SHA一致 | 0 | 0 |
 | P8 | CBM + GAM | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：Stage A、五折80 epochs与唯一committed tests、CPU existing-artifact final verifier `8983016`、2,633/868 OOF job `8983018`、0 leakage、transaction=1、reconstruction≤`1e-6`、direct/full=`23/280 passed`、六份deidentified audit及阶段级双agent审查均`PASS`；`BUG-P8-002`已解决，用户于2026-08-12明确确认。Completion commit `6ca4f48`已fast-forward合并并推送；合并后完整测试`280 passed`，三方SHA一致 | 0 | 0 |
 | P9 | 统一评估、干预与空间解释 | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：20个formal jobs、唯一CPU recovery `8987554`、2,633/868 aggregate、map accounting、九份deidentified reports、完整`348 passed`及阶段级双agent审查均`PASS`；`BUG-P9-001`已解决，用户于2026-08-13明确确认。Completion commit `2223aea`已fast-forward合并并推送；合并后完整测试`348 passed`，三方SHA一致 | 0 | 0 |
-| P10 | Results Catalogue与Catalogue驱动双语报告总修订 | `COMPLETED` | `ON_TRACK` | `PHASE_COMPLETED_PENDING_DELIVERY`：用户于2026-08-14明确确认；功能/报告commit=`9a88578`，等待门状态commit=`14a631a`。六PDF页数=`25/25/10/10/35/35`，SHA=`20be47d1...72d36/2b217e7d...4c215/6b8cef13...25f98/257d4d78...009b0/14bbaa96...34edd/15a2287d...013a`。Strict report、audit、bilingual/semantic/privacy/visual QA及final Phase Compliance均`PASS`，public manifest=`4c540d3d...57b5b`；P10 targeted=`82 passed`/2条既有环境warnings。P5–P9 immutable，`scientific_recomputation=false`、`model_forward=false`、P11=false。Completion状态commit、fast-forward merge、`main`复测与push尚待，当前不得称为`DELIVERED` | 0 | 0 |
+| P10 | Results Catalogue与Catalogue驱动双语报告总修订 | `COMPLETED` | `ON_TRACK` | `PASS_DELIVERED`：用户于2026-08-14明确确认；completion commit `87c2ccf`已fast-forward合并至`main`并推送GitHub，合并后完整测试=`430 passed`/3条既有warnings，冻结检查与post-delivery Phase Compliance均`PASS`，三方SHA一致且ahead/behind=`0/0`。六PDF页数=`25/25/10/10/35/35`，SHA=`20be47d1...72d36/2b217e7d...4c215/6b8cef13...25f98/257d4d78...009b0/14bbaa96...34edd/15a2287d...013a`。Strict report、audit、bilingual/semantic/privacy/visual QA及final Phase Compliance均`PASS`，public manifest=`4c540d3d...57b5b`。P5–P9 immutable，`scientific_recomputation=false`、`model_forward=false`、P11=false | 0 | 0 |
 
 ## 7. Bug 登记表
 
 ### 活动 Bug
 
-当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9为`COMPLETED / ON_TRACK / DELIVERED`；P10已获用户最终确认并转为`COMPLETED / ON_TRACK`，尚待Git交付，不创建P11。
+当前无活动Bug。`BUG-P9-001`、`BUG-P8-002`、`BUG-P8-001`及既有`BUG-P7-001`、`BUG-P5-002`、`BUG-P5-001`、`BUG-P3-001`与`BUG-P3-002`均已解决。P9与P10均为`COMPLETED / ON_TRACK / DELIVERED`；P11不存在。
 
 ### Bug 状态
 
@@ -545,7 +544,7 @@ Bug 修复后：
 - 影响阶段：P9
 - 影响验收标准：是；20个formal spatial jobs均已成功并且existing artifacts有效，但final P9 audit/summary必须由CPU aggregate成功构建与验证。
 - 恢复阶段：P9
-- 受影响下游阶段：风险已解除；P9已完成确认与交付。P10 Catalogue/report总修订已获用户确认，现为`COMPLETED / ON_TRACK`并等待Git交付；该流程不改变本Bug的历史recovery事实。
+- 受影响下游阶段：风险已解除；P9与P10均已完成确认与交付。该流程不改变本Bug的历史recovery事实。
 - 现象：CPU-only aggregate job `8987452`以`ngpus=0`、8 CPU、64 GB、`run_count=1`运行。`p9_katana verify-stage-a`和`p9_spatial verify --scope all`均`PASS`；`p9_audit build`调用`build_task_results`时，`_p9_evaluation._validation_frame`对Black-box pooled validation frame抛出`P9_VALIDATION_FRAME_INVALID:blackbox`，job终态`F / Exit_status=1`。Final audit与summary未生成。
 - 科学执行证据：jobs `8986218`–`8986237`全部`F / Exit_status=0 / run_count=1`，每个model×fold strict verifier已通过。原始20份spatial artifacts、Grad-CAM、occlusion、intervention与faithfulness证据保持有效且只读；本Bug不是model、checkpoint、spatial execution或scientific result失败。
 - 诊断：pooled validation共1,315 rows与226个cross-fold repeated UIDs。四模型的每fold内duplicate=0，每fold UID set精确等于P4 validation membership，所有数值finite。同一patient/nodule在不同outer development folds中合法可进入多个validation partitions，因此pooled validation不应全局UID唯一。
@@ -1126,3 +1125,4 @@ Bug 修复后：
 | 2026-08-14 | `SECOND_SCIENTIFIC_PRESENTATION_CORRECTION_PASS` / `PHASE_AWAITING_APPROVAL` | P10 | 用户要求的第二轮修订已全部关闭：T02 cohort；T08/T10 actual supported direction；CEM benefit、CBM near-neutral、GAM unfavorable overall的intervention解释；T14/F08 scope；T05/T06；F10 categorical；Dumaev与扩展正文；正文去audit化；zero-map、FA03、FA06、native zoom/full CT/inset；TA01/TA02；T17十列clipping。六PDF最终页数/SHA为technical EN=`25/5291c0ef...a01f`、ZH=`25/82bbbb12...e29`，appendix EN=`10/407cb675...b7a7`、ZH=`10/efcb8fde...7df`，combined EN=`35/5eb39b43...04ea`、ZH=`35/0b80b4ed...f53`。Strict report与audit均`PASS`，public manifest=`35e61ed6...fb68`；P10 targeted=`81 passed`、分批P0–P10完整覆盖=`429 passed`、9个shell syntax checks=`PASS`，仅既有环境依赖warnings；diff/frozen、P5–P9 immutable与final Phase Compliance均`PASS`。无scientific compute、model forward或P11。功能/产物由本地未推送commit `951a3c1`封存；P10为`AWAITING_USER_APPROVAL / ON_TRACK`，仅待用户最终确认，确认前不得`COMPLETED / DELIVERED`、merge或push。 | HEAD/functional-artifact commit `951a3c10cf9d42266851424c39d0785a5fa4eeba`；Phase Compliance `PASS`；本次状态同步commit待创建 |
 | 2026-08-14 | `FINAL_PRESENTATION_REFINEMENT_PASS` / `PHASE_AWAITING_APPROVAL` | P10 | 最后一轮presentation-only微调严格限于T15 extrema role、WHY prose及T08/T10 reader labels+CI note；controlled codes仅用于traceability，T16未移动，private outputs/cases保持不变。六PDF最终页数/SHA为technical EN=`25/20be47d1...72d36`、ZH=`25/2b217e7d...4c215`，appendix EN=`10/6b8cef13...25f98`、ZH=`10/257d4d78...009b0`，combined EN=`35/14bbaa96...34edd`、ZH=`35/15a2287d...013a`。Strict report、audit、bilingual/semantic/privacy/visual QA与final Phase Compliance均`PASS`，public manifest=`4c540d3d...57b5b`；P10 targeted=`82 passed`，仅2条既有环境dependency warnings。P5–P9 immutable，`scientific_recomputation=false`、`model_forward=false`、无P11。功能/报告由本地未推送commit `9a88578`封存；P10为`AWAITING_USER_APPROVAL / ON_TRACK`，仅待用户最终确认，确认前不得`COMPLETED / DELIVERED`、merge或push。 | HEAD/functional-report commit `9a88578ea69dabe0a8394dcda0817d0ccd69f94b`；Phase Compliance `PASS`；本次状态同步commit待创建 |
 | 2026-08-14 | `PHASE_COMPLETED` | P10 | 用户明确确认最终P10交付。Catalogue、六份中英报告、20张表、14张public figures、6张private figures、14个固定cases、private archive与全部traceability/QA证据保持封存；最终presentation微调、strict report/audit、双语/语义/隐私/视觉QA、P5–P9 immutable与Phase Compliance均为`PASS`。P10转为`COMPLETED / ON_TRACK`，但completion状态commit、fast-forward合并、`main`复测及GitHub push尚未执行，不得提前称为`DELIVERED`；P11不存在。 | 用户确认；functional/report `9a88578`；awaiting-status `14a631a`；本次completion状态commit待创建 |
+| 2026-08-14 | `DELIVERED` | P10 | Completion commit `87c2ccf`已fast-forward合并至`main`并推送GitHub。合并后在项目依赖环境运行完整测试=`430 passed`且仅3条既有dependency warnings；冻结V1/V2 requirements/config及P10 supplements检查与post-delivery Phase Compliance均`PASS`。首次交付核对`HEAD=main=origin/main=87c2ccf2a89c8b4cc4e0e52aec13380f1660b505`且ahead/behind=`0/0`。P10为`COMPLETED / ON_TRACK / DELIVERED`；P11不存在。 | `87c2ccf`；本次post-delivery状态同步commit待创建 |
